@@ -21,7 +21,6 @@ Build:
   artifacts:
     paths:
       - build
-  tags: ["default"]
 
 Test:
   stage: test
@@ -30,4 +29,3 @@ Test:
   artifacts:
     paths:
       - build
-  tags: ["default"]

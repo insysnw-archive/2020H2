@@ -1,6 +1,12 @@
 plugins {
     base
+    id("com.gladed.androidgitversion")
 }
 
-group = "com.handtruth"
-version = "0.1.0"
+val groupString = "com.handtruth"
+val versionString = androidGitVersion.name()
+
+allprojects {
+    group = groupString
+    version = versionString
+}
