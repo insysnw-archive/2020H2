@@ -5,45 +5,88 @@ stages:
   - test
   - analysis
   - package
+  - deploy
 
 cache:
   paths:
-    - .gradle/wrapper
-    - .gradle/caches
+    - .gradle
 
 variables:
   GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
   GIT_SUBMODULE_STRATEGY: normal
   GRADLE: ./gradlew -Pci --console=plain --no-daemon --max-workers=1 --stacktrace
 
-Build:
+assemble:
   stage: build
   script:
     - $GRADLE assemble
-  artifacts:
+  artifacts: &artifacts
     paths:
       - build
+      - 'subprojects/*/build'
 
-Test:
+test:
   stage: test
   script:
-    - $GRADLE check
+    - $GRADLE test
+  needs:
+    - assemble
   artifacts:
-    paths:
-      - build
+    <<: *artifacts
     reports:
-      junit: build/test-results/test/TEST-*.xml
+      junit:
+        - 'subprojects/*/build/test-results/$CI_JOB_NAME/TEST-*.xml'
+  cache:
+    policy: pull
 
-Coverage:
+lint:
+  stage: test
+  script:
+    - $GRADLE ktlintCheck
+  needs:
+    - assemble
+  cache:
+    policy: pull
+
+coverage:
   stage: analysis
   script:
-    - $GRADLE jacocoTestReport
-    - cat build/jacocoHtml/index.html || true
+    - $GRADLE rootTestCoverageReport
+    - cat build/reports/jacoco/rootTestCoverageReport/html/index.html || true
   coverage: "/Total.*?([0-9]{1,3})%/"
+  artifacts: *artifacts
+  needs:
+    - test
 
-Package:
+mavenSnapshot:
+  stage: package
+  script:
+    - $GRADLE publish
+  needs:
+    - assemble
+  cache:
+    policy: pull
+
+mavenRelease:
   stage: package
   script:
     - $GRADLE publishToMavenLocal
-  only: [ tags ]
   tags: [ package ]
+  only: [ tags ]
+  needs:
+    - assemble
+  cache:
+    policy: pull
+
+pages:
+  stage: package
+  script:
+    - $GRADLE gitlabPagesCreate
+  only: [ tags ]
+  needs:
+    - coverage
+  artifacts:
+    paths:
+      - public
+  cache:
+    policy: pull

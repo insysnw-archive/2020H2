@@ -1,62 +1,187 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+@file:Suppress("UNUSED_VARIABLE")
+
+import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
+import org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapper
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.dokka.gradle.DokkaPlugin
+import org.jlleitschuh.gradle.ktlint.KtlintPlugin
+import org.jlleitschuh.gradle.ktlint.KtlintExtension
+import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 plugins {
+    base
     id("com.gladed.androidgitversion")
-    kotlin("jvm")
+    kotlin("jvm") apply false
+    id("org.jetbrains.dokka")
+    id("org.jlleitschuh.gradle.ktlint") apply false
     jacoco
-    `maven-publish`
 }
 
 androidGitVersion {
     prefix = "v"
 }
 
-group = "com.handtruth"
-version = androidGitVersion.name()
+val groupString = "com.handtruth.example"
+val versionString: String = androidGitVersion.name()
 
-repositories {
-    mavenCentral()
-    maven("https://mvn.handtruth.com")
+allprojects {
+    group = groupString
+    version = versionString
+
+    repositories {
+        maven("https://mvn.handtruth.com")
+        jcenter()
+    }
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["kotlin"])
+val kotlinProjects: List<String> by extra
+
+val platformVersion: String by project
+
+fun KotlinSourceSet.collectSources(): Iterable<File> {
+    return kotlin.srcDirs.filter { it.exists() } + dependsOn.flatMap { it.collectSources() }
+}
+
+fun KotlinSourceSet.collectSourceFiles(): ConfigurableFileCollection {
+    return files(collectSources().map { fileTree(it) })
+}
+
+fun Project.kotlinProject() {
+    apply<KotlinPluginWrapper>()
+    apply<JacocoPlugin>()
+    apply<MavenPublishPlugin>()
+    apply<DokkaPlugin>()
+    apply<KtlintPlugin>()
+
+    configure<PublishingExtension> {
+        if (!System.getenv("CI").isNullOrEmpty()) repositories {
+            maven {
+                url = uri("https://git.handtruth.com/api/v4/projects/${System.getenv("CI_PROJECT_ID")}/packages/maven")
+                credentials(HttpHeaderCredentials::class) {
+                    name = "Job-Token"
+                    value = System.getenv("CI_JOB_TOKEN")!!
+                }
+                authentication {
+                    create<HttpHeaderAuthentication>("header")
+                }
+            }
         }
     }
-}
 
-dependencies {
-    val platformVersion: String by project
-    implementation(platform("com.handtruth.internal:platform:$platformVersion"))
+    lateinit var jvmMainSourceSet: KotlinSourceSet
 
-    implementation(kotlin("stdlib-jdk8"))
-
-    testImplementation(kotlin("test-junit5"))
-    testImplementation("org.junit.jupiter:junit-jupiter-engine")
-}
-
-jacoco {
-    toolVersion = "0.8.5"
-    reportsDir = file("$buildDir/customJacocoReportDir")
-}
-
-tasks {
-    withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "1.8"
+    configure<KotlinJvmProjectExtension> {
+        target.compilations.all {
+            kotlinOptions.jvmTarget = "1.8"
+        }
+        sourceSets {
+            val main by getting
+            jvmMainSourceSet = main
+        }
     }
-    withType<Test> {
+
+    val implementation by configurations.getting
+    val runtimeOnly by configurations.getting
+    val testImplementation by configurations.getting
+    val testRuntimeOnly by configurations.getting
+
+    dependencies {
+        val handtruthPlatform = dependencies.platform("com.handtruth.internal:platform:$platformVersion")
+        implementation(handtruthPlatform)
+        runtimeOnly(handtruthPlatform)
+
+        testImplementation(kotlin("test-junit5"))
+        testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    }
+
+    configure<KtlintExtension> {
+        version.set("0.39.0")
+        verbose.set(true)
+        outputToConsole.set(true)
+        enableExperimentalRules.set(true)
+        outputColorName.set("RED")
+
+        reporters {
+            reporter(ReporterType.PLAIN)
+            reporter(ReporterType.CHECKSTYLE)
+        }
+    }
+
+    configure<JacocoPluginExtension> {
+        toolVersion = "0.8.6"
+    }
+
+    tasks.withType<Test> {
         useJUnitPlatform()
         testLogging {
             events("passed", "skipped", "failed")
         }
     }
-    jacocoTestReport {
-        reports {
-            xml.isEnabled = false
-            csv.isEnabled = false
-            html.destination = file("$buildDir/jacocoHtml")
+}
+
+configure<JacocoPluginExtension> {
+    toolVersion = "0.8.6"
+}
+
+val thisProjects = kotlinProjects.map { project(":$name-$it") }
+
+thisProjects.forEach {
+    it.kotlinProject()
+}
+
+tasks {
+    val mergeTestCoverageReport by creating(JacocoMerge::class) {
+        group = "Reporting"
+        val pTasks = Callable { thisProjects.map { it.tasks["test"] } }
+        dependsOn(pTasks)
+        executionData(pTasks)
+    }
+    val rootTestCoverageReport by creating(JacocoReport::class) {
+        dependsOn(mergeTestCoverageReport)
+        group = "Reporting"
+        description = "Generate Jacoco coverage reports."
+        val coverageSourceDirs = thisProjects.map {
+            it.tasks.getByName<JacocoReport>("jacocoTestReport").sourceDirectories
         }
+
+        val classFiles = Callable {
+            thisProjects.map {
+                it.tasks.getByName<JacocoReport>("jacocoTestReport").classDirectories
+            }
+        }
+
+        classDirectories.setFrom(classFiles)
+        sourceDirectories.setFrom(coverageSourceDirs)
+
+        executionData.setFrom(mergeTestCoverageReport)
+
+        reports {
+            xml.isEnabled = true
+            html.isEnabled = true
+        }
+    }
+    val dokkaHtmlMultiModule by getting(DokkaMultiModuleTask::class)
+    val pagesDest = File(projectDir, "public")
+    val gitlabPagesCreateDocs by creating(Copy::class) {
+        group = "Documentation"
+        dependsOn(dokkaHtmlMultiModule)
+        from(dokkaHtmlMultiModule)
+        into(File(pagesDest, "docs"))
+    }
+    val gitlabPagesCreate by creating(Copy::class) {
+        group = "Reporting"
+        dependsOn(gitlabPagesCreateDocs)
+        File(projectDir, "pages").listFiles()!!.forEach {
+            from(it)
+        }
+        destinationDir = pagesDest
+    }
+    val gitlabPagesClear by creating(Delete::class) {
+        delete = setOf(pagesDest)
+    }
+    val clean by getting {
+        dependsOn(gitlabPagesClear)
     }
 }
