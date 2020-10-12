@@ -1,0 +1,9 @@
+[submodule "ekutils"]
+	path = subprojects/ekutils
+	url = ../../handtruth/ekutils.git
+[submodule "paket-cpp"]
+	path = subprojects/paket-cpp
+	url = ../../handtruth/paket-cpp.git
+[submodule "cpp-res"]
+	path = subprojects/cpp-res
+	url = ../cpp-res.git

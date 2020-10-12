@@ -1,0 +1,229 @@
+image: reg.handtruth.com/roots/cpp-meson/build:debian
+
+stages:
+  - setup
+  - build
+  - test
+  - analysis
+  - package
+  - image
+  - deploy
+
+variables:
+  GIT_SUBMODULE_STRATEGY: normal
+
+Restore:x86_64-linux-gnu: &restore
+  stage: setup
+  variables:
+    TARGET: x86_64-linux-gnu
+  script:
+    - meson -Db_coverage=true build/$TARGET --cross-file=$TARGET
+  tags: ["default"]
+  artifacts:
+    paths:
+      - build
+    expire_in: 2 hrs
+
+Restore:arm-linux-gnueabihf:
+  <<: *restore
+  variables:
+    TARGET: arm-linux-gnueabihf
+
+Restore:x86_64-alpine-linux-musl:
+  <<: *restore
+  image: reg.handtruth.com/roots/cpp-meson/build:alpine
+  variables:
+    TARGET: x86_64-alpine-linux-musl
+
+Build:x86_64-linux-gnu: &build
+  stage: build
+  variables:
+    TARGET: x86_64-linux-gnu
+  script:
+    - cd build/$TARGET
+    - ninja
+  tags: ["default"]
+  artifacts:
+    paths:
+      - build
+    expire_in: 2 hrs
+  dependencies:
+    - Restore:x86_64-linux-gnu
+
+Build:arm-linux-gnueabihf:
+  <<: *build
+  variables:
+    TARGET: arm-linux-gnueabihf
+  dependencies:
+    - Restore:arm-linux-gnueabihf
+
+Build:x86_64-alpine-linux-musl:
+  <<: *build
+  image: reg.handtruth.com/roots/cpp-meson/build:alpine
+  variables:
+    TARGET: x86_64-alpine-linux-musl
+  dependencies:
+    - Restore:x86_64-alpine-linux-musl
+
+Test:x86_64-linux-gnu: &test
+  stage: test
+  variables:
+    TARGET: x86_64-linux-gnu
+    MESON_TESTTHREADS: 1
+  script:
+    - cd build/$TARGET
+    - meson test --print-errorlogs --suite regular --wrap='valgrind --error-exitcode=1 --leak-check=full --tool=memcheck --track-origins=yes'
+    - cat meson-logs/testlog-valgrind.txt
+  tags: ["default"]
+  artifacts:
+    paths:
+      - build
+    expire_in: 2 hrs
+  dependencies:
+    - Restore:x86_64-linux-gnu
+    - Build:x86_64-linux-gnu
+
+Test:arm-linux-gnueabihf:
+  <<: *test
+  image: reg.handtruth.com/roots/cpp-meson/build:debian-armhf
+  variables:
+    TARGET: arm-linux-gnueabihf
+  tags: ["armhf"]
+  dependencies:
+    - Restore:arm-linux-gnueabihf
+    - Build:arm-linux-gnueabihf
+  when: manual
+
+Test:x86_64-alpine-linux-musl:
+  <<: *test
+  image: reg.handtruth.com/roots/cpp-meson/build:alpine
+  variables:
+    TARGET: x86_64-alpine-linux-musl
+  dependencies:
+    - Restore:x86_64-alpine-linux-musl
+    - Build:x86_64-alpine-linux-musl
+
+Coverage: &coverage
+  stage: analysis
+  variables:
+    TARGET: x86_64-linux-gnu
+  script:
+    - cd build/$TARGET
+    - ninja coverage-text
+    - cat meson-logs/coverage.txt
+  coverage: '/^TOTAL\s+\S+\s+\S+\s+(\d+\.?\d+)%/'
+  tags: ["default"]
+  artifacts:
+    paths:
+      - build
+    expire_in: 2 hrs
+  dependencies:
+    - Restore:x86_64-linux-gnu
+    - Build:x86_64-linux-gnu
+    - Test:x86_64-linux-gnu
+
+Check:
+  stage: analysis
+  variables:
+    TARGET: x86_64-linux-gnu
+  script:
+    - cd build/$TARGET
+    - ninja cppcheck
+  coverage: '/^TOTAL\s+\S+\s+\S+\s+(\d+\.?\d+)%/'
+  tags: ["default"]
+  artifacts:
+    paths:
+      - build/x86_64-linux-gnu/cppcheck.log
+    expire_in: 1 week
+  dependencies:
+    - Restore:x86_64-linux-gnu
+
+Package:x86_64-linux-gnu: &package
+  stage: package
+  variables:
+    TARGET: x86_64-linux-gnu
+  script:
+    - meson -Dprefix=`pwd`/dist/$TARGET -Ddefault_library=static -Dbuildtype=release -Doptimization=3 --cross-file=$TARGET package/$TARGET
+    - cd package/$TARGET
+    - ninja
+    - ninja install
+  tags: ["default"]
+  artifacts:
+    paths:
+      - dist
+    expire_in: 1 mos
+  dependencies: []
+
+Package:arm-linux-gnueabihf:
+  <<: *package
+  variables:
+    TARGET: arm-linux-gnueabihf
+
+Package:x86_64-alpine-linux-musl:
+  <<: *package
+  image: reg.handtruth.com/roots/cpp-meson/build:alpine
+  variables:
+    TARGET: x86_64-alpine-linux-musl
+
+ImageAmd64:
+  stage: image
+  image: docker:stable
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    LATEST_TAG: $CI_REGISTRY_IMAGE/amd64:latest
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/amd64:$CI_COMMIT_TAG
+  services:
+    - name: docker:dind
+      entrypoint: ["dockerd", "--host=tcp://0.0.0.0:2375"]
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker build -t $IMAGE_TAG -f Dockerfile .
+    - docker tag $IMAGE_TAG $LATEST_TAG
+    - docker push $IMAGE_TAG
+    - docker push $LATEST_TAG
+  tags: ["docker"]
+  only: ["tags"]
+  cache:
+    paths: []
+  dependencies: []
+
+ImageArmhf:
+  stage: image
+  image: arm32v7/docker:stable
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    LATEST_TAG: $CI_REGISTRY_IMAGE/armhf:latest
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/armhf:$CI_COMMIT_TAG
+  services:
+    - name: arm32v7/docker:dind
+      alias: docker
+      entrypoint: ["dockerd", "--host=tcp://0.0.0.0:2375"]
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker build -t $IMAGE_TAG -f armhf.Dockerfile .
+    - docker tag $IMAGE_TAG $LATEST_TAG
+    - docker push $IMAGE_TAG
+    - docker push $LATEST_TAG
+  tags: ["docker-armhf"]
+  only: ["tags"]
+  cache:
+    paths: []
+  dependencies: []
+
+Deploy:
+  stage: deploy
+  image: arm32v7/docker:stable
+  variables:
+    DOCKER_HOST: unix:///var/run/docker.sock
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/armhf:$CI_COMMIT_TAG
+    GIT_STRATEGY: none
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker pull $IMAGE_TAG
+    - docker stop net-chat && docker rm net-chat || true
+    - docker run -d --name net-chat -p 1338:1338 $IMAGE_TAG server --address=0.0.0.0 --verb=verbose
+  tags: ["kuiper"]
+  only: ["tags"]
+  cache:
+    paths: []
+  dependencies: []  
