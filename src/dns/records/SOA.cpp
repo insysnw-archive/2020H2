@@ -1,0 +1,72 @@
+#include "records/SOA.hpp"
+
+#include <yaml-cpp/yaml.h>
+
+#include <sstream>
+
+#include "dnscodec.hpp"
+#include "dns_error.hpp"
+#include "zones.hpp"
+
+namespace ktlo::dns::records {
+
+void SOA::encode(varbytes & data) const {
+	writer wr(data);
+	wr.write_name(mname);
+	wr.write_name(rname);
+	wr.write<dword_t>(serial);
+	wr.write<dword_t>(refresh);
+	wr.write<dword_t>(retry);
+	wr.write<dword_t>(expire);
+	wr.write<dword_t>(minimum);
+}
+
+void SOA::decode(const varbytes_view & data) {
+	reader rd(gloabl_names, data);
+	mname = rd.read_name();
+	rname = rd.read_name();
+	serial = rd.read<dword_t>();
+	refresh = rd.read<dword_t>();
+	retry = rd.read<dword_t>();
+	expire = rd.read<dword_t>();
+	minimum = rd.read<dword_t>();
+}
+
+void SOA::read(const YAML::Node & node, const name & zone) {
+	switch (node.Type()) {
+		case YAML::NodeType::Scalar: {
+			std::stringstream ss(node.as<std::string>());
+			std::string value;
+			ss >> value;
+			mname = gloabl_names.resolve(value, zone);
+			ss >> value;
+			rname = gloabl_names.resolve(value, zone);
+			ss >> serial;
+			ss >> refresh;
+			ss >> retry;
+			ss >> expire;
+			ss >> minimum;
+			break;
+		}
+		case YAML::NodeType::Map: {
+			mname = gloabl_names.resolve(node["origin"].as<std::string>(), zone);
+			rname = gloabl_names.resolve(node["admin"].as<std::string>(), zone);
+			serial = node["serial"].as<dword_t>();
+			refresh = node["refresh"].as<dword_t>();
+			retry = node["retry"].as<dword_t>();
+			expire = node["expire"].as<dword_t>();
+			minimum = node["minimum"].as<dword_t>();
+			break;
+		}
+		default: throw zone_error(node.Mark(), "wrong YAML node type for SOA record");
+	}
+}
+
+std::string SOA::data_to_string() const {
+	return mname.domain() + ' ' + rname.domain() + ' ' +
+		std::to_string(serial) + ' ' + std::to_string(refresh) + ' ' +
+		std::to_string(retry) + ' ' + std::to_string(expire) + ' ' +
+		std::to_string(minimum);
+}
+
+} // ktlo::dns::records
