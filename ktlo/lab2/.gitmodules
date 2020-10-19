@@ -1,0 +1,9 @@
+[submodule "ekutils"]
+	path = subprojects/ekutils
+	url = ../../handtruth/ekutils.git
+[submodule "yaml-cpp"]
+	path = subprojects/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git
+[submodule "ipv6-parse"]
+	path = subprojects/ipv6-parse
+	url = https://github.com/jrepp/ipv6-parse.git
