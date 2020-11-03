@@ -37,20 +37,20 @@ begin
   @socket = Socket.new(AF_INET, SOCK_STREAM, 0)
   sockaddr = Socket.pack_sockaddr_in(ARGV[1].to_i, ARGV[0])
   @socket.connect(sockaddr)
-  output = Thread.new(nik) { |nik|
+  output = Thread.new(nik) {
     while @work do
       text = STDIN.gets.chomp
-      send @socket, "[#{Time.now}] <#{nik}> #{text}"
+      send @socket, "[#{Time.now}] <#{_1}> #{text}"
     end
   }
-  input = Thread.new do
+  input = Thread.new {
     while @work do
       text = ''
       text << @socket.recvfrom(256)[0].chomp until text.end_with? "~@~"
       print ">" + text[0..-4] + "\n"
       exit if text == "Server is out. Please reconnect~@~"
     end
-  end
+  }
 
   def shutdown(input, output)
     @work = false
