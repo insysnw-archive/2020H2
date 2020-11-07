@@ -1,0 +1,30 @@
+.name_form {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+}
+
+.name_form input {
+    height: 30px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.name_form button {
+    background: #267af8;
+    padding: 10px 15px;
+    border-radius: 4px;
+    border: 0;
+    color: #fff;
+    font-weight: bold;
+}
+
+.modal_window button:hover {
+    background: #1b5bbb;
+}
+
+.modal_window button:disabled {
+    background-color: #a6b8d3;
+}
