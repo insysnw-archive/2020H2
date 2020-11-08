@@ -41,7 +41,7 @@
 | Романов А.Л.     | +        |      |      | dns  | dhcp |     |
 | Свечников Р.А.   | +        |      |      | dhcp | dns  |     |
 | Сибагатулин А.Ф. |          |      |      |      |      |     |
-| Товпеко К.А.     | +        | [?](https://github.com/insysnw/2020h2/#2) | [?](https://github.com/insysnw/2020h2/#2) | dns  | ntp  |     |
+| Товпеко К.А.     | +        | [?](https://github.com/insysnw/2020h2/pull/2) | [?](https://github.com/insysnw/2020h2/pull/2) | dns  | ntp  |     |
 | Черноног С.А.    | +        |      |      |      |      |     |
 | Шаляпин Г.А.     | +        |      |      |      |      |     |
 
