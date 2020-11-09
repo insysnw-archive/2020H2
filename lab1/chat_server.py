@@ -1,7 +1,7 @@
 import socket
 import select
 
-HEADER_LENGTH = 10
+HEADER_LENGTH = 5
 
 IP = "0.0.0.0"
 PORT = 1234
@@ -30,24 +30,21 @@ print(f'Listening for connections on {IP}:{PORT}...')
 # Handles message receiving
 def receive_message(client_socket):
 
-    try:
+   
 
-        # Receive our "header" with message length
-        message_header = client_socket.recv(HEADER_LENGTH)
+    # Receive our "header" with message length
+    message_header = client_socket.recv(HEADER_LENGTH)
 
         # If we received no data, client gracefully closed a connection
-        if not len(message_header):
-            return False
+    if not len(message_header):
+        return False
 
         # Convert header to int value
-        message_length = int(message_header.decode('utf-8').strip())
+    message_length = int(message_header.decode('utf-8').strip())
 
         # Return an object of message header and message data
-        return {'header': message_header, 'data': client_socket.recv(message_length)}
+    return {'header': message_header, 'data': client_socket.recv(message_length)}
 
-    except:
-        # Client closed connection violently
-        return False
 
 while True:
 
@@ -86,6 +83,8 @@ while True:
 
             print('Accepted new connection from {}:{}, username: {}'.format(*client_address, user['data'].decode('utf-8')))
             message=f"User {user['data'].decode('utf-8')} entered the channel".encode('utf-8')
+            if(len(message)>=pow(10,HEADER_LENGTH)):
+                message=message[:pow(10,HEADER_LENGTH)-1]
             message_header=f"{len(message):<{HEADER_LENGTH}}".encode('utf-8')
             for tmp_socket in clients:
 
@@ -105,6 +104,8 @@ while True:
 
                 print('Closed connection from: {}'.format(clients[some_socket]['data'].decode('utf-8')))
                 message=f"User {user['data'].decode('utf-8')} leaved the channel".encode('utf-8')
+                if(len(message)>=pow(10,HEADER_LENGTH)):
+                    message=message[:pow(10,HEADER_LENGTH)-1]
                 message_header=f"{len(message):<{HEADER_LENGTH}}".encode('utf-8')
                 for client_socket in clients:
 

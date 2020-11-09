@@ -6,7 +6,7 @@ import os
 import datetime
 from _thread import start_new_thread
 
-HEADER_LENGTH = 10
+HEADER_LENGTH = 5
 
 if(len(sys.argv)!=3):
     print("USAGE: python chat_client.py [Server IP] [Server port]")
@@ -32,6 +32,8 @@ client_socket.setblocking(False)
 my_username = input("Username: ")
 # Prepare username and header(username length) and send them
 username = my_username.encode('utf-8')
+if(len(username)>=pow(10,HEADER_LENGTH)):
+    username=username[:pow(10,HEADER_LENGTH)-1]
 username_header = f"{len(username):<{HEADER_LENGTH}}".encode('utf-8')
 client_socket.send(username_header + username)
 print("Yay, successfull, you can now start messaging")
@@ -97,6 +99,8 @@ while True:
     if message:
 
         enc_message = message.encode('utf-8')
+        if(len(enc_message)>=pow(10,HEADER_LENGTH)):
+            enc_message=enc_message[:pow(10,HEADER_LENGTH)-1]
         message_header = f"{len(enc_message):<{HEADER_LENGTH}}".encode('utf-8')
         client_socket.send(message_header + enc_message)
 
