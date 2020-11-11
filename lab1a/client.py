@@ -3,7 +3,7 @@ import time
 import datetime
 import threading
 
-
+#converts from Greenwich time to local time
 def local_time(time_of_message):
     timezone = -time.timezone / 3600
     time_of_message_format = datetime.datetime.strptime(time_of_message, "%H:%M")
@@ -11,7 +11,7 @@ def local_time(time_of_message):
     time_format = datetime.datetime.strftime(local_time_of_message, "%H:%M")
     return time_format
 
-
+#recieve message from clients and print it
 class ReceivingThread(threading.Thread):
     def __init__(self, server_socket):
         threading.Thread.__init__(self)
@@ -35,7 +35,7 @@ class ReceivingThread(threading.Thread):
             time_of_message = local_time(time_of_message)
             print("<" +time_of_message + "> "+ "[" + name + "] " + data.decode("UTF-8"))
 
-
+#make the connection
 SERVER = "127.0.0.1"
 PORT = 7000
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -51,7 +51,7 @@ while True:
     client.send(bytes(str(length), 'UTF-8'))
     client.send(bytes(datetime.datetime.utcnow().strftime("%H:%M"), 'UTF-8'))
     client.send(bytes(out_data, 'UTF-8'))
-    if out_data == 'exit':
+    if out_data == 'exit()':
         break
 client.shutdown(socket.SHUT_WR)
 client.close()

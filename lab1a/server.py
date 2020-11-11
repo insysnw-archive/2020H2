@@ -8,12 +8,12 @@ names = {}
 length = 0
 time = 0
 
-
+#convert string to bytes
 def to_bytes(text):
     text_to_bytes = bytes(text, 'UTF-8')
     return text_to_bytes
 
-
+#send message to all clients exsept who send the message
 def send_to_all(msg, sock):
     global all_sockets
     global names
@@ -24,7 +24,7 @@ def send_to_all(msg, sock):
             all_sockets[a].send(msg)
     return len(msg)
 
-
+#receiving messages from clients
 class ReceivingThread(threading.Thread):
     def __init__(self, client_address, client_socket):
         threading.Thread.__init__(self)
@@ -48,18 +48,19 @@ class ReceivingThread(threading.Thread):
             socket_from = self.csocket
             chunks = []
             bytes_record = 0
+            #check whole message or not
             while bytes_record < length:
                 chunk = self.csocket.recv(length)
                 if chunk == b'':
                     raise RuntimeError("The socket connection is broken")
-                if chunk == "exit":
+                if chunk == "exit()":
                     break
                 chunks.append(chunk)
                 bytes_record = bytes_record + len(chunk)
             data = b''.join(chunks)
             print("Client:", data)
 
-
+#send messages to another clients
 class SendingThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
@@ -89,11 +90,13 @@ class SendingThread(threading.Thread):
 
 
 def main():
+    #make the connection
     localhost = "127.0.0.1"
     port = 7000
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((localhost, port))
     print("Server is running")
+    #connect no more than 5 clients
     server.listen(5)
     sending_thread = SendingThread()
     sending_thread.start()
