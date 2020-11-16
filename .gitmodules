@@ -1,6 +1,6 @@
 [submodule "ekutils"]
 	path = subprojects/ekutils
-	url = https://git.handtruth.com/handtruth/ekutils.git
+	url = ../../handtruth/ekutils.git
 [submodule "paket-cpp"]
 	path = subprojects/paket-cpp
-	url = https://git.handtruth.com/handtruth/paket-cpp.git
+	url = ../../handtruth/paket-cpp.git
