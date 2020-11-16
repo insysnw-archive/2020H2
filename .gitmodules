@@ -1,0 +1,6 @@
+[submodule "ekutils"]
+	path = ktlo/lab1/subprojects/ekutils
+	url = https://github.com/handtruth/ekutils.git
+[submodule "paket-cpp"]
+	path = ktlo/lab1/subprojects/paket-cpp
+	url = https://github.com/handtruth/paket-cpp.git

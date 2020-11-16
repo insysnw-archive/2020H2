@@ -4,7 +4,6 @@
 #include <memory>
 
 #include <ekutils/expandbuff.hpp>
-#include <ekutils/stream_socket_d.hpp>
 
 #include "bad_request.hpp"
 #include "client_shared.hpp"
@@ -21,7 +20,7 @@ public:
 	bool paket_read(P & packet);
 	template <typename P>
 	void paket_write(const P & packet);
-	ekutils::stream_socket_d & socket() noexcept {
+	ekutils::net::stream_socket_d & socket() noexcept {
 		return *sock;
 	}
 };

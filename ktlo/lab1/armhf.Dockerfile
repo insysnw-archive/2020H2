@@ -1,4 +1,4 @@
-FROM arm32v7/alpine:latest AS base
+FROM arm32v7/alpine:3 AS base
 RUN [ "apk", "--no-cache", "--no-progress", "add", "libstdc++" ]
 
 FROM base AS build
@@ -6,7 +6,7 @@ RUN apk --no-cache --no-progress add build-base ninja coreutils git python3 py-p
     && pip3 install meson
 ADD . /lab1-chat
 WORKDIR /lab1-chat
-RUN meson -Dprefix=`pwd`/out -Dbuildtype=release -Ddefault_library=static -Doptimization=3 build \
+RUN meson -Dprefix=`pwd`/out -Dbuildtype=release -Ddefault_library=static -Dstrip=true build \
     && cd build && ninja && ninja install
 
 FROM base

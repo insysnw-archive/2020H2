@@ -1,13 +1,11 @@
 #ifndef CHAT_CLIENT_HEAD_PSOFBGBVEDC
 #define CHAT_CLIENT_HEAD_PSOFBGBVEDC
 
-#include <ekutils/stream_socket_d.hpp>
 #include <ekutils/epoll_d.hpp>
 #include <ekutils/reader.hpp>
 #include <ekutils/timer_d.hpp>
 
 #include "gate.hpp"
-#include "client_shared.hpp"
 
 namespace ktlo::chat {
 

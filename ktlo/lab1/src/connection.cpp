@@ -4,7 +4,7 @@
 
 #include <ekutils/log.hpp>
 
-#include "settings.hpp"
+#include "server_arguments.hpp"
 #include "server.hpp"
 #include "bad_request.hpp"
 
@@ -15,7 +15,7 @@ ekutils::idgen<unsigned> connection::ids;
 connection::connection(server & source, sock_ptr && socket) :
 	srv(source), tube(std::move(socket)), state(states::handshake), id(ids.next()), timeout_task(-1)
 {
-	log_info("new client connected #" + std::to_string(id));
+	log_info("new client connected #" + std::to_string(id) + " (" + tube.socket().local_endpoint().to_string() + ')');
 	reset_timeout();
 }
 
@@ -78,7 +78,7 @@ bool connection::process_handshake() {
 	if (hs.version() != protocol::version)
 		throw bad_request("client #" + std::to_string(id) + " sent wrong protocol version");
 	user = std::move(hs.username());
-	if (settings.single_login && srv.there(user) != 1) {
+	if (server_args.single_login && srv.there(user) != 1) {
 		// check multiple login
 		throw bad_request("user \"" + user + "\" already connected (client #" + std::to_string(id) + ")");
 	}
@@ -103,7 +103,7 @@ void connection::reset_timeout() {
 	using namespace std::chrono_literals;
 	if (timeout_task != -1)
 		srv.poll().refuse(timeout_task);
-	timeout_task = srv.poll().later(std::chrono::milliseconds(settings.timeout), [this]() {
+	timeout_task = srv.poll().later(std::chrono::milliseconds(server_args.timeout), [this]() {
 		on_timeout();
 	});
 }

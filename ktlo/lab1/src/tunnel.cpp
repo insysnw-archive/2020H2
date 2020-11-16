@@ -2,7 +2,7 @@
 
 #include <paket.hpp>
 
-#include "settings.hpp"
+#include "arguments.hpp"
 
 namespace ktlo::chat {
 
@@ -17,7 +17,7 @@ void tunnel::head(std::int32_t & id, std::int32_t & size) {
 			break;
 		}
 	} while (true);
-	std::int32_t max_size = settings.max_paket_size;
+	auto max_size = common_args->max_paket_size;
 	if (max_size != -1 && size > max_size)
 		throw bad_request("the maximum allowed packet size was reached");
 	size += offset;

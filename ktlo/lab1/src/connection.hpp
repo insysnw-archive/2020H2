@@ -6,6 +6,7 @@
 
 #include "gate.hpp"
 #include "protocol.hpp"
+#include "server_shared.hpp"
 
 namespace ktlo::chat {
 
@@ -25,7 +26,7 @@ class connection final {
 public:
 	connection(server & source, sock_ptr && socket);
 
-	ekutils::stream_socket_d & socket() noexcept {
+	ekutils::net::stream_socket_d & socket() noexcept {
 		return tube.socket();
 	}
 

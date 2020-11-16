@@ -22,10 +22,6 @@ endforeach
 
 module_deps += dependency('threads')
 
-cppres_proj = subproject('cpp-res', default_options : ['native_tool=true'])
-cppres_exe = cppres_proj.get_variable('exe')
-
-subdir('res')
 subdir('src')
 subdir('test')
 

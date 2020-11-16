@@ -3,11 +3,11 @@
 
 #include <memory>
 
-#include <ekutils/stream_socket_d.hpp>
+#include <ekutils/socket_d.hpp>
 
 namespace ktlo::chat {
 
-typedef std::unique_ptr<ekutils::stream_socket_d> sock_ptr;
+typedef std::unique_ptr<ekutils::net::stream_socket_d> sock_ptr;
 
 sock_ptr connect_client();
 

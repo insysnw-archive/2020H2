@@ -1,29 +1,28 @@
 #include "client_shared.hpp"
 
-#include <ekutils/tcp_d.hpp>
+#include <ekutils/resolver.hpp>
 #include <ekutils/unix_d.hpp>
 
-#include "settings.hpp"
+#include "client_arguments.hpp"
 
 namespace ktlo::chat {
 
 sock_ptr connect_client() {
-	sock_ptr sock;
-	switch (settings.type) {
-	case settings_t::sock_types::tcp_sock:
-		sock = std::make_unique<ekutils::tcp_socket_d>(
-			ekutils::connection_info::resolve(settings.resolve_address(), settings.port)
-		);
-		break;
-	case settings_t::sock_types::unix_sock:
-		sock = std::make_unique<ekutils::unix_stream_socket_d>(
-			settings.resolve_address()
-		);
-		break;
-	default:
-		throw std::runtime_error("UNREACHABLE");
+	switch (client_args.protocol()) {
+		case arguments::transports::tcp: {
+			auto targets = ekutils::net::resolve(client_args.resolve_address(), client_args.port, ekutils::net::protocols::tcp);
+			return ekutils::net::connect_any(targets.begin(), targets.end());
+		}
+		case arguments::transports::un: {
+			ekutils::net::un::endpoint target(client_args.resolve_address());
+			auto result = std::make_unique<ekutils::net::client_stream_unix_socket_d>();
+			result->connect(target);
+			return result;
+		}
+		default: {
+			abort(); // unreachable
+		}
 	}
-	return sock;
 }
 
 } // namespace ktlo::chat

@@ -3,25 +3,14 @@
 #include <ekutils/tcp_d.hpp>
 #include <ekutils/unix_d.hpp>
 
-#include "settings.hpp"
+#include "server_arguments.hpp"
 
 namespace ktlo::chat {
 
 server::server(ekutils::epoll_d & poll) : epoll(poll) {
-	switch (settings.type) {
-		case settings_t::sock_types::tcp_sock: {
-			sock = std::make_unique<ekutils::tcp_listener_d>(settings.resolve_address(), settings.port, ekutils::sock_flags::non_blocking);
-			break;
-		}
-		case settings_t::sock_types::unix_sock: {
-			sock = std::make_unique<ekutils::unix_stream_listener_d>(settings.resolve_address(), ekutils::sock_flags::non_blocking);
-			break;
-		}
-		default:
-			throw std::runtime_error("UNREACHABLE");
-	}
-	sock->start();
-	log_info("started server: " + std::string(sock->local_endpoint()));
+	sock = open_server(ekutils::net::socket_flags::non_block);
+	sock->listen();
+	log_info("started server: " + sock->local_endpoint().to_string());
 	epoll.add(*sock, [this](const auto &, const auto &) {
 		on_accept();
 	});
@@ -41,7 +30,7 @@ std::size_t server::there(const std::string & username) const {
 }
 
 void server::on_accept() {
-	if (connections.size() >= settings.max_client_count) {
+	if (server_args.max_client_count != -1 && connections.size() >= static_cast<std::uintmax_t>(server_args.max_client_count)) {
 		sock->accept_virtual()->close();
 		log_warning("maximum client count reached");
 		return;

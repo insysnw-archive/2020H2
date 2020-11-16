@@ -2,7 +2,7 @@
 
 #include <paket.hpp>
 
-#include "settings.hpp"
+#include "arguments.hpp"
 
 namespace ktlo::chat {
 
@@ -12,7 +12,7 @@ bool gate::head(std::int32_t & id, std::int32_t & size) const {
 		return false;
 	if (size < 0)
 		throw bad_request("packet size is lower than 0");
-	std::int32_t max_size = settings.max_paket_size;
+	auto max_size = common_args->max_paket_size;
 	if (max_size != -1 && size > max_size)
 		throw bad_request("the maximum allowed packet size was reached");
 	size += s;
