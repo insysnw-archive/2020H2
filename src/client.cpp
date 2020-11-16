@@ -5,14 +5,14 @@
 #include <ekutils/stdin_d.hpp>
 
 #include "protocol.hpp"
-#include "settings.hpp"
+#include "client_arguments.hpp"
 
 namespace ktlo::chat {
 
 client::client(ekutils::epoll_d & poll, sock_ptr && sock) : epoll(poll), input(ekutils::input), tube(std::move(sock)) {
 	protocol::handshake hs;
-	hs.address() = settings.resolve_address();
-	hs.username() = settings.resolve_username();
+	hs.address() = client_args.resolve_address();
+	hs.username() = client_args.resolve_username();
 	std::cerr << "login as \"" << hs.username() << "\"" << std::endl;
 	tube.paket_write(hs);
 	tube.socket().set_non_block();
@@ -25,12 +25,16 @@ client::client(ekutils::epoll_d & poll, sock_ptr && sock) : epoll(poll), input(e
 		on_input(events);
 	});
 	using namespace std::chrono;
-	timer.set_non_block();
-	timer.period(milliseconds(settings.pulse));
-	epoll.add(timer, [this](const auto &, std::uint32_t) {
-		timer.read();
-		tube.paket_write(protocol::noop);
-	});
+	if (client_args.pulse) {
+		timer.set_non_block();
+		timer.period(milliseconds(client_args.pulse));
+		epoll.add(timer, [this](const auto &, std::uint32_t) {
+			timer.read();
+			tube.paket_write(protocol::noop);
+		});
+	} else {
+		timer.close();
+	}
 }
 
 void client::on_input(std::uint32_t events) {
@@ -111,7 +115,8 @@ void client::disconnect_self() {
 client::~client() {
 	epoll.remove(ekutils::input);
 	epoll.remove(tube.socket());
-	epoll.remove(timer);
+	if (timer)
+		epoll.remove(timer);
 }
 
 } // namespace ktlo::chat

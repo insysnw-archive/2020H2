@@ -61,6 +61,8 @@
         "mutex": "cpp",
         "shared_mutex": "cpp",
         "thread": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "variant": "cpp",
+        "cassert": "cpp"
     }
 }

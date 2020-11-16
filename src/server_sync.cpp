@@ -6,37 +6,39 @@
 #include <ekutils/tcp_d.hpp>
 #include <ekutils/unix_d.hpp>
 
-#include "settings.hpp"
+#include "server_arguments.hpp"
 
 namespace ktlo::chat {
 
 server_sync::server_sync() {
-	switch (settings.type) {
-		case settings_t::sock_types::tcp_sock: {
-			sock = std::make_unique<ekutils::tcp_listener_d>(settings.resolve_address(), settings.port);
-			break;
-		}
-		case settings_t::sock_types::unix_sock: {
-			sock = std::make_unique<ekutils::unix_stream_listener_d>(settings.resolve_address());
-			break;
-		}
-		default:
-			throw std::runtime_error("UNREACHABLE");
-	}
-	sock->start();
-	log_info("started server: " + std::string(sock->local_endpoint()));
+	sock = open_server();
+	sock->listen();
+	log_info("started server: " + sock->local_endpoint().to_string());
 	
 	try {
 		for (;;) {
-			auto client_sock = sock->accept_virtual();
-			if (connections.size() >= settings.max_client_count) {
+			sock_ptr client_sock = sock->accept_virtual();
+			if (server_args.max_client_count != -1 && connections.size() >= static_cast<std::uintmax_t>(server_args.max_client_count)) {
 				client_sock->close();
 				log_warning("maximum client count reached");
 				continue;
 			}
-			std::unique_lock lock(connections_mutex);
-			connection_sync & connection = connections.emplace_front(*this, std::move(client_sock));
-			connection.start(connections.begin());
+			ekutils::net::stream_socket_d * client_ptr = client_sock.release();
+			std::thread thr([this, client_ptr] {
+				sock_ptr client(client_ptr);
+				std::list<connection_sync>::iterator iter;
+				{
+					std::unique_lock lock(connections_mutex);
+					connections.emplace_front(*this, std::move(client));
+					iter = connections.begin();
+				}
+				iter->start();
+				{
+					std::unique_lock lock(connections_mutex);
+					connections.erase(iter);
+				}
+			});
+			thr.detach();
 		}
 	} catch (const std::exception & e) {
 		log_error("server socket error");
@@ -58,11 +60,6 @@ std::size_t server_sync::there(const std::string & username) const {
 	return std::count_if(connections.cbegin(), connections.cend(), [&username](const connection_sync & client) -> bool {
 		return client.username() == username;
 	});
-}
-
-void server_sync::forget(connection_sync & connection) {
-	std::unique_lock lock(connections_mutex);
-	connections.erase(connection.me());
 }
 
 } // namespace ktlo::chat

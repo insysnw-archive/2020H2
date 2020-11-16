@@ -3,8 +3,6 @@
 
 #include <mutex>
 
-#include <ekutils/stream_socket_d.hpp>
-
 #include "tunnel.hpp"
 #include "client_shared.hpp"
 

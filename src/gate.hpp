@@ -4,7 +4,6 @@
 #include <memory>
 
 #include <ekutils/expandbuff.hpp>
-#include <ekutils/stream_socket_d.hpp>
 
 #include "bad_request.hpp"
 #include "client_shared.hpp"
@@ -29,7 +28,7 @@ public:
 	std::size_t avail_write() const noexcept {
 		return output.size();
 	}
-	ekutils::stream_socket_d & socket() noexcept {
+	ekutils::net::stream_socket_d & socket() noexcept {
 		return *sock;
 	}
 };

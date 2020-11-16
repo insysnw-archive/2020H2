@@ -4,16 +4,16 @@
 #include <iostream>
 
 #include "protocol.hpp"
-#include "settings.hpp"
+#include "client_arguments.hpp"
 
 namespace ktlo::chat {
 
 client_sync::client_sync(sock_ptr && sock) : tube(std::move(sock)) {
-    const std::string & username = settings.resolve_username();
+    const std::string & username = client_args.resolve_username();
 	std::cerr << "login as \"" << username << "\"" << std::endl;
     protocol::handshake hs;
     hs.username() = username;
-	hs.address() = settings.resolve_address();
+	hs.address() = client_args.resolve_address();
     tube.paket_write(hs);
 	std::thread read_line([this] {
         std::string line;
@@ -28,10 +28,10 @@ client_sync::client_sync(sock_ptr && sock) : tube(std::move(sock)) {
 	    std::exit(EXIT_SUCCESS);
     });
     std::thread pulsar;
-    if (settings.pulse != 0)
+    if (client_args.pulse != 0)
         pulsar = std::thread([this] {
             for (;;) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(settings.pulse));
+                std::this_thread::sleep_for(std::chrono::milliseconds(client_args.pulse));
                 tube.paket_write(protocol::noop);
             }
         });

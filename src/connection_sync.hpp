@@ -10,6 +10,7 @@
 
 #include "tunnel.hpp"
 #include "protocol.hpp"
+#include "server_shared.hpp"
 
 namespace ktlo::chat {
 
@@ -22,14 +23,12 @@ class connection_sync final {
 	const unsigned id;
 	std::string user;
 	std::mutex send_mutex;
-	ekutils::lateinit<std::list<connection_sync>::iterator> remover;
-	std::thread thr;
 
 public:
 	connection_sync(server_sync & source, sock_ptr && socket);
-	void start(const std::list<connection_sync>::iterator & rm);
+	void start();
 
-	ekutils::stream_socket_d & socket() noexcept {
+	ekutils::net::stream_socket_d & socket() noexcept {
 		return tube.socket();
 	}
 
@@ -37,10 +36,6 @@ public:
 
 	const std::string & username() const noexcept {
 		return user;
-	}
-
-	const std::list<connection_sync>::iterator & me() {
-		return remover.get();
 	}
 
 	~connection_sync();

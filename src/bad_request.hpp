@@ -1,6 +1,9 @@
 #ifndef CHAT_BAD_REQUEST_HEAD_FRGHGIUYJHTGR
 #define CHAT_BAD_REQUEST_HEAD_FRGHGIUYJHTGR
 
+#include <string>
+#include <stdexcept>
+
 namespace ktlo::chat {
 
 class bad_request : public std::runtime_error {
