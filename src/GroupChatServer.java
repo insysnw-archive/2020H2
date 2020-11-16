@@ -8,8 +8,7 @@ import java.util.Iterator;
 
 //Group chat server
 public class GroupChatServer {
-//    private final int Port = 9999;
-    //Properties used
+
     private Selector selector;
     private ServerSocketChannel serverSocketChannel;
     private SocketChannel socketChannel;
@@ -72,7 +71,6 @@ public class GroupChatServer {
                 }
 
             }
-            //The connection is abnormal, the client should be offline
         }
 
     }
@@ -90,7 +88,7 @@ public class GroupChatServer {
             //Read the information
             if (count > 0) {
                 String msg = new String(buffer.array());
-                System.out.println(getMessageDescription() + msg);
+                System.out.println((getMessageDescription() + msg).trim());
 //                System.out.println("Message sent by the client:" + msg);
                 // forward the message
                 Forward(msg, channel);

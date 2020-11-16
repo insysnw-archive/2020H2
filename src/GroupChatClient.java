@@ -11,13 +11,9 @@ import java.util.Iterator;
 import java.util.Scanner;
 
 public class GroupChatClient {
-    //Commonly used attributes
-//    private  final String IP="192.168.101.41";
-//    private  final int Port=9999;
     private  Selector selector;
     private  SocketChannel socketChannel;
-//    private  String clientname;
-    //Construction method
+
     public GroupChatClient(String ip, int port) throws Exception{
         //turn on
         selector = Selector.open();
@@ -28,10 +24,6 @@ public class GroupChatClient {
 
         //Register, monitor the read method
         socketChannel.register(selector, SelectionKey.OP_READ);
-        //Get the client name
-//        clientname=socketChannel.getLocalAddress().toString().substring(1);
-//
-//        System.out.println(" Ready...1");
     }
     //Receive information
     public  void Receive() throws IOException {
