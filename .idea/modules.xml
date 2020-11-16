@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/2020H2.iml" filepath="$PROJECT_DIR$/.idea/2020H2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/DNSClient/DNSClient.iml" filepath="$PROJECT_DIR$/DNSClient/DNSClient.iml" />
+      <module fileurl="file://$PROJECT_DIR$/TFTPServer/TFTPServer.iml" filepath="$PROJECT_DIR$/TFTPServer/TFTPServer.iml" />
+    </modules>
+  </component>
+</project>
