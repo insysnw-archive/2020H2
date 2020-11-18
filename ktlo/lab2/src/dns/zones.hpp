@@ -13,7 +13,7 @@ struct zone_error : public std::runtime_error {
 	zone_error(const YAML::Mark & mark, const std::string & message);
 };
 
-database read(namez & ns, const YAML::Node & node);
+void read(database & db, const YAML::Node & node);
 
 } // ktlo::dns
 

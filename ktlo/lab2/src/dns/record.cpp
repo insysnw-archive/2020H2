@@ -1,8 +1,11 @@
 #include "record.hpp"
 
+#include <ekutils/log.hpp>
+
 #include "question.hpp"
 #include "zones.hpp"
 #include "base64.hpp"
+#include "dnscodec.hpp"
 
 #include "records/A.hpp"
 #include "records/NS.hpp"
@@ -17,6 +20,13 @@
 
 namespace ktlo::dns {
 
+thread_local ekutils::pocket<const zone> record_context_pocket;
+
+record::record() :
+	context(record_context_pocket),
+	rclass(context.settings.rclass), ttl(context.settings.ttl)
+{}
+
 bool record::shoud_answer(const question & q) const {
 	return q.qtype == 255 || q.qtype == type();
 }
@@ -27,32 +37,30 @@ std::string record::to_string() const {
 
 // strange way to create `switch` statement
 template <record_tids tid>
-std::unique_ptr<record> record_create_bridge(record_tids id, record_classes rclass, std::uint32_t ttl) {
+std::unique_ptr<record> record_create_bridge(record_tids id, const zone & context) {
 	if (id == tid)
-		return record::create<tid>(rclass, ttl);
+		return record::create<tid>(context);
 	else
-		return record_create_bridge<static_cast<record_tids>(static_cast<std::int8_t>(tid) - 1)>(id, rclass, ttl);
+		return record_create_bridge<static_cast<record_tids>(static_cast<std::int8_t>(tid) - 1)>(id, context);
 }
 
 template <>
-inline std::unique_ptr<record> record_create_bridge<records::unknown::tid>(record_tids id, record_classes rclass, std::uint32_t ttl) {
-	auto ptr = std::make_unique<records::unknown>(id);
-	ptr->rclass = rclass;
-	ptr->ttl = ttl;
-	return ptr;
+inline std::unique_ptr<record> record_create_bridge<records::unknown::tid>(record_tids id, const zone & context) {
+	auto lock = record_context_pocket.use(context);
+	return std::make_unique<records::unknown>(id);
 }
 
 template <record_tids tid>
-std::unique_ptr<record> record_create_bridge(const std::string_view & tname, record_classes rclass, std::uint32_t ttl) {
+std::unique_ptr<record> record_create_bridge(const std::string_view & tname, const zone & context) {
 	if (records::by<tid>::tname == tname)
-		return record::create<tid>(rclass, ttl);
+		return record::create<tid>(context);
 	else
-		return record_create_bridge<static_cast<record_tids>(static_cast<std::int8_t>(tid) - 1)>(tname, rclass, ttl);
+		return record_create_bridge<static_cast<record_tids>(static_cast<std::int8_t>(tid) - 1)>(tname, context);
 }
 
 template <>
-inline std::unique_ptr<record> record_create_bridge<records::unknown::tid>(const std::string_view &, record_classes rclass, std::uint32_t ttl) {
-	return record::create<records::unknown::tid>(rclass, ttl);
+inline std::unique_ptr<record> record_create_bridge<records::unknown::tid>(const std::string_view &, const zone & context) {
+	return record::create<records::unknown::tid>(context);
 }
 
 template <record_tids tid>
@@ -70,15 +78,15 @@ constexpr const char * record_tname_bridge<records::unknown::tid>(record_tids) {
 
 constexpr record_tids max_tid = records::OPT::tid;
 
-std::unique_ptr<record> record::create(record_tids tid, record_classes rclass, std::uint32_t ttl) {
+std::unique_ptr<record> record::create(record_tids tid, const zone & context) {
 	if (tid > max_tid)
-		return record::create<records::unknown::tid>(rclass, ttl); // shortcut
+		return record::create<records::unknown::tid>(context); // shortcut
 	else
-		return record_create_bridge<max_tid>(tid, rclass, ttl);
+		return record_create_bridge<max_tid>(tid, context);
 }
 
-std::unique_ptr<record> record::create(const std::string_view & tname, record_classes rclass, std::uint32_t ttl) {
-	return record_create_bridge<max_tid>(tname, rclass, ttl);
+std::unique_ptr<record> record::create(const std::string_view & tname, const zone & context) {
+	return record_create_bridge<max_tid>(tname, context);
 }
 
 const char * record::tname(record_tids tid) {
@@ -88,22 +96,22 @@ const char * record::tname(record_tids tid) {
 		return record_tname_bridge<max_tid>(tid);
 }
 
-std::vector<question> record::ask(const question &) const {
+std::vector<question_info> record::ask(const question_info &) const {
 	return {};
 }
 
 namespace records {
 
-void unknown::encode(varbytes & data) const {
-	data = buffer;
+void unknown::encode(writer & wr) const {
+	wr.write_bytes(buffer);
 }
 
-void unknown::decode(const varbytes_view & data) {
-	buffer = data;
+void unknown::decode(reader & rd) {
+	buffer = rd.read_all();
 }
 
-void unknown::read(const YAML::Node & node, const name &) {
-	throw zone_error(node.Mark(), "not implemented");
+void unknown::read(const YAML::Node &, const name &) {
+	throw std::invalid_argument("not implemented");
 }
 
 std::string unknown::data_to_string() const {

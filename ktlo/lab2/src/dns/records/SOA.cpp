@@ -4,14 +4,13 @@
 
 #include <sstream>
 
+#include "database.hpp"
 #include "dnscodec.hpp"
 #include "dns_error.hpp"
-#include "zones.hpp"
 
 namespace ktlo::dns::records {
 
-void SOA::encode(varbytes & data) const {
-	writer wr(data);
+void SOA::encode(writer & wr) const {
 	wr.write_name(mname);
 	wr.write_name(rname);
 	wr.write<dword_t>(serial);
@@ -21,8 +20,7 @@ void SOA::encode(varbytes & data) const {
 	wr.write<dword_t>(minimum);
 }
 
-void SOA::decode(const varbytes_view & data) {
-	reader rd(gloabl_names, data);
+void SOA::decode(reader & rd) {
 	mname = rd.read_name();
 	rname = rd.read_name();
 	serial = rd.read<dword_t>();
@@ -32,15 +30,15 @@ void SOA::decode(const varbytes_view & data) {
 	minimum = rd.read<dword_t>();
 }
 
-void SOA::read(const YAML::Node & node, const name & zone) {
+void SOA::read(const YAML::Node & node, const name & hint) {
 	switch (node.Type()) {
 		case YAML::NodeType::Scalar: {
 			std::stringstream ss(node.as<std::string>());
 			std::string value;
 			ss >> value;
-			mname = gloabl_names.resolve(value, zone);
+			mname = context.names().resolve(value, hint);
 			ss >> value;
-			rname = gloabl_names.resolve(value, zone);
+			rname = context.names().resolve(value, hint);
 			ss >> serial;
 			ss >> refresh;
 			ss >> retry;
@@ -49,8 +47,8 @@ void SOA::read(const YAML::Node & node, const name & zone) {
 			break;
 		}
 		case YAML::NodeType::Map: {
-			mname = gloabl_names.resolve(node["origin"].as<std::string>(), zone);
-			rname = gloabl_names.resolve(node["admin"].as<std::string>(), zone);
+			mname = context.names().resolve(node["origin"].as<std::string>(), hint);
+			rname = context.names().resolve(node["admin"].as<std::string>(), hint);
 			serial = node["serial"].as<dword_t>();
 			refresh = node["refresh"].as<dword_t>();
 			retry = node["retry"].as<dword_t>();
@@ -58,7 +56,7 @@ void SOA::read(const YAML::Node & node, const name & zone) {
 			minimum = node["minimum"].as<dword_t>();
 			break;
 		}
-		default: throw zone_error(node.Mark(), "wrong YAML node type for SOA record");
+		default: throw std::invalid_argument("wrong YAML node type for SOA record");
 	}
 }
 

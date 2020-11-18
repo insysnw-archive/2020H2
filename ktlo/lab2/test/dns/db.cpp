@@ -64,8 +64,7 @@ test {
 	using namespace ktlo::dns;
 	YAML::Node node = YAML::Load(test_data);
 	namez ns;
-	database db = read(ns, node);
-	for (const auto & item : db.all()) {
-		std::cout << item.first.domain() << " " << item.second->to_string() << std::endl;
-	}
+	database db(ns);
+    read(db, node);
+    std::cout << db.to_string() << std::endl;
 }

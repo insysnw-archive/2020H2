@@ -12,8 +12,7 @@ modules = [
 
 ######################################
 
-add_global_arguments('-Wno-gnu-anonymous-struct', language : 'cpp')
-add_global_arguments('-Wno-nested-anon-types', language : 'cpp')
+add_global_arguments('-Wno-subobject-linkage', language : 'cpp')
 
 module_deps = []
 
@@ -25,9 +24,7 @@ cmake = import('cmake')
 yamlcpp_proj = cmake.subproject('yaml-cpp', cmake_options : [
   '-DYAML_CPP_BUILD_TESTS=OFF'
 ])
-ipv6_parse_proj = cmake.subproject('ipv6-parse')
 module_deps += yamlcpp_proj.dependency('yaml-cpp')
-module_deps += ipv6_parse_proj.dependency('ipv6-parse')
 
 subdir('src')
 subdir('test')

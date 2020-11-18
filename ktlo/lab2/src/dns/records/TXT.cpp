@@ -3,30 +3,29 @@
 #include <yaml-cpp/yaml.h>
 
 #include "zones.hpp"
+#include "dnscodec.hpp"
 
 namespace ktlo::dns::records {
 
-void TXT::encode(varbytes & data) const {
+void TXT::encode(writer & wr) const {
 	for (const std::string & text : texts) {
-		data += static_cast<byte_t>(text.size());
-		data += varbytes_view(reinterpret_cast<const byte_t *>(text.data()), text.size());
+		wr.write<byte_t>(static_cast<byte_t>(text.size()));
+		wr.write_bytes(varbytes_view(reinterpret_cast<const byte_t *>(text.data()), text.size()));
 	}
 }
 
-void TXT::decode(const varbytes_view & data) {
+void TXT::decode(reader & rd) {
 	texts.clear();
-	std::size_t i = 0;
 	for (;;) {
-		if (i >= data.size())
+		if (!rd.pending())
 			return;
-		std::size_t size = data[i];
-		std::string_view text(reinterpret_cast<const char *>(data.data() + i + 1), size);
+		std::size_t size = rd.read<byte_t>();
+		std::string_view text(reinterpret_cast<const char *>(rd.read_bytes(size).data(), size));
 		texts.emplace_back(text);
-		i += size + 1;
 	}
 }
 
-void TXT::read(const YAML::Node & node, const name & zone) {
+void TXT::read(const YAML::Node & node, const name & hint) {
 	switch (node.Type()) {
 		case YAML::NodeType::Scalar: {
 			texts.emplace_back(node.as<std::string>());
@@ -38,7 +37,7 @@ void TXT::read(const YAML::Node & node, const name & zone) {
 			break;
 		}
 		case YAML::NodeType::Map: {
-			read(node["text"], zone);
+			read(node["text"], hint);
 			break;
 		}
 		default: throw zone_error(node.Mark(), "wrong YAML node type for TXT record");

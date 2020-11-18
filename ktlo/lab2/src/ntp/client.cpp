@@ -5,7 +5,7 @@
 #include <chrono>
 
 #include <ekutils/udp_d.hpp>
-#include <ekutils/connection_info.hpp>
+#include <ekutils/resolver.hpp>
 
 #include "packet.hpp"
 
@@ -22,7 +22,7 @@ int main(int argc, char * argv[]) {
 		default:
 			std::cerr << "too many arguments" << std::endl << argv[0] << " [host] [port] [t0]" << std::endl;
 			exit(EXIT_FAILURE);
-		case 4: t0.seconds = std::atoll(argv[3]);
+		case 4: t0.seconds = std::atoll(argv[3]); [[fallthrough]];
 		case 3: port = argv[2]; [[fallthrough]];
 		case 2: host_name = argv[1]; [[fallthrough]];
 		case 1: break;
@@ -30,14 +30,14 @@ int main(int argc, char * argv[]) {
 	}
 
 	try {
-		auto infos = ekutils::connection_info::resolve(host_name, 123);
+		auto infos = ekutils::net::resolve(host_name, "ntp", ekutils::net::protocols::udp);
 
 		if (infos.empty())
 			throw std::runtime_error("hostname \"" + host_name + "\" not resolved");
 
-		ekutils::udp_socket_d client;
+		auto client = ekutils::net::prepare(infos.front());
 
-		auto & server = infos[0].endpoint;
+		auto server = std::move(infos.front().address);
 
 		varbytes outcoming;
 
@@ -46,10 +46,10 @@ int main(int argc, char * argv[]) {
 		p.transmit = t0;
 		time_point start = std::chrono::high_resolution_clock::now();
 		p.write(outcoming);
-		client.write(outcoming.data(), outcoming.size(), server);
+		client->write(outcoming.data(), outcoming.size(), *server);
 
 		std::array<byte_t, 5000> incoming;
-		std::size_t size = client.read(incoming.data(), incoming.size(), &server);
+		std::size_t size = client->read(incoming.data(), incoming.size(), server);
 		varbytes_view view(incoming.data(), size);
 		time_point stop = std::chrono::high_resolution_clock::now();
 		p.read(view);
@@ -61,7 +61,7 @@ int main(int argc, char * argv[]) {
 		ntp_timestamp theta = ((t1 - t0) + (t2 - t3)).div2();
 		ntp_timestamp delta = (t3 - t0) - (t2 - t1);
 
-		std::cout << "server: " << std::string(server) << std::endl;
+		std::cout << "server: " << server->to_string() << std::endl;
 		std::cout << "t0=" << t0 << "t1=" << t1 << "t2=" << t2 << "t3=" << t3;
 		std::cout << "theta=" << theta.seconds << ", delta=" << delta.seconds << std::endl;
 	} catch (const std::exception & error) {

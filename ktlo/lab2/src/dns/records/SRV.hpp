@@ -9,11 +9,11 @@ dns_record(SRV, 33) {
 	word_t priority;
 	word_t weight;
 	word_t port;
-	name target = gloabl_names.root();
+	name target;
 
-	virtual void encode(varbytes & data) const override;
-	virtual void decode(const varbytes_view & data) override;
-	virtual void read(const YAML::Node & node, const name & zone) override;
+	virtual void encode(writer & wr) const override;
+	virtual void decode(reader & rd) override;
+	virtual void read(const YAML::Node & node, const name & hint) override;
 	virtual std::string data_to_string() const override;
 };
 

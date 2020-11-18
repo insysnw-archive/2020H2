@@ -6,21 +6,21 @@
 #include <yaml-cpp/yaml.h>
 
 #include "dns_error.hpp"
-#include "zones.hpp"
 #include "base64.hpp"
+#include "dnscodec.hpp"
 
 namespace ktlo::dns::records {
 
-void OPT::encode(varbytes & data) const {
-	data = buffer;
+void OPT::encode(writer & wr) const {
+	wr.write_bytes(buffer);
 }
 
-void OPT::decode(const varbytes_view & data) {
-	buffer = data;
+void OPT::decode(reader & rd) {
+	buffer = rd.read_all();
 }
 
-void OPT::read(const YAML::Node & node, const name &) {
-	throw zone_error(node.Mark(), "not implemented");
+void OPT::read(const YAML::Node &, const name &) {
+	throw std::runtime_error("not implemented");
 }
 
 std::string OPT::data_to_string() const {

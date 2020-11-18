@@ -2,34 +2,37 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include "database.hpp"
 #include "dnscodec.hpp"
 #include "dns_error.hpp"
-#include "zones.hpp"
+#include "records/A.hpp"
 
 namespace ktlo::dns::records {
 
-void NS::encode(varbytes & data) const {
-	writer wr(data);
+void NS::encode(writer & wr) const {
 	wr.write_name(nsdname);
 }
 
-void NS::decode(const varbytes_view & data) {
-	reader rd(gloabl_names, data);
+void NS::decode(reader & rd) {
     nsdname = rd.read_name();
 }
 
-void NS::read(const YAML::Node & node, const name & zone) {
+std::vector<question_info> NS::ask(const question_info & q) const {
+	return { { question(nsdname, A::tid, q.q.qclass), answer_categories::additional } };
+}
+
+void NS::read(const YAML::Node & node, const name & hint) {
 	switch (node.Type()) {
 		case YAML::NodeType::Scalar: {
 			const std::string & value = node.as<std::string>();
-            nsdname = gloabl_names.resolve(value, zone);
+            nsdname = context.names().resolve(value, hint);
 			break;
 		}
 		case YAML::NodeType::Map: {
-			read(node["name"], zone);
+			read(node["name"], hint);
 			break;
 		}
-		default: throw zone_error(node.Mark(), "wrong YAML node type for NS record");
+		default: throw std::invalid_argument("wrong YAML node type for NS record");
 	}
 }
 
