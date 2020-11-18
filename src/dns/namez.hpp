@@ -120,14 +120,24 @@ public:
 friend class name;
 };
 
-extern namez gloabl_names;
-
 class name final {
 	std::shared_ptr<namez::node> top;
 	mutable std::optional<std::string> fullname;
 
 public:
-	name(const std::shared_ptr<namez::node> & t);
+	name() = default;
+	explicit name(const std::shared_ptr<namez::node> & t) : top(t), fullname(std::nullopt) {}
+	name(const name & other) = default;
+	name(name && other) : top(std::move(other.top)), fullname(std::move(other.fullname)) {
+		other.fullname.reset();
+	}
+	name & operator=(const name & other) = default;
+	name & operator=(name && other) {
+		top = std::move(other.top);
+		fullname = std::move(other.fullname);
+		other.fullname.reset();
+		return *this;
+	}
 	const std::string & domain() const;
 	const std::string & label() const {
 		return top->label;
@@ -135,6 +145,7 @@ public:
 	bool is_root() const {
 		return !top->parent;
 	}
+	bool inside(const name & other) const;
 	name parent() const {
 		return name(top->parent);
 	}

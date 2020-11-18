@@ -1,4 +1,5 @@
 dns_sources = files([
+  'arguments.cpp',
   'namez.cpp',
   'record.cpp',
   'records/A.cpp',
@@ -18,9 +19,8 @@ dns_sources = files([
   'zones.cpp',
   'question.cpp',
   'answer.cpp',
-  'settings.cpp',
-  'ipv6.cpp',
-  'base64.cpp'
+  'base64.cpp',
+  'client.cpp'
 ])
 
 dns_sources += common_sources

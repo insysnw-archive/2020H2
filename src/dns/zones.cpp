@@ -1,21 +1,12 @@
 #include "zones.hpp"
 
 #include <ekutils/log.hpp>
+#include <ekutils/resolver.hpp>
 
 namespace ktlo::dns {
 
 zone_error::zone_error(const YAML::Mark & mark, const std::string & message) :
 	std::runtime_error(message + " (at line: " + std::to_string(mark.line) + ", column: " + std::to_string(mark.column) + ")") {}
-
-struct zone_info {
-	std::uint32_t ttl = 14400u;
-	record_classes rclass = record_classes::IN;
-};
-
-struct zone_shared {
-	namez & ns;
-	database & db;
-};
 
 namespace yamltags {
 #	define YAML_TAG "tag:yaml.org,2002:"
@@ -32,18 +23,26 @@ namespace yamltags {
 }
 
 void db_add_record(
-	database & db, const zone_info & info, const std::string & tag,
-	const YAML::Node & value, const name & domain, const name & zone
+	const std::string & tag, const YAML::Node & value,
+	const name & domain, zone & _zone, const name & hint
 ) {
 	std::string_view view(tag.data() + 1, tag.size() - 1);
-	auto rr = record::create(view, info.rclass, info.ttl);
-	if (rr->type() == records::unknown::tid) {
-		std::string errstr = "unknown record type: ";
-		errstr.append(view);
-		throw zone_error(value.Mark(), errstr);
+	try {
+		auto rr = record::create(view, _zone);
+		if (rr->type() == records::unknown::tid) {
+			std::string errstr = "unknown record type: ";
+			errstr.append(view);
+			throw zone_error(value.Mark(), errstr);
+		}
+		rr->read(value, hint);
+		_zone.add(domain, std::move(rr));
+	} catch (const zone_error &) {
+		throw;
+	} catch (const std::invalid_argument & e) {
+		throw zone_error(value.Mark(), e.what());
+	} catch (const std::runtime_error & e) {
+		throw zone_error(value.Mark(), std::string("error: ") + typeid(e).name() + ": " + e.what());
 	}
-	rr->read(value, zone);
-	db.add(domain, std::move(rr));
 }
 
 record_classes resolve_class(const YAML::Node & rclass) {
@@ -65,16 +64,94 @@ record_classes resolve_class(const YAML::Node & rclass) {
 	}
 }
 
-void read_subzone(const zone_shared & shared, const zone_info & parent_info, const YAML::Node & node, const name & domain) {
-	if (!node.IsMap())
-		throw std::runtime_error("not a map");
-	zone_info info = parent_info;
+class hold_settings final {
+	zone & m_zone;
+	zone_settings settings;
+public:
+	hold_settings(zone & z) : m_zone(z), settings(z.settings) {}
+	~hold_settings() {
+		m_zone.settings = settings;
+	}
+};
+
+void operator<<(zone_settings & settings, const YAML::Node & node) {
 	if (auto ttl = node["$ttl"]) {
-		info.ttl = ttl.as<std::uint32_t>();
+		settings.ttl = ttl.as<std::uint32_t>();
 	}
 	if (auto rclass = node["$class"]) {
-		info.rclass = resolve_class(rclass);
+		settings.rclass = resolve_class(rclass);
 	}
+}
+
+void add_resolved(zone::addresses_t & addresses, const YAML::Node & node) {
+	switch (node.Type()) {
+		case YAML::NodeType::Undefined:
+			return;
+		case YAML::NodeType::Null:
+			addresses.clear();
+			return;
+		case YAML::NodeType::Sequence:
+			for (const auto & item : node)
+				add_resolved(addresses, item);
+			return;
+		case YAML::NodeType::Scalar:
+			try {
+				auto targets = ekutils::net::resolve(node.as<std::string>(), "domain", ekutils::net::protocols::udp);
+				for (auto & target : targets) {
+					switch (target.address->family()) {
+						case ekutils::net::family_t::ipv4:
+							addresses.emplace_back(dynamic_cast<ekutils::net::ipv4::endpoint &>(*target.address).address());
+							break;
+						case ekutils::net::family_t::ipv6:
+							addresses.emplace_back(dynamic_cast<ekutils::net::ipv6::endpoint &>(*target.address).address());
+							break;
+						default: log_fatal("unreachable");
+					}
+				}
+			} catch (const std::exception & e) {
+				throw zone_error(node.Mark(), e.what());
+			}
+			return;
+		default: throw zone_error(node.Mark(), "wrong YAML type for address");
+	}
+}
+
+void add_forwarder(std::vector<ekutils::uri> & forwarders, const YAML::Node & node) {
+	switch (node.Type()) {
+		case YAML::NodeType::Undefined:
+			return;
+		case YAML::NodeType::Null:
+			forwarders.clear();
+			return;
+		case YAML::NodeType::Sequence:
+			for (const auto & item : node)
+				add_forwarder(forwarders, item);
+			return;
+		case YAML::NodeType::Scalar:
+			try {
+				forwarders.emplace_back("udp://" + node.as<std::string>());
+			} catch (const std::exception & e) {
+				throw zone_error(node.Mark(), e.what());
+			}
+			return;
+		default: throw zone_error(node.Mark(), "wrong YAML type for forwarder");
+	}
+}
+
+void read_zone(zone & _zone, const YAML::Node & node) {
+	if (node.IsNull())
+		return;
+	if (!node.IsMap())
+		throw zone_error(node.Mark(), "not a map");
+	_zone.settings << node;
+
+	if (auto forward = node["$forward"])
+		add_forwarder(_zone.forward, forward);
+	if (auto allow = node["$allow"])
+		add_resolved(_zone.allowed, allow);
+	if (auto deny = node["$deny"])
+		add_resolved(_zone.denied, deny);
+
 	for (const auto & subnode : node) {
 		const YAML::Node & first = subnode.first;
 		if (first.IsScalar() || first.IsNull()) {
@@ -82,35 +159,32 @@ void read_subzone(const zone_shared & shared, const zone_info & parent_info, con
 			if (key.empty() || key[0] != '$') {
 				const YAML::Node & value = subnode.second;
 				const std::string & tag = value.Tag();
-				name subdomain = shared.ns.resolve(key, domain);
+				name subdomain = _zone.names().resolve(key, _zone.domain);
+				zone & actual_zone = key[key.size() - 1] == '.' ? _zone.db.zoneof(subdomain) : _zone;
 				if (tag[0] == '!') {
 					// records
 					switch (value.Type()) {
 						case YAML::NodeType::Scalar: {
-							db_add_record(shared.db, info, tag, value, subdomain, domain);
+							db_add_record(tag, value, subdomain, actual_zone, _zone.domain);
 							break;
 						}
 						case YAML::NodeType::Sequence: {
 							for (const auto & item : value)
-								db_add_record(shared.db, info, tag, item, subdomain, domain);
+								db_add_record(tag, item, subdomain, actual_zone, _zone.domain);
 							break;
 						}
 						case YAML::NodeType::Map: {
-							zone_info subinfo = info;
-							if (auto ttl = value["$ttl"]) {
-								subinfo.ttl = ttl.as<std::uint32_t>();
-							}
-							if (auto rclass = value["$class"]) {
-								subinfo.rclass = resolve_class(rclass);
-							}
-							db_add_record(shared.db, subinfo, tag, value, subdomain, domain);
+							hold_settings hold_it(actual_zone);
+							actual_zone.settings << value;
+							db_add_record(tag, value, subdomain, actual_zone, _zone.domain);
 							break;
 						}
 						default: break;
 					} 
 				} else if (tag == yamltags::ymap || tag == "?" || tag.empty()) {
 					// subzone
-					read_subzone(shared, info, value, subdomain);
+					zone & subzone = actual_zone.declare(subdomain);
+					read_zone(subzone, value);
 				} else {
 					log_warning("unknown YAML tag: " + tag);
 				}
@@ -119,12 +193,9 @@ void read_subzone(const zone_shared & shared, const zone_info & parent_info, con
 	}
 }
 
-database read(namez & ns, const YAML::Node & node) {
-	database db;
-	zone_shared shared { ns, db };
-	zone_info info { };
-	read_subzone(shared, info, node, ns.root());
-	return db;
+void read(database & db, const YAML::Node & node) {
+	zone & root = db.declare(db.names.root());
+	read_zone(root, node);
 }
 
 } // ktlo::dns

@@ -6,11 +6,11 @@
 namespace ktlo::dns::records {
 
 dns_record(PTR, 12) {
-	name ptrdname = gloabl_names.root();
+	name ptrdname;
 
-	virtual void encode(varbytes & data) const override;
-	virtual void decode(const varbytes_view & data) override;
-	virtual void read(const YAML::Node & node, const name & zone) override;
+	virtual void encode(writer & wr) const override;
+	virtual void decode(reader & rd) override;
+	virtual void read(const YAML::Node & node, const name & hint) override;
 	virtual std::string data_to_string() const override;
 };
 

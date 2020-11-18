@@ -11,9 +11,9 @@
 namespace ktlo::ntp {
 
 struct packet final {
-	leaps leap : 2;
+	leaps leap;
 	unsigned version : 3;
-	modes mode : 3;
+	modes mode;
 	unsigned stratum : 8;
 	signed poll : 8;
 	signed precision : 8;

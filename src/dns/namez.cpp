@@ -42,6 +42,10 @@ void namez::cleanup(node & next) {
 	});
 }
 
+void namez::cleanup() {
+	cleanup(*_root);
+}
+
 namez::namez() {
 	_root = std::make_shared<node>();
 }
@@ -72,9 +76,9 @@ name namez::resolve(const std::string_view & value, const name & zone) {
 	if (value == "@" || value.empty()) {
 		return zone;
 	} else if (value[value.length() - 1] == '.') {
-		return gloabl_names.add(value);
+		return add(value);
 	} else {
-		return gloabl_names.add(value, zone);
+		return add(value, zone);
 	}
 }
 
@@ -82,17 +86,11 @@ name namez::root() const {
 	return name(_root);
 }
 
-void namez::cleanup() {
-	
-}
-
-namez gloabl_names;
-
-name::name(const std::shared_ptr<namez::node> & t) : top(t), fullname(std::nullopt) {}
-
 const std::string & name::domain() const {
 	if (fullname.has_value())
 		return fullname.value();
+	if (is_root())
+		return fullname.emplace(".");
 	std::shared_ptr ptr = top;
 	std::string & result = fullname.emplace(ptr->label);
 	for (;;) {
@@ -103,6 +101,15 @@ const std::string & name::domain() const {
 		result.append(ptr->label);
 	}
 	return result;
+}
+
+bool name::inside(const name & other) const {
+	name current = *this;
+	for (;!current.is_root(); current = current.parent()) {
+		if (current == other)
+			return true;
+	}
+	return current == other;
 }
 
 } // ktlo::dns

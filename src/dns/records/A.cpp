@@ -5,67 +5,38 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include "dns_error.hpp"
-#include "zones.hpp"
+#include <ekutils/socket_d.hpp>
+
+#include "dnscodec.hpp"
 
 namespace ktlo::dns::records {
 
-void A::encode(varbytes & data) const {
-	data.append(reinterpret_cast<const byte_t *>(&addr_dword), 4);
+void A::encode(writer & wr) const {
+	wr.write_raw<dword_t>(address.data);
 }
 
-void A::decode(const varbytes_view & data) {
-	if (data.size() != 4)
+void A::decode(reader & rd) {
+	if (rd.pending() != 4)
 		throw dns_error(rcodes::format_error, "wrong A record size");
-	addr_dword = *reinterpret_cast<const dword_t *>(data.data());
+	address = rd.read_raw<dword_t>();
 }
 
-[[noreturn]] void ipaddr_format(const YAML::Node & node) {
-	throw zone_error(node.Mark(), "wrong ipv4 address format");
-}
-
-std::uint8_t read_octet(std::istream & ss, const YAML::Node & node) {
-	int c = ss.peek();
-	if (!std::isdigit(c))
-		ipaddr_format(node);
-	unsigned octet;
-	ss >> octet;
-	if (octet > 255u)
-		ipaddr_format(node);
-	return static_cast<std::uint8_t>(octet);
-}
-
-void A::read(const YAML::Node & node, const name & zone) {
+void A::read(const YAML::Node & node, const name & hint) {
 	switch (node.Type()) {
 		case YAML::NodeType::Scalar: {
-			const std::string & value = node.as<std::string>();
-			std::stringstream ss(value);
-			bytes[0] = read_octet(ss, node);
-			for (int i = 1; i < 4; ++i) {
-				int c = ss.get();
-				if (c != '.')
-					ipaddr_format(node);
-				bytes[i] = read_octet(ss, node);
-			}
-			if (ss.good())
-				ipaddr_format(node);
+			address = ekutils::net::ipv4::address(node.as<std::string>());
 			break;
 		}
 		case YAML::NodeType::Map: {
-			read(node["address"], zone);
+			read(node["address"], hint);
 			break;
 		}
-		default: throw zone_error(node.Mark(), "wrong YAML node type for A record");
+		default: throw std::invalid_argument("wrong YAML node type for A record");
 	}
 }
 
 std::string A::data_to_string() const {
-	std::string result = std::to_string(unsigned(bytes[0]));
-	for (auto i = 1; i < 4; ++i) {
-		result += '.';
-		result += std::to_string(unsigned(bytes[i]));
-	}
-	return result;
+	return address.to_string();
 }
 
 } // ktlo::dns::records

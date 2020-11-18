@@ -4,28 +4,26 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include "zones.hpp"
+#include "database.hpp"
 #include "dnscodec.hpp"
 
 namespace ktlo::dns::records {
 
-void SRV::encode(varbytes & data) const {
-	writer wr(data);
+void SRV::encode(writer & wr) const {
 	wr.write<word_t>(priority);
 	wr.write<word_t>(weight);
 	wr.write<word_t>(port);
 	wr.write_name(target);
 }
 
-void SRV::decode(const varbytes_view & data) {
-	reader rd(gloabl_names, data);
+void SRV::decode(reader & rd) {
 	priority = rd.read<word_t>();
 	weight = rd.read<word_t>();
 	port = rd.read<word_t>();
 	target = rd.read_name();
 }
 
-void SRV::read(const YAML::Node & node, const name & zone) {
+void SRV::read(const YAML::Node & node, const name & hint) {
 	switch (node.Type()) {
 		case YAML::NodeType::Scalar: {
 			std::stringstream ss(node.as<std::string>());
@@ -34,17 +32,17 @@ void SRV::read(const YAML::Node & node, const name & zone) {
 			ss >> port;
 			std::string value;
 			ss >> value;
-			target = gloabl_names.resolve(value, zone);
+			target = context.names().resolve(value, hint);
 			break;
 		}
 		case YAML::NodeType::Map: {
 			priority = node["priority"].as<word_t>();
 			weight = node["weight"].as<word_t>();
 			port = node["port"].as<word_t>();
-			target = gloabl_names.resolve(node["target"].as<std::string>(), zone);
+			target = context.names().resolve(node["target"].as<std::string>(), hint);
 			break;
 		}
-		default: throw zone_error(node.Mark(), "wrong YAML node type for SRV record");
+		default: throw std::invalid_argument("wrong YAML node type for SRV record");
 	}
 }
 

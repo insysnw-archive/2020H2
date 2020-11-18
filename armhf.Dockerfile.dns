@@ -2,11 +2,11 @@ FROM arm32v7/alpine:latest AS base
 RUN [ "apk", "--no-cache", "--no-progress", "add", "libstdc++" ]
 
 FROM base AS build
-RUN apk --no-cache --no-progress add build-base clang cmake ninja coreutils git python3 py-pip \
+RUN apk --no-cache --no-progress add build-base cmake ninja coreutils git python3 py-pip \
     && pip3 install meson
 ADD . /lab2
 WORKDIR /lab2
-RUN CXX=clang++ CC=clang meson -Dprefix=`pwd`/out -Dbuildtype=release -Ddefault_library=static build \
+RUN meson -Dprefix=`pwd`/out -Dbuildtype=release -Ddefault_library=static build \
     && cd build && ninja && ninja install
 
 FROM base

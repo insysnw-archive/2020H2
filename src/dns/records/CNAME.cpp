@@ -2,51 +2,50 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include "database.hpp"
+#include "question.hpp"
 #include "dnscodec.hpp"
 #include "dns_error.hpp"
-#include "zones.hpp"
 #include "records/A.hpp"
 
 namespace ktlo::dns::records {
 
-void CNAME::encode(varbytes & data) const {
-	writer wr(data);
-	wr.write_name(this->data);
+void CNAME::encode(writer & wr) const {
+	wr.write_name(alias);
 }
 
-void CNAME::decode(const varbytes_view & data) {
-	reader rd(gloabl_names, data);
-	this->data = rd.read_name();
+void CNAME::decode(reader & rd) {
+	alias = rd.read_name();
 }
 
 bool CNAME::shoud_answer(const question & q) const {
 	return q.qtype == 255 || q.qtype == CNAME::tid || q.qtype == A::tid;
 }
 
-std::vector<question> CNAME::ask(const question & q) const {
-	if (q.qtype == A::tid)
-		return { question(data, A::tid, q.qclass) };
+std::vector<question_info> CNAME::ask(const question_info & q) const {
+	if (q.q.qtype == A::tid)
+		return { { question(alias, A::tid, q.q.qclass), q.category } };
 	else
 		return {};
 }
 
-void CNAME::read(const YAML::Node & node, const name & zone) {
+void CNAME::read(const YAML::Node & node, const name & hint) {
 	switch (node.Type()) {
 		case YAML::NodeType::Scalar: {
 			const std::string & value = node.as<std::string>();
-			data = gloabl_names.resolve(value, zone);
+			alias = context.names().resolve(value, hint);
 			break;
 		}
 		case YAML::NodeType::Map: {
-			read(node["name"], zone);
+			read(node["name"], hint);
 			break;
 		}
-		default: throw zone_error(node.Mark(), "wrong YAML node type for CNAME record");
+		default: throw std::runtime_error("wrong YAML node type for CNAME record");
 	}
 }
 
 std::string CNAME::data_to_string() const {
-	return data.domain();
+	return alias.domain();
 }
 
 } // ktlo::dns::records

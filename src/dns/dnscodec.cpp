@@ -8,17 +8,19 @@ name reader::read_name() {
 	std::uint8_t byte = read<byte_t>();
 	switch (byte >> 6) {
 		case 0b00u: {
-			std::ptrdiff_t ptr = data.data() - start - 1;
+			std::ptrdiff_t ptr = this->ptr() - start - 1;
 			varbytes_view label_raw = read_bytes(byte);
 			std::string_view label(reinterpret_cast<const char *>(label_raw.data()), label_raw.size());
 			name result = byte ? ns.add(label, read_name()) : ns.root();
-			names.emplace(ptr, result);
+			names->emplace(ptr, result);
 			return result;
 		}
 		case 0b11u: {
-			auto iter = names.find(((byte & 0b111111u) << 8) | read<byte_t>());
-			if (iter == names.end())
+			unsigned offset = ((byte & 0b111111u) << 8) | read<byte_t>();
+			auto iter = names->find(offset);
+			if (iter == names->end()) {
 				throw dns_error(rcodes::format_error, "forward name ptr");
+			}
 			return iter->second;
 		}
 		default: throw dns_error(rcodes::not_implemented, "unknown label octet type");
@@ -26,15 +28,15 @@ name reader::read_name() {
 }
 
 void writer::write_name(const name & n) {
-	auto iter = names.find(n);
-	if (!compress_names || iter == names.end()) {
-		std::size_t offset = data.size();
+	auto iter = names->find(n);
+	if (iter == names->end()) {
+		std::size_t offset = ktlo::writer::size();
 		const std::string & label = n.label();
 		write<byte_t>(static_cast<byte_t>(label.size()));
 		varbytes_view label_raw(reinterpret_cast<const byte_t *>(label.data()), label.size());
 		write_bytes(label_raw);
 		if (offset <= 0x3FFF)
-			names.emplace(n, offset);
+			names->emplace(n, offset);
 		if (!n.is_root())
 			write_name(n.parent());
 	} else {

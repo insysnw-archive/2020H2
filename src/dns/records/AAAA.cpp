@@ -4,37 +4,32 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include "dns_error.hpp"
-#include "zones.hpp"
-#include "codec.hpp"
+#include "dnscodec.hpp"
 
 namespace ktlo::dns::records {
 
-void AAAA::encode(varbytes & data) const {
-	ktlo::writer wr { data };
-	for (word_t word : address.words)
-		wr.write<word_t>(word);
+void AAAA::encode(writer & wr) const {
+	wr.write_bytes(varbytes_view(address.data.data(), address.data.size()));
 }
 
-void AAAA::decode(const varbytes_view & data) {
-	if (data.size() != 16)
+void AAAA::decode(reader & rd) {
+	if (rd.pending() != address.data.size())
 		throw dns_error(rcodes::format_error, "wrong AAAA record size");
-	ktlo::reader rd { data };
-	for (word_t & word : address.words)
-		word = rd.read<word_t>();
+	varbytes_view bytes = rd.read_bytes(address.data.size());
+	std::memcpy(address.data.data(), bytes.data(), address.data.size());
 }
 
-void AAAA::read(const YAML::Node & node, const name & zone) {
+void AAAA::read(const YAML::Node & node, const name & hint) {
 	switch (node.Type()) {
 		case YAML::NodeType::Scalar: {
-			address = ipv6::parse(node.as<std::string>());
+			address = ekutils::net::ipv6::address(node.as<std::string>());
 			break;
 		}
 		case YAML::NodeType::Map: {
-			read(node["address"], zone);
+			read(node["address"], hint);
 			break;
 		}
-		default: throw zone_error(node.Mark(), "wrong YAML node type for AAAA record");
+		default: throw std::invalid_argument("wrong YAML node type for AAAA record");
 	}
 }
 

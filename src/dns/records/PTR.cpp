@@ -2,34 +2,31 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include "database.hpp"
 #include "dnscodec.hpp"
-#include "dns_error.hpp"
-#include "zones.hpp"
 
 namespace ktlo::dns::records {
 
-void PTR::encode(varbytes & data) const {
-	writer wr(data);
+void PTR::encode(writer & wr) const {
 	wr.write_name(ptrdname);
 }
 
-void PTR::decode(const varbytes_view & data) {
-	reader rd(gloabl_names, data);
+void PTR::decode(reader & rd) {
     ptrdname = rd.read_name();
 }
 
-void PTR::read(const YAML::Node & node, const name & zone) {
+void PTR::read(const YAML::Node & node, const name & hint) {
 	switch (node.Type()) {
 		case YAML::NodeType::Scalar: {
 			const std::string & value = node.as<std::string>();
-            ptrdname = gloabl_names.resolve(value, zone);
+            ptrdname = context.names().resolve(value, hint);
 			break;
 		}
 		case YAML::NodeType::Map: {
-			read(node["name"], zone);
+			read(node["name"], hint);
 			break;
 		}
-		default: throw zone_error(node.Mark(), "wrong YAML node type for PTR record");
+		default: throw std::invalid_argument("wrong YAML node type for PTR record");
 	}
 }
 
