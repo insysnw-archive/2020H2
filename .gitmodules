@@ -1,0 +1,6 @@
+[submodule "ekutils"]
+	path = ktlo/lab2/subprojects/ekutils
+	url = https://github.com/handtruth/ekutils.git
+[submodule "yaml-cpp"]
+	path = ktlo/lab2/subprojects/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git
