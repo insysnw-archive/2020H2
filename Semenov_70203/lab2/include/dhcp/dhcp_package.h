@@ -1,5 +1,5 @@
-#include <bits/stdint-intn.h>
-#include <bits/stdint-uintn.h>
+#pragma once
+
 #include <netinet/ip.h>
 
 #include <string>

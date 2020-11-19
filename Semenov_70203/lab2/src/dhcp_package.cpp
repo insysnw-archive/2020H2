@@ -7,6 +7,7 @@
 #include <iterator>
 #include <sstream>
 
+#include "dhcp/common.h"
 #include "dhcp/net_int.h"
 
 namespace dhcp {
@@ -24,6 +25,10 @@ RawType DhcpPackage::serialize() const noexcept {
     raw += yiaddr.toRaw();
     raw += siaddr.toRaw();
     raw += giaddr.toRaw();
+    raw.push_back(99u);
+    raw.push_back(130u);
+    raw.push_back(83u);
+    raw.push_back(99u);
 
     for (auto & option : options) {
         auto optionSize = static_cast<uint8_t>(option.data.size());
@@ -111,22 +116,12 @@ DhcpPackage DhcpPackage::deserialize(const RawType & raw) noexcept {
     return package;
 }
 
-std::string ipV4(IpType ip) noexcept {
-    char buffer[INET_ADDRSTRLEN];
-    in_addr inaddr;
-    inaddr.s_addr = ip.net();
-
-    if (!inet_ntop(AF_INET, &inaddr, buffer, sizeof(buffer)))
-        return "Error";
-    return std::string{buffer};
-}
-
 std::string ipV4pack(RawType raw) noexcept {
     std::stringstream ss;
     for (auto i = raw.begin(); i < raw.end() - 4; i += 4) {
-        ss << ipV4(IpType{i}) << " ";
+        ss << ipToString(IpType{i}) << " ";
     }
-    ss << ipV4(IpType{raw.end() - 4});
+    ss << ipToString(IpType{raw.end() - 4});
     return ss.str();
 }
 
@@ -278,16 +273,16 @@ void DhcpPackage::print() const noexcept {
     std::cout << "  secs: " << secs << "\n";
     std::cout << " flags: " << flags << "\n";
 
-    std::cout << "ciaddr: " << ipV4(ciaddr) << "\n";
-    std::cout << "yiaddr: " << ipV4(yiaddr) << "\n";
-    std::cout << "siaddr: " << ipV4(siaddr) << "\n";
-    std::cout << "giaddr: " << ipV4(giaddr) << "\n";
+    std::cout << "ciaddr: " << ipToString(ciaddr) << "\n";
+    std::cout << "yiaddr: " << ipToString(yiaddr) << "\n";
+    std::cout << "siaddr: " << ipToString(siaddr) << "\n";
+    std::cout << "giaddr: " << ipToString(giaddr) << "\n";
 
     std::cout << "chaddr: " << hexValue(chaddr) << "\n";
     std::cout << " sname: " << sname << "\n";
     std::cout << "  file: " << file << "\n\n";
 
-    std::cout << "Options\n" << optionsString(options) << std::endl;
+    std::cout << optionsString(options) << std::endl;
 }
 
 }  // namespace dhcp

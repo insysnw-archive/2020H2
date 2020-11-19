@@ -1,9 +1,10 @@
-#include "dhcp/dhcp_server.h"
-#include "utils.h"
-
 #include <signal.h>
-
+#include <unistd.h>
+#include <iostream>
 #include <memory>
+
+#include "dhcp/config.h"
+#include "dhcp/dhcp_server.h"
 
 std::unique_ptr<dhcp::DhcpServer> server;
 
@@ -13,17 +14,9 @@ void handler(int signal) {
 }
 
 int main(int argc, char * argv[]) {
-    auto setup = getSetup(argc, argv, "0.0.0.0", 67);
-    if (!setup.has_value())
-        return EXIT_FAILURE;
-
-    setup->connection.type = SOCK_DGRAM;
-
-    server = std::make_unique<dhcp::DhcpServer>(*setup);
     signal(SIGINT, handler);
-
-    server->start();
-    server->join();
+    dhcp::Config config{argc, argv};
+    server = std::make_unique<dhcp::DhcpServer>(config);
 
     return EXIT_SUCCESS;
 }

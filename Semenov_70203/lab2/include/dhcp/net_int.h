@@ -6,7 +6,7 @@
 
 namespace dhcp {
 
-template<class Type>
+template <class Type>
 class NetInt;
 
 using RawType = std::string;
@@ -25,6 +25,10 @@ class NetInt {
 
     // implicit
     NetInt(const RawType & raw) : NetInt{raw.begin()} {}
+
+    static NetInt fromNet(Type value) noexcept {
+        return NetInt{NetInt{value}.net()};
+    }
 
     explicit NetInt(RawType::const_iterator raw) noexcept {
         fromRaw(raw);
@@ -61,6 +65,17 @@ class NetInt {
 
     operator Type() const noexcept {
         return mValue;
+    }
+
+    NetInt & operator++() noexcept {
+        mValue += 1;
+        return *this;
+    }
+
+    NetInt operator++(int) noexcept {
+        NetInt saved = *this;
+        mValue += 1;
+        return saved;
     }
 
  private:

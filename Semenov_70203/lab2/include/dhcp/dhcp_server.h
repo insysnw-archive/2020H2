@@ -1,34 +1,34 @@
 #pragma once
 
-#include <netinet/in.h>
-#include <vector>
-
-#include "looped_thread.h"
-
-class EndpointSetup;
+#include <atomic>
+#include <thread>
+#include "dhcp/client.h"
+#include "dhcp/ip_allocator.h"
 
 namespace dhcp {
 
-class DhcpServer : public LoopedThread {
- public:
-    using AddressPool = std::vector<sockaddr_in>;
+class Config;
 
+class DhcpServer {
  public:
-    explicit DhcpServer(const EndpointSetup & setup) noexcept;
+    explicit DhcpServer(const Config & config) noexcept;
 
     ~DhcpServer() noexcept;
 
-    void onThreadStart() noexcept override;
+    void receive() const noexcept;
 
-    void threadStep() noexcept override;
+    void stop() noexcept;
 
-    void onThreadFinish() noexcept override;
-
-    void onStop() noexcept override;
+ private:
+    void threadStart() noexcept;
 
  private:
     int mSocket;
-    AddressPool mAddresses;
+    std::thread mThread;
+    std::atomic_bool mStopped;
+
+    ClientManager mManager;
+    IpAllocator mAllocator;
 };
 
-} // namespace dhcp
+}  // namespace dhcp

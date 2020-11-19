@@ -1,11 +1,20 @@
 cmake_minimum_required(VERSION 3.0)
 
-add_executable(dhcp_server
-    ${PROJECT_SOURCE_DIR}/src/dhcp_server.cpp
-    ${PROJECT_SOURCE_DIR}/src/dhcp_package.cpp
-    ${PROJECT_SOURCE_DIR}/src/dhcp_server_main.cpp)
+find_library(rt_lib REQUIRED rt)
+find_package(Threads REQUIRED)
 
-target_include_directories(dhcp_server PUBLIC
-    ${PROJECT_SOURCE_DIR}/include)
+add_executable(
+  dhcp_server
+  ${PROJECT_SOURCE_DIR}/src/client.cpp
+  ${PROJECT_SOURCE_DIR}/src/common.cpp
+  ${PROJECT_SOURCE_DIR}/src/config.cpp
+  ${PROJECT_SOURCE_DIR}/src/dhcp_package.cpp
+  ${PROJECT_SOURCE_DIR}/src/dhcp_server.cpp
+  ${PROJECT_SOURCE_DIR}/src/dhcp_server_main.cpp
+  ${PROJECT_SOURCE_DIR}/src/ip_allocator.cpp
+  ${PROJECT_SOURCE_DIR}/src/leased_ip.cpp
+  ${PROJECT_SOURCE_DIR}/src/range.cpp
+  ${PROJECT_SOURCE_DIR}/src/timer.cpp)
 
-target_link_libraries(dhcp_server PUBLIC chatlibs)
+target_include_directories(dhcp_server PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(dhcp_server PUBLIC rt ${CMAKE_THREAD_LIBS_INIT})
