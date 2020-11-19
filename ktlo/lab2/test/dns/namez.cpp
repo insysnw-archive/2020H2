@@ -16,7 +16,7 @@ test {
 	name mcgit = ns.add("mc.git", zone);
 
 	std::array<std::string, 11> expectations {
-		"",
+		".",
 		"com.",
 		"example.com.",
 		"d.example.com.",
