@@ -61,9 +61,9 @@ bool client::request(answers_bag & result, const ekutils::net::endpoint & addres
 	if (in_packet.head.id != out_packet.head.id)
 		throw std::runtime_error("forwarder responded with different id");
 	move_answers(result, in_packet.answers);
-	if (in_packet.answers.answers.empty() && !in_packet.head.recursion_available) {
+	if (!in_packet.head.authoritative && !in_packet.head.recursion_available) {
 		// ask next
-		log_debug("reqursion not available, ask next");
+		log_debug("recursion not available, ask next");
 		return false;
 	}
 	return true;
