@@ -200,6 +200,7 @@ class TFTP_Client:
         self.client_sock.close()
         print('[Client] Stopped')
 
+
 SERVER_IP = '127.0.0.1'
 SERVER_PORT = 5004
 ROOT_DIR = 'C:\Projects\\'

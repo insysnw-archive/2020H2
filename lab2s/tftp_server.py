@@ -251,6 +251,7 @@ class TFTP_Server:
         self.close()
         print('[SERVER] Stopped')
 
+
 SERVER_PORT = 5004
 ROOT_DIR = 'C:\\Projects\\server\\'
 MODE = 'octet'
