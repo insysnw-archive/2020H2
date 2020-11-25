@@ -8,7 +8,7 @@ add_executable(
   ${PROJECT_SOURCE_DIR}/src/client.cpp
   ${PROJECT_SOURCE_DIR}/src/common.cpp
   ${PROJECT_SOURCE_DIR}/src/config.cpp
-  ${PROJECT_SOURCE_DIR}/src/dhcp_package.cpp
+  ${PROJECT_SOURCE_DIR}/src/dhcp_packet.cpp
   ${PROJECT_SOURCE_DIR}/src/dhcp_server.cpp
   ${PROJECT_SOURCE_DIR}/src/dhcp_server_main.cpp
   ${PROJECT_SOURCE_DIR}/src/ip_allocator.cpp

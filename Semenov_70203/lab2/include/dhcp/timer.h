@@ -1,7 +1,6 @@
 #pragma once
 
 #include <time.h>
-
 #include <vector>
 
 namespace dhcp {
@@ -17,6 +16,10 @@ class Timer {
  public:
     explicit Timer(ITimerListener * listener) noexcept;
 
+    Timer(const Timer &) = delete;
+
+    Timer(Timer &&) noexcept;
+
     ~Timer() noexcept;
 
     void lease(size_t sec) noexcept;
@@ -27,8 +30,13 @@ class Timer {
 
     bool isStopped() const noexcept;
 
+    Timer & operator=(const Timer &) = delete;
+
+    Timer & operator=(Timer &&) noexcept;
+
  private:
     timer_t mTimer;
+    ITimerListener * mListener;
 };
 
 }  // namespace dhcp

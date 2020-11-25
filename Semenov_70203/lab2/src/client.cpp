@@ -4,27 +4,33 @@
 
 namespace dhcp {
 
-Client::Client() noexcept : timer{&ip} {}
+Client::Client(const RawType & id) noexcept : timer{&ip}, mId{id} {}
+
 bool Client::operator==(const Client & other) const noexcept {
-    return chaddr == other.chaddr;
+    return mId == other.mId;
 }
 
-Client & ClientManager::get(const RawType & chaddr) noexcept {
+RawType Client::id() const noexcept {
+    return mId;
+}
+
+Client * ClientManager::get(const RawType & id) noexcept {
     auto clientIterator = std::find_if(
         mClients.begin(), mClients.end(),
-        [&chaddr](const Client & client) { return client.chaddr == chaddr; });
+        [&id](const Client & client) { return client.id() == id; });
 
     if (clientIterator != mClients.end())
-        return *clientIterator;
+        return clientIterator.base();
 
-    Client client;
-    client.chaddr = chaddr;
-    mClients.emplace_back(std::move(client));
-    return mClients.back();
+    return nullptr;
 }
 
-Client & ClientManager::operator[](const RawType & chaddr) noexcept {
-    return get(chaddr);
+Client * ClientManager::getOrNew(const RawType & id) noexcept {
+    if (!has(id)) {
+        mClients.emplace_back(id);
+        return &mClients.back();
+    }
+    return get(id);
 }
 
 void ClientManager::clear() noexcept {
@@ -34,6 +40,12 @@ void ClientManager::clear() noexcept {
                 std::remove(mClients.begin(), mClients.end(), client);
             mClients.erase(removeFrom, mClients.end());
         }
+}
+
+bool ClientManager::has(const RawType & id) const noexcept {
+    return std::any_of(
+        mClients.begin(), mClients.end(),
+        [&id](const Client & client) { return id == client.id(); });
 }
 
 }  // namespace dhcp

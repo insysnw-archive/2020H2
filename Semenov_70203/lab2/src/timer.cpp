@@ -17,26 +17,36 @@ void posixTimerStop(sigval value) {
 
 }  // namespace details
 
-Timer::Timer(ITimerListener * listener) noexcept {
+Timer::Timer(ITimerListener * listener) noexcept : mListener{listener} {
     sigevent event;
-    memset(&event, 0, sizeof(event));
+    std::memset(&event, 0, sizeof(event));
     event.sigev_notify = SIGEV_THREAD;
     event.sigev_notify_function = details::posixTimerStop;
-    event.sigev_value.sival_ptr = reinterpret_cast<void *>(listener);
+    event.sigev_value.sival_ptr = reinterpret_cast<void *>(mListener);
 
     if (timer_create(CLOCK_MONOTONIC, &event, &mTimer) < 0)
         logError("Cannot create timer");
 }
 
+Timer::Timer(Timer && other) noexcept {
+    mTimer = other.mTimer;
+    mListener = other.mListener;
+    other.mListener = nullptr;
+    other.mTimer = 0;
+}
+
 Timer::~Timer() noexcept {
-    timer_delete(mTimer);
+    if (mTimer)
+        timer_delete(mTimer);
 }
 
 void Timer::lease(size_t sec) noexcept {
+    logInfo("Lease time: " + std::to_string(sec) + " sec");
     itimerspec timespec;
-    memset(&timespec, 0, sizeof(timespec));
+    std::memset(&timespec, 0, sizeof(timespec));
     timespec.it_value.tv_sec = sec;
-    timer_settime(mTimer, 0, &timespec, nullptr);
+    if (timer_settime(mTimer, 0, &timespec, nullptr) < 0)
+        logError("timer_settime");
 }
 
 void Timer::release() noexcept {
@@ -51,6 +61,14 @@ time_t Timer::remainingTime() const noexcept {
 
 bool Timer::isStopped() const noexcept {
     return remainingTime() == 0;
+}
+
+Timer & Timer::operator=(Timer && other) noexcept {
+    std::memcpy(&mTimer, other.mTimer, sizeof(mTimer));
+    mListener = other.mListener;
+    other.mListener = nullptr;
+    other.mTimer = 0;
+    return *this;
 }
 
 }  // namespace dhcp

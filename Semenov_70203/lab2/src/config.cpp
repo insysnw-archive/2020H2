@@ -15,7 +15,7 @@ Config::Config(int argc, char * argv[]) noexcept {
         switch (option) {
             case 'r': range = Range{optarg};
             case 'i': address = optarg; break;
-            case 'p': port = std::stoi(optarg); break;
+            case 'p': serverPort = std::stoi(optarg); break;
             case 'd': defaultLeaseTime = std::stoi(optarg); break;
             case 'm': maxLeaseTime = std::stoi(optarg); break;
             case 'h': [[fallthrough]];

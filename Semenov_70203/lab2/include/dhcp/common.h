@@ -9,7 +9,7 @@
 
 namespace dhcp {
 
-class Config;
+struct Config;
 
 void logError(std::string_view source) noexcept;
 

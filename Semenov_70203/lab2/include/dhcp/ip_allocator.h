@@ -1,7 +1,6 @@
 #pragma once
 
-#include <optional>
-#include <vector>
+#include <deque>
 
 #include "dhcp/range.h"
 
@@ -10,21 +9,25 @@ class IpAllocator {
  public:
     explicit IpAllocator(const Range & range) noexcept;
 
-    std::optional<IpType> allocate() noexcept;
+    IpType allocate() noexcept;
 
-    std::optional<IpType> allocate(IpType preference) noexcept;
+    IpType allocate(IpType preference) noexcept;
+
+    IpType reserve() noexcept;
+
+    IpType reserve(IpType preference) noexcept;
 
     void deallocate(IpType ip) noexcept;
 
- private:
     bool isFree(IpType ip) const noexcept;
 
+ private:
     bool isReserved(IpType ip) const noexcept;
 
  private:
     Range mRange;
-    std::vector<IpType> mAllocated;
-    std::vector<IpType> mReserved;
+    std::deque<IpType> mAllocated;
+    std::deque<IpType> mReserved;
 };
 
 }  // namespace dhcp

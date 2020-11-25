@@ -49,7 +49,7 @@ int bindedSocket(const Config & config) noexcept {
     std::memset(&sockaddr, 0, sizeof(sockaddr));
 
     sockaddr.sin_addr.s_addr = ip.net();
-    sockaddr.sin_port = config.port.net();
+    sockaddr.sin_port = config.serverPort.net();
     sockaddr.sin_family = AF_INET;
 
     auto casted = reinterpret_cast<struct sockaddr *>(&sockaddr);
@@ -63,6 +63,9 @@ int bindedSocket(const Config & config) noexcept {
     if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
         logError("setsockopt");
 
+    if (setsockopt(socket, SOL_SOCKET, SO_BROADCAST, &opt, sizeof(opt)) < 0)
+        logError("setsockopt");
+
     if (bind(socket, casted, sizeof(sockaddr)) < 0) {
         logError("bind");
         close(socket);
@@ -71,7 +74,7 @@ int bindedSocket(const Config & config) noexcept {
 
     logInfo(
         "Binded address: " + ipToString(ip) + ":" +
-        std::to_string(config.port));
+        std::to_string(config.serverPort));
 
     return socket;
 }

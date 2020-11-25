@@ -3,6 +3,8 @@
 #include <iostream>
 #include <memory>
 
+#include "dhcp/client.h"
+#include "dhcp/common.h"
 #include "dhcp/config.h"
 #include "dhcp/dhcp_server.h"
 

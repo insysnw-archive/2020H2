@@ -9,8 +9,9 @@ namespace dhcp {
 template <class Type>
 class NetInt;
 
-using RawType = std::string;
 using IpType = NetInt<in_addr_t>;
+constexpr in_addr_t UNDEFINED_IP = 0;
+using RawType = std::string;
 
 template <class Type>
 class NetInt {
@@ -18,7 +19,7 @@ class NetInt {
     constexpr static size_t size = sizeof(Type);
 
  public:
-    NetInt() noexcept = default;
+    NetInt() noexcept : mValue{0} {}
 
     // implicit
     NetInt(Type value) noexcept : mValue{value} {}
