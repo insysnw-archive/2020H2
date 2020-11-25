@@ -20,7 +20,7 @@ def get_time(additional_info=False):
 	    arrive_time = time.time() + format_diff
 	    answer.unpack(data)
 
-	time_different = answer.receive_time-answer.originate_time-arrive_time+answer.transmit_time
+	time_different = (answer.receive_time-answer.originate_time-arrive_time+answer.transmit_time)/2
 	if not additional_info:
 		return f'Time: {datetime.datetime.fromtimestamp(time.time() + time_different).strftime("%c")}'
 	else:
