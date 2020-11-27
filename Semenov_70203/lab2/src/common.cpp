@@ -19,31 +19,14 @@ void logError(std::string_view source) noexcept {
 void logInfo(std::string_view info) noexcept {
     static std::mutex lMutex;
     std::lock_guard lock{lMutex};
-    std::cout << "INFO: " << info << std::endl;
-}
-
-IpType stringToIp(std::string_view ip) noexcept {
-    in_addr inaddr;
-    std::memset(&inaddr, 0, sizeof(inaddr));
-    if (inet_pton(AF_INET, ip.data(), &inaddr) <= 0)
-        return 0;
-
-    return IpType::fromNet(inaddr.s_addr);
-}
-
-std::string ipToString(IpType ip) noexcept {
-    char buffer[INET_ADDRSTRLEN];
-    in_addr inaddr;
-    inaddr.s_addr = ip.net();
-
-    if (!inet_ntop(AF_INET, &inaddr, buffer, sizeof(buffer)))
-        return "Error";
-    return std::string{buffer};
+    std::cout << "\033[33m";
+    std::cout << "INFO: " << info;
+    std::cout << "\033[0m" << std::endl;
 }
 
 int bindedSocket(const Config & config) noexcept {
     auto socket = ::socket(AF_INET, SOCK_DGRAM, 0);
-    auto ip = stringToIp(config.address);
+    auto ip = IpType::fromString(config.address);
 
     sockaddr_in sockaddr;
     std::memset(&sockaddr, 0, sizeof(sockaddr));
@@ -73,7 +56,7 @@ int bindedSocket(const Config & config) noexcept {
     }
 
     logInfo(
-        "Binded address: " + ipToString(ip) + ":" +
+        "Binded address: " + ip.toString() + ":" +
         std::to_string(config.serverPort));
 
     return socket;

@@ -11,22 +11,21 @@
 #include "dhcp/common.h"
 #include "dhcp/config.h"
 #include "dhcp/dhcp_packet.h"
-#include "dhcp/leased_ip.h"
 
 namespace dhcp {
 
 DhcpServer::DhcpServer(const Config & config) noexcept
     : mStopped{false}, mConfig{config}, mAllocator{config.range} {
     mSocket = bindedSocket(config);
-    mId = stringToIp(config.address);
+    mId = IpType::fromString(config.address);
 
     auto broadcastConfig = config;
     broadcastConfig.address = "255.255.255.255";
     mBroadcastSocket = bindedSocket(broadcastConfig);
 
     logInfo(
-        "Ip from " + ipToString(config.range.from()) + " to " +
-        ipToString(config.range.to()));
+        "Ip from " + config.range.from().toString() + " to " +
+        config.range.to().toString());
 
     if (mSocket >= 0 && mBroadcastSocket >= 0) {
         mThreadIp = std::thread{&DhcpServer::threadStart, this, mSocket};
@@ -69,7 +68,6 @@ void DhcpServer::sendPacket(const DhcpPacket * packet) const noexcept {
     sockaddr.sin_family = AF_INET;
     sockaddr.sin_port = mConfig.clientPort.net();
     sockaddr.sin_addr.s_addr = packet->ipAddress().net();
-    logInfo(ipToString(packet->ipAddress()));
 
     packet->print();
     sendto(
@@ -77,9 +75,7 @@ void DhcpServer::sendPacket(const DhcpPacket * packet) const noexcept {
         reinterpret_cast<struct sockaddr *>(&sockaddr), sizeof(sockaddr));
 }
 
-NetInt<uint32_t> defineLeaseTime(
-    const Config & config,
-    const DhcpPacket * packet) {
+net32 defineLeaseTime(const Config & config, const DhcpPacket * packet) {
     auto clientLeaseTime = packet->getLeaseTime();
     if (clientLeaseTime.has_value())
         return std::min(*clientLeaseTime, config.maxLeaseTime);
@@ -91,12 +87,12 @@ void DhcpServer::onDiscover(DhcpPacket * packet) noexcept {
     IpType requestedIp;
 
     if (mClients.has(clientId))
-        requestedIp = mClients.get(clientId)->ip;
-    else
-        requestedIp = packet->requestedIp();
+        requestedIp = mClients.get(clientId)->lease.ip();
+    else if (auto ip = packet->requestedIp(); ip != UNDEFINED_IP)
+        requestedIp = *ip;
 
-    if (auto yiaddr = mAllocator.reserve(requestedIp); yiaddr != UNDEFINED_IP) {
-        packet->yiaddr = yiaddr;
+    if (auto yiaddr = mAllocator.reserve(requestedIp); yiaddr.isActive()) {
+        packet->yiaddr = yiaddr.ip();
     } else {
         logInfo("No free ip to reserve");
         return;
@@ -107,70 +103,126 @@ void DhcpServer::onDiscover(DhcpPacket * packet) noexcept {
 
 void DhcpServer::onRequest(DhcpPacket * packet) noexcept {
     auto serverId = packet->getServerId();
-    if (serverId != UNDEFINED_IP && serverId != mId) {
-        logInfo("Client chooses another server");
-        nack(packet);
-        return;
-    }
-
     auto clientId = packet->clientId();
-    auto client = mClients.getOrNew(clientId);
-    if (serverId == UNDEFINED_IP) {
-        if (client->xid != packet->xid) {
-            logInfo("Client sends info to another server");
-            return;
-        }
-    }
 
-    auto requestedIp = packet->requestedIp();
-    if (requestedIp == 0) {
-        logInfo("Client requests wrong ip");
+    if (serverId != mId && serverId != UNDEFINED_IP) {
+        logInfo("Client sent packet to another server");
         nack(packet);
         return;
     }
 
-    auto leasedIp = LeasedIp{&mAllocator, requestedIp};
-    if (leasedIp == 0) {
-        logInfo("No free ip");
+    Lease lease;
+    if (serverId == mId) {
+        lease = onRequestFromNewClient(packet);
+    } else if (mClients.has(clientId)) {
+        if (packet->ciaddr == 0)
+            lease = onRequestFromKnownClient(packet);
+        else
+            lease = onRequestUpdateLeaseTime(packet);
+    } else {
+        logInfo("There is no info about this client");
         nack(packet);
         return;
     }
 
-    auto leaseTime = client->timer.remainingTime();
-    if (packet->xid == client->xid && leaseTime == 0)
-        leaseTime = defineLeaseTime(mConfig, packet);
+    if (!lease.isActive()) {
+        nack(packet);
+        logInfo("Cannot lease an ip address");
+        return;
+    }
 
+    auto client = mClients.get(clientId);
     client->xid = packet->xid;
-    client->ip = std::move(leasedIp);
+    client->lease = std::move(lease);
     client->lastMessageType = packet->messageType();
+    packet->yiaddr = client->lease.ip();
 
-    if (leaseTime != std::numeric_limits<uint32_t>::max())
-        client->timer.lease(leaseTime);
-
-    packet->yiaddr = client->ip;
     ack(packet);
+}
+
+Lease DhcpServer::onRequestUpdateLeaseTime(DhcpPacket * packet) noexcept {
+    auto clientId = packet->clientId();
+    auto client = mClients.get(clientId);
+    auto requestedTime = defineLeaseTime(mConfig, packet);
+
+    if (client->lease.isActive()) {
+        auto ip = client->lease.ip();
+        client->lease.release();
+        return mAllocator.allocate(requestedTime, ip);
+    }
+
+    return Lease{};
+}
+
+Lease DhcpServer::onRequestFromNewClient(DhcpPacket * packet) noexcept {
+    IpType clientIp;
+    auto clientId = packet->clientId();
+    auto requestedIp = packet->requestedIp();
+
+    // Allocate previous ip address from history
+    if (mClients.has(clientId)) {
+        auto client = mClients.get(clientId);
+        if (mAllocator.isFree(client->lease.ip()))
+            clientIp = client->lease.ip();
+    } else {
+        clientIp = requestedIp.value_or(0);
+    }
+
+    auto leaseTime = defineLeaseTime(mConfig, packet);
+    auto lease = mAllocator.allocate(leaseTime, clientIp);
+
+    if (!lease.isActive()) {
+        logInfo("No free ip for new client");
+        return lease;
+    }
+
+    mClients.newClient(clientId);
+    return lease;
+}
+
+Lease DhcpServer::onRequestFromKnownClient(DhcpPacket * packet) noexcept {
+    auto serverId = packet->getServerId();
+    auto clientId = packet->clientId();
+    auto client = mClients.get(clientId);
+    auto requestedIp = packet->requestedIp();
+
+    if (!requestedIp.has_value()) {
+        logInfo("No requested ip");
+        return Lease{};
+    }
+
+    if (client->lease.isActive() && client->lease.ip() == *requestedIp) {
+        return std::move(client->lease);
+    }
+
+    auto leaseTime = defineLeaseTime(mConfig, packet);
+    auto lease = mAllocator.allocate(leaseTime, *requestedIp);
+
+    if (lease.ip() != requestedIp) {
+        logInfo("Requested ip is currenlty allocated");
+        lease.release();
+    }
+
+    return lease;
 }
 
 void DhcpServer::onRelease(DhcpPacket * packet) noexcept {
     auto client = mClients.get(packet->clientId());
-    if (client != nullptr) {
-        client->timer.release();
-        client->ip = LeasedIp{};
-    }
+    if (client != nullptr)
+        client->lease.release();
 }
 
 void DhcpServer::onDecline(DhcpPacket * packet) noexcept {
     auto client = mClients.get(packet->clientId());
     if (client != nullptr) {
-        client->timer.release();
-
+        auto busyIp = client->lease.ip();
+        client->lease.release();
+        mAllocator.allocate(busyIp);
         // permanentally allocate busy ip
-        mAllocator.allocate(client->ip);
-        client->ip = LeasedIp{};
     }
 
     logInfo(
-        "Client has defined that " + ipToString(client->ip) +
+        "Client has defined that " + client->lease.ip().toString() +
         " is used by someone");
 }
 
@@ -189,6 +241,7 @@ void DhcpServer::nack(DhcpPacket * packet) noexcept {
     packet->yiaddr = 0;
     packet->clearOptions();
     packet->setMessageType(MessageType::DHCPNACK);
+    packet->setServerId(mId);
     packet->sname.clear();
     sendPacket(packet);
 }
@@ -207,21 +260,19 @@ void DhcpServer::offer(DhcpPacket * packet) noexcept {
 }
 
 void DhcpServer::preparePacket(DhcpPacket * packet) noexcept {
-    auto leaseTime = packet->getLeaseTime();
+    auto leaseTime = defineLeaseTime(mConfig, packet);
     packet->clearOptions();
+
     packet->op = 2;
     packet->siaddr = 0;
     packet->setServerId(mId);
-    packet->setDnsServer(stringToIp(mConfig.dnsServer));
-    packet->setSubnetMask(stringToIp(mConfig.mask));
-    packet->setRouter(stringToIp(mConfig.router));
-    packet->setBroadcast(stringToIp("255.255.255.255"));
-    packet->setT1(1500);
-    packet->setT2(2200);
-
-    packet->setLeaseTime(3200);
-    // if (leaseTime.has_value())
-    // packet->setLeaseTime(*leaseTime);
+    packet->setDnsServer(IpType::fromString(mConfig.dnsServer));
+    packet->setSubnetMask(IpType::fromString(mConfig.mask));
+    packet->setRouter(IpType::fromString(mConfig.router));
+    packet->setBroadcast(IpType::fromString("255.255.255.255"));
+    packet->setT1(leaseTime * mConfig.t1);
+    packet->setT2(leaseTime * mConfig.t2);
+    packet->setLeaseTime(leaseTime);
 }
 
 void DhcpServer::threadStart(int socket) noexcept {

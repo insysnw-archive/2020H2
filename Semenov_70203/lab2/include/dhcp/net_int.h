@@ -2,85 +2,55 @@
 
 #include <arpa/inet.h>
 #include <algorithm>
+#include <atomic>
 #include <string>
+#include "dhcp/common.h"
 
 namespace dhcp {
 
 template <class Type>
 class NetInt;
 
-using IpType = NetInt<in_addr_t>;
-constexpr in_addr_t UNDEFINED_IP = 0;
 using RawType = std::string;
 
 template <class Type>
 class NetInt {
  public:
-    constexpr static size_t size = sizeof(Type);
+    using BaseType = Type;
+    constexpr static size_t size = sizeof(BaseType);
 
  public:
-    NetInt() noexcept : mValue{0} {}
+    NetInt() noexcept;
 
     // implicit
-    NetInt(Type value) noexcept : mValue{value} {}
+    NetInt(BaseType hostValue) noexcept;
 
-    // implicit
-    NetInt(const RawType & raw) : NetInt{raw.begin()} {}
+    virtual ~NetInt() = default;
 
-    static NetInt fromNet(Type value) noexcept {
-        return NetInt{NetInt{value}.net()};
-    }
+    static NetInt fromNet(BaseType netValue) noexcept;
 
-    explicit NetInt(RawType::const_iterator raw) noexcept {
-        fromRaw(raw);
-    }
+    static NetInt fromRaw(RawType::const_iterator raw) noexcept;
 
-    NetInt & fromRaw(RawType::const_iterator raw) noexcept {
-        Type netValue;
-        std::copy(raw, raw + size, reinterpret_cast<char *>(&netValue));
+    static NetInt fromRaw(const RawType & raw) noexcept;
 
-        if constexpr (sizeof(Type) == 4)
-            mValue = htonl(netValue);
-        else if (sizeof(Type) == 2)
-            mValue = htons(netValue);
-        else
-            mValue = netValue;
+    void assign(RawType::const_iterator raw) noexcept;
 
-        return *this;
-    }
+    RawType toRaw() const noexcept;
 
-    RawType toRaw() const noexcept {
-        RawType raw;
-        auto netValue = net();
-        raw.append(reinterpret_cast<char *>(&netValue), size);
-        return raw;
-    }
+    BaseType net() const noexcept;
 
-    Type net() const noexcept {
-        if constexpr (sizeof(Type) == 4)
-            return ntohl(mValue);
-        else if (sizeof(Type) == 2)
-            return ntohs(mValue);
-        return mValue;
-    }
+    operator BaseType() const noexcept;
 
-    operator Type() const noexcept {
-        return mValue;
-    }
+    NetInt & operator++() noexcept;
 
-    NetInt & operator++() noexcept {
-        mValue += 1;
-        return *this;
-    }
-
-    NetInt operator++(int) noexcept {
-        NetInt saved = *this;
-        mValue += 1;
-        return saved;
-    }
+    NetInt operator++(int) noexcept;
 
  private:
-    Type mValue;
+    BaseType mValue;
 };
+
+using net32 = NetInt<uint32_t>;
+using net16 = NetInt<uint16_t>;
+using net8 = NetInt<uint8_t>;
 
 }  // namespace dhcp

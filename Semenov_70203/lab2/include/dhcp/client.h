@@ -5,7 +5,6 @@
 
 #include "dhcp/dhcp_packet.h"
 #include "dhcp/ip_allocator.h"
-#include "dhcp/leased_ip.h"
 #include "dhcp/timer.h"
 
 namespace dhcp {
@@ -19,10 +18,9 @@ class Client {
     RawType id() const noexcept;
 
  public:
-    LeasedIp ip;
-    Timer timer;
+    Lease lease;
     MessageType lastMessageType;
-    NetInt<uint32_t> xid;
+    net32 xid;
 
  private:
     RawType mId;
@@ -34,7 +32,7 @@ class ClientManager {
 
     Client * get(const RawType & id) noexcept;
 
-    Client * getOrNew(const RawType & id) noexcept;
+    Client * newClient(const RawType & id) noexcept;
 
     void clear() noexcept;
 

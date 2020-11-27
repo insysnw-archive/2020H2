@@ -1,21 +1,29 @@
 #pragma once
 
 #include <deque>
+#include <mutex>
 
+#include "dhcp/lease.h"
+#include "dhcp/net_int.h"
 #include "dhcp/range.h"
 
 namespace dhcp {
+
 class IpAllocator {
+ public:
+    using Reserve = Lease;
+    static constexpr uint32_t RESERVE_TIME = 30;
+
  public:
     explicit IpAllocator(const Range & range) noexcept;
 
-    IpType allocate() noexcept;
+    Lease allocate(net32 time) noexcept;
 
-    IpType allocate(IpType preference) noexcept;
+    Lease allocate(net32 time, IpType preference) noexcept;
 
-    IpType reserve() noexcept;
+    Reserve reserve() noexcept;
 
-    IpType reserve(IpType preference) noexcept;
+    Reserve reserve(IpType preference) noexcept;
 
     void deallocate(IpType ip) noexcept;
 
@@ -26,6 +34,8 @@ class IpAllocator {
 
  private:
     Range mRange;
+    mutable std::recursive_mutex mMutex;
+
     std::deque<IpType> mAllocated;
     std::deque<IpType> mReserved;
 };

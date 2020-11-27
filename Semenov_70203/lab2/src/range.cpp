@@ -15,8 +15,8 @@ Range::Range() noexcept {
 Range::Range(std::string_view range) noexcept {
     auto separator = ':';
     auto firstEnd = std::find(range.begin(), range.end(), separator);
-    mFrom = stringToIp(std::string{range.begin(), firstEnd});
-    mTo = stringToIp(std::string{firstEnd + 1, range.end()});
+    mFrom = IpType::fromString(std::string{range.begin(), firstEnd});
+    mTo = IpType::fromString(std::string{firstEnd + 1, range.end()});
     if (mFrom > mTo)
         std::swap(mFrom, mTo);
 }

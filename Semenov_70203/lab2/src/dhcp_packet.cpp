@@ -1,10 +1,10 @@
 #include "dhcp/dhcp_packet.h"
 
 #include <arpa/inet.h>
-#include <bits/stdint-uintn.h>
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <iterator>
 #include <sstream>
@@ -86,37 +86,37 @@ DhcpPacket DhcpPacket::deserialize(const RawType & raw) noexcept {
     DhcpPacket packet;
     auto rawBegin = raw.begin();
 
-    packet.op.fromRaw(rawBegin);
+    packet.op.assign(rawBegin);
     rawBegin += packet.op.size;
 
-    packet.htype.fromRaw(rawBegin);
+    packet.htype.assign(rawBegin);
     rawBegin += packet.htype.size;
 
-    packet.hlen.fromRaw(rawBegin);
+    packet.hlen.assign(rawBegin);
     rawBegin += packet.hlen.size;
 
-    packet.hops.fromRaw(rawBegin);
+    packet.hops.assign(rawBegin);
     rawBegin += packet.hops.size;
 
-    packet.xid.fromRaw(rawBegin);
+    packet.xid.assign(rawBegin);
     rawBegin += packet.xid.size;
 
-    packet.secs.fromRaw(rawBegin);
+    packet.secs.assign(rawBegin);
     rawBegin += packet.secs.size;
 
-    packet.flags.fromRaw(rawBegin);
+    packet.flags.assign(rawBegin);
     rawBegin += packet.flags.size;
 
-    packet.ciaddr.fromRaw(rawBegin);
+    packet.ciaddr.assign(rawBegin);
     rawBegin += packet.ciaddr.size;
 
-    packet.yiaddr.fromRaw(rawBegin);
+    packet.yiaddr.assign(rawBegin);
     rawBegin += packet.yiaddr.size;
 
-    packet.siaddr.fromRaw(rawBegin);
+    packet.siaddr.assign(rawBegin);
     rawBegin += packet.siaddr.size;
 
-    packet.giaddr.fromRaw(rawBegin);
+    packet.giaddr.assign(rawBegin);
     rawBegin += packet.giaddr.size;
 
     packet.chaddr.append(rawBegin, rawBegin + 16);
@@ -135,9 +135,9 @@ DhcpPacket DhcpPacket::deserialize(const RawType & raw) noexcept {
 std::string ipV4pack(RawType raw) noexcept {
     std::stringstream ss;
     for (auto i = raw.begin(); i < raw.end() - 4; i += 4) {
-        ss << ipToString(IpType{i}) << " ";
+        ss << IpType::fromRaw(i).toString() << " ";
     }
-    ss << ipToString(IpType{raw.end() - 4});
+    ss << IpType::fromRaw(raw.end() - 4).toString();
     return ss.str();
 }
 
@@ -146,9 +146,9 @@ std::string intPack(RawType raw) noexcept {
     auto size = sizeof(Type);
     std::stringstream ss;
     for (auto i = raw.begin(); i < raw.end() - size; i += size) {
-        ss << +NetInt<Type>{i} << " ";
+        ss << +NetInt<Type>::fromRaw(i) << " ";
     }
-    ss << +NetInt<Type>{raw.end() - size};
+    ss << +NetInt<Type>::fromRaw(raw.end() - size);
     return ss.str();
 }
 
@@ -263,7 +263,7 @@ std::string optionsString(const DhcpPacket::OptionsList & options) noexcept {
 
             case MESSAGE_TYPE_CODE:
                 ss << "DHCP Message type: ";
-                switch (NetInt<uint8_t>{o.data}) {
+                switch (net8::fromRaw(o.data)) {
                     case 1: ss << "DHCPDISCOVER\n"; break;
                     case 2: ss << "DHCPOFFER\n"; break;
                     case 3: ss << "DHCPREQUEST\n"; break;
@@ -282,6 +282,14 @@ std::string optionsString(const DhcpPacket::OptionsList & options) noexcept {
 }
 
 void DhcpPacket::print() const noexcept {
+    auto now = std::chrono::system_clock::now();
+    auto time = std::chrono::system_clock::to_time_t(now);
+
+    std::cout << "======================================================="
+              << "\n";
+    std::cout << "\t\t" << ctime(&time);
+    std::cout << "======================================================="
+              << "\n";
     std::cout << "    op: " << +op << "\n";
     std::cout << " htype: " << +htype << "\n";
     std::cout << "  hlen: " << +hlen << "\n";
@@ -290,10 +298,10 @@ void DhcpPacket::print() const noexcept {
     std::cout << "  secs: " << secs << "\n";
     std::cout << " flags: " << flags << "\n";
 
-    std::cout << "ciaddr: " << ipToString(ciaddr) << "\n";
-    std::cout << "yiaddr: " << ipToString(yiaddr) << "\n";
-    std::cout << "siaddr: " << ipToString(siaddr) << "\n";
-    std::cout << "giaddr: " << ipToString(giaddr) << "\n";
+    std::cout << "ciaddr: " << ciaddr.toString() << "\n";
+    std::cout << "yiaddr: " << yiaddr.toString() << "\n";
+    std::cout << "siaddr: " << siaddr.toString() << "\n";
+    std::cout << "giaddr: " << giaddr.toString() << "\n";
 
     std::cout << "chaddr: " << hexValue(chaddr) << "\n";
     std::cout << " sname: " << sname << "\n";
@@ -347,18 +355,18 @@ RawType DhcpPacket::clientId() const noexcept {
     return cid;
 }
 
-IpType DhcpPacket::requestedIp() const noexcept {
+std::optional<IpType> DhcpPacket::requestedIp() const noexcept {
     auto requestedIp = getOption(REQUESTED_IP_CODE);
     if (!requestedIp.has_value())
         return UNDEFINED_IP;
-    return IpType{requestedIp->data};
+    return IpType::fromRaw(requestedIp->data);
 }
 
 MessageType DhcpPacket::messageType() const noexcept {
     auto messageType = getOption(MESSAGE_TYPE_CODE);
     if (!messageType.has_value())
         return MessageType::UNDEFINED;
-    uint8_t type = NetInt<uint8_t>{messageType->data};
+    uint8_t type = net8::fromRaw(messageType->data);
     return static_cast<MessageType>(type);
 }
 
@@ -366,7 +374,7 @@ void DhcpPacket::setMessageType(MessageType type) noexcept {
     uint8_t value = static_cast<uint8_t>(type);
     Option messageType;
     messageType.code = MESSAGE_TYPE_CODE;
-    messageType.data = NetInt<uint8_t>{value}.toRaw();
+    messageType.data = net8{value}.toRaw();
     addOption(std::move(messageType));
 }
 
@@ -377,10 +385,10 @@ void DhcpPacket::setServerId(IpType ip) noexcept {
     addOption(std::move(serverId));
 }
 
-IpType DhcpPacket::getServerId() const noexcept {
+std::optional<IpType> DhcpPacket::getServerId() const noexcept {
     auto serverId = getOption(SERVER_ID_CODE);
     if (serverId.has_value())
-        return serverId->data;
+        return IpType::fromRaw(serverId->data);
     return UNDEFINED_IP;
 }
 void DhcpPacket::setSubnetMask(IpType ip) noexcept {
@@ -411,28 +419,28 @@ void DhcpPacket::setBroadcast(IpType ip) noexcept {
     addOption(std::move(broadcast));
 }
 
-std::optional<NetInt<uint32_t>> DhcpPacket::getLeaseTime() const noexcept {
+std::optional<net32> DhcpPacket::getLeaseTime() const noexcept {
     auto leaseTime = getOption(LEASE_TIME_CODE);
     if (leaseTime.has_value())
-        return leaseTime->data;
+        return net32::fromRaw(leaseTime->data);
     return std::nullopt;
 }
 
-void DhcpPacket::setLeaseTime(NetInt<uint32_t> time) noexcept {
+void DhcpPacket::setLeaseTime(net32 time) noexcept {
     Option leaseTime;
     leaseTime.code = LEASE_TIME_CODE;
     leaseTime.data = time.toRaw();
     addOption(std::move(leaseTime));
 }
 
-void DhcpPacket::setT1(NetInt<uint32_t> time) noexcept {
+void DhcpPacket::setT1(net32 time) noexcept {
     Option t1;
     t1.code = T1_CODE;
     t1.data = time.toRaw();
     addOption(std::move(t1));
 }
 
-void DhcpPacket::setT2(NetInt<uint32_t> time) noexcept {
+void DhcpPacket::setT2(net32 time) noexcept {
     Option t2;
     t2.code = T2_CODE;
     t2.data = time.toRaw();

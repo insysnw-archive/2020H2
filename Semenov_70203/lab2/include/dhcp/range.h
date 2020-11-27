@@ -2,6 +2,7 @@
 
 #include <string_view>
 
+#include "dhcp/ip_type.h"
 #include "dhcp/net_int.h"
 
 namespace dhcp {

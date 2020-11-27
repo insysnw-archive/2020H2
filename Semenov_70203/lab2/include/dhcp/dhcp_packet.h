@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "dhcp/ip_type.h"
 #include "dhcp/net_int.h"
 
 namespace dhcp {
@@ -28,17 +29,17 @@ struct Option {
 struct DhcpPacket {
     using OptionsList = std::vector<Option>;
 
-    NetInt<uint8_t> op;
-    NetInt<uint8_t> htype;
-    NetInt<uint8_t> hlen;
-    NetInt<uint8_t> hops;
-    NetInt<uint32_t> xid;
-    NetInt<uint16_t> secs;
-    NetInt<uint16_t> flags;
-    NetInt<uint32_t> ciaddr;
-    NetInt<uint32_t> yiaddr;
-    NetInt<uint32_t> siaddr;
-    NetInt<uint32_t> giaddr;
+    net8 op;
+    net8 htype;
+    net8 hlen;
+    net8 hops;
+    net32 xid;
+    net16 secs;
+    net16 flags;
+    IpType ciaddr;
+    IpType yiaddr;
+    IpType siaddr;
+    IpType giaddr;
     RawType chaddr;
     RawType sname;
     RawType file;
@@ -66,13 +67,13 @@ struct DhcpPacket {
 
     RawType clientId() const noexcept;
 
-    IpType requestedIp() const noexcept;
+    std::optional<IpType> requestedIp() const noexcept;
 
     void setMessageType(MessageType type) noexcept;
 
     void setServerId(IpType ip) noexcept;
 
-    IpType getServerId() const noexcept;
+    std::optional<IpType> getServerId() const noexcept;
 
     void setSubnetMask(IpType ip) noexcept;
 
@@ -82,13 +83,13 @@ struct DhcpPacket {
 
     void setBroadcast(IpType ip) noexcept;
 
-    void setT1(NetInt<uint32_t> time) noexcept;
+    void setT1(net32 time) noexcept;
 
-    void setT2(NetInt<uint32_t> time) noexcept;
+    void setT2(net32 time) noexcept;
 
-    std::optional<NetInt<uint32_t>> getLeaseTime() const noexcept;
+    std::optional<net32> getLeaseTime() const noexcept;
 
-    void setLeaseTime(NetInt<uint32_t> time) noexcept;
+    void setLeaseTime(net32 time) noexcept;
 
     IpType ipAddress() const noexcept;
 

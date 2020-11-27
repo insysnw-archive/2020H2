@@ -4,7 +4,7 @@
 
 namespace dhcp {
 
-Client::Client(const RawType & id) noexcept : timer{&ip}, mId{id} {}
+Client::Client(const RawType & id) noexcept : mId{id} {}
 
 bool Client::operator==(const Client & other) const noexcept {
     return mId == other.mId;
@@ -25,7 +25,7 @@ Client * ClientManager::get(const RawType & id) noexcept {
     return nullptr;
 }
 
-Client * ClientManager::getOrNew(const RawType & id) noexcept {
+Client * ClientManager::newClient(const RawType & id) noexcept {
     if (!has(id)) {
         mClients.emplace_back(id);
         return &mClients.back();
@@ -35,7 +35,7 @@ Client * ClientManager::getOrNew(const RawType & id) noexcept {
 
 void ClientManager::clear() noexcept {
     for (auto & client : mClients)
-        if (client.timer.isStopped()) {
+        if (!client.lease.isActive()) {
             auto removeFrom =
                 std::remove(mClients.begin(), mClients.end(), client);
             mClients.erase(removeFrom, mClients.end());

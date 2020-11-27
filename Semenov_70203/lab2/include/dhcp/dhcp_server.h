@@ -29,6 +29,12 @@ class DhcpServer {
 
     void onRequest(DhcpPacket * packet) noexcept;
 
+    Lease onRequestFromNewClient(DhcpPacket * packet) noexcept;
+
+    Lease onRequestFromKnownClient(DhcpPacket * packet) noexcept;
+
+    Lease onRequestUpdateLeaseTime(DhcpPacket * packet) noexcept;
+
     void onRelease(DhcpPacket * packet) noexcept;
 
     void onDecline(DhcpPacket * packet) noexcept;

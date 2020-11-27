@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include "dhcp/lease.h"
 #include "dhcp/range.h"
 
 namespace dhcp {
@@ -15,8 +16,11 @@ struct Config {
     std::string dnsServer = "8.8.8.8";
     std::string mask = "255.255.255.0";
 
-    NetInt<uint32_t> defaultLeaseTime = 3600;
-    NetInt<uint32_t> maxLeaseTime = 7200;
+    float t1 = 0.5f;
+    float t2 = 0.9f;
+
+    net32 defaultLeaseTime = 3600;
+    net32 maxLeaseTime = INFINITY_TIME;
     Range range = Range{"192.168.0.101:192.168.0.200"};
 };
 
