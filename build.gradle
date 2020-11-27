@@ -1,0 +1,42 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.10'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.8'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+application {
+    mainClassName = "MainKt"
+}
+
+javafx {
+    version = "11.0.2"
+    modules = ['javafx.controls', 'javafx.graphics']
+}
+
+shadowJar{}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    implementation "no.tornado:tornadofx:$tornadofx_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-javafx:$coroutines_version"
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "11"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "11"
+}
