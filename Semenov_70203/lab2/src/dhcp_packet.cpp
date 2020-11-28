@@ -374,11 +374,14 @@ void DhcpPacket::setMessageType(MessageType type) noexcept {
     addOption(std::move(messageType));
 }
 
+#define ADD_OPTION(CODE, VALUE)    \
+    Option option;                 \
+    option.code = (CODE);          \
+    option.data = (VALUE).toRaw(); \
+    addOption(std::move(option));
+
 void DhcpPacket::setServerId(IpType ip) noexcept {
-    Option serverId;
-    serverId.code = SERVER_ID_CODE;
-    serverId.data = ip.toRaw();
-    addOption(std::move(serverId));
+    ADD_OPTION(SERVER_ID_CODE, ip);
 }
 
 std::optional<IpType> DhcpPacket::getServerId() const noexcept {
@@ -387,32 +390,21 @@ std::optional<IpType> DhcpPacket::getServerId() const noexcept {
         return IpType::fromRaw(serverId->data);
     return UNDEFINED_IP;
 }
+
 void DhcpPacket::setSubnetMask(IpType ip) noexcept {
-    Option subnetMask;
-    subnetMask.code = SUBNET_MASK_CODE;
-    subnetMask.data = ip.toRaw();
-    addOption(std::move(subnetMask));
+    ADD_OPTION(SUBNET_MASK_CODE, ip);
 }
 
 void DhcpPacket::setDnsServer(IpType ip) noexcept {
-    Option dns;
-    dns.code = DNS_CODE;
-    dns.data = ip.toRaw();
-    addOption(std::move(dns));
+    ADD_OPTION(DNS_CODE, ip);
 }
 
 void DhcpPacket::setRouter(IpType ip) noexcept {
-    Option router;
-    router.code = ROUTER_CODE;
-    router.data = ip.toRaw();
-    addOption(std::move(router));
+    ADD_OPTION(ROUTER_CODE, ip);
 }
 
 void DhcpPacket::setBroadcast(IpType ip) noexcept {
-    Option broadcast;
-    broadcast.code = BROADCAST_CODE;
-    broadcast.data = ip.toRaw();
-    addOption(std::move(broadcast));
+    ADD_OPTION(BROADCAST_CODE, ip);
 }
 
 std::optional<net32> DhcpPacket::getLeaseTime() const noexcept {
@@ -423,24 +415,15 @@ std::optional<net32> DhcpPacket::getLeaseTime() const noexcept {
 }
 
 void DhcpPacket::setLeaseTime(net32 time) noexcept {
-    Option leaseTime;
-    leaseTime.code = LEASE_TIME_CODE;
-    leaseTime.data = time.toRaw();
-    addOption(std::move(leaseTime));
+    ADD_OPTION(LEASE_TIME_CODE, time);
 }
 
 void DhcpPacket::setT1(net32 time) noexcept {
-    Option t1;
-    t1.code = T1_CODE;
-    t1.data = time.toRaw();
-    addOption(std::move(t1));
+    ADD_OPTION(T1_CODE, time);
 }
 
 void DhcpPacket::setT2(net32 time) noexcept {
-    Option t2;
-    t2.code = T2_CODE;
-    t2.data = time.toRaw();
-    addOption(std::move(t2));
+    ADD_OPTION(T2_CODE, time);
 }
 
 IpType DhcpPacket::ipAddress() const noexcept {
