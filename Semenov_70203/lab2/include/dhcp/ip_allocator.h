@@ -11,7 +11,7 @@ namespace dhcp {
 
 class IpAllocator {
  public:
-    using Reserve = Lease;
+    using IpContainer = std::deque<IpType>;
     static constexpr uint32_t RESERVE_TIME = 30;
 
  public:
@@ -23,9 +23,9 @@ class IpAllocator {
 
     Lease tryToAllocate(net32 time, IpType ip) noexcept;
 
-    Reserve reserve() noexcept;
+    std::optional<IpType> reserve() noexcept;
 
-    Reserve reserve(IpType preference) noexcept;
+    std::optional<IpType> reserve(IpType preference) noexcept;
 
     void deallocate(IpType ip) noexcept;
 
@@ -34,12 +34,21 @@ class IpAllocator {
  private:
     bool isReserved(IpType ip) const noexcept;
 
+    IpType doReserve(IpType ip) noexcept;
+
+    Lease doAllocate(IpType ip, net32 time) noexcept;
+
+    void clearTemporary() noexcept;
+
  private:
     Range mRange;
     mutable std::recursive_mutex mMutex;
 
-    std::deque<IpType> mAllocated;
-    std::deque<IpType> mReserved;
+    IpContainer mAllocated;
+    IpContainer mReserved;
+
+    IpContainer mTemporary;
+    Timer mClearReservedTimer;
 };
 
 }  // namespace dhcp
