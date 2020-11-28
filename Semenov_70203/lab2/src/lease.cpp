@@ -1,8 +1,6 @@
 #include "dhcp/lease.h"
 
-#include <limits.h>
 #include "dhcp/ip_allocator.h"
-#include "dhcp/net_int.h"
 
 namespace dhcp {
 

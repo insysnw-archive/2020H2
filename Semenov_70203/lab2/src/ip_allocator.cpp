@@ -1,8 +1,6 @@
 #include "dhcp/ip_allocator.h"
 
-#include "dhcp/common.h"
-#include "dhcp/ip_type.h"
-#include "dhcp/net_int.h"
+#include "dhcp/log.h"
 
 namespace dhcp {
 
@@ -73,19 +71,19 @@ void IpAllocator::deallocate(IpType ip) noexcept {
     auto ips = ip.toString();
 
     if (ipTemporary != mTemporary.end()) {
-        logInfo("Temporary ip " + ips + " is released");
+        log("Temporary ip " + ips + " is released");
         mTemporary.erase(ipTemporary);
     }
 
     if (ipReserved != mReserved.end()) {
-        logInfo("Ip " + ips + " is back from reservation");
+        log("Ip " + ips + " is back from reservation");
         mReserved.erase(ipReserved);
     }
 
     if (ipAllocated != mAllocated.end()) {
-        logInfo("Released " + ips);
+        log("Released " + ips);
         mAllocated.erase(ipAllocated);
-        logInfo("Ip " + ips + " is reserved for this client");
+        log("Ip " + ips + " is reserved for this client");
         mReserved.push_back(ip);
     }
 }
@@ -103,7 +101,7 @@ bool IpAllocator::isReserved(IpType ip) const noexcept {
 
 IpType IpAllocator::doReserve(IpType ip) noexcept {
     std::lock_guard lock{mMutex};
-    logInfo("Temporary reserved " + ip.toString());
+    log("Temporary reserved " + ip.toString());
     mTemporary.push_back(ip);
     mClearReservedTimer.start(RESERVE_TIME);
     return ip;
@@ -113,7 +111,7 @@ Lease IpAllocator::doAllocate(IpType ip, net32 time) noexcept {
     std::lock_guard lock{mMutex};
     deallocate(ip);
     mAllocated.push_back(ip);
-    logInfo("Allocated " + ip.toString() + " for client");
+    log("Allocated " + ip.toString() + " for client");
     return Lease{ip, time, this};
 }
 

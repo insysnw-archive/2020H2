@@ -1,18 +1,44 @@
 #include "dhcp/dhcp_server.h"
 
-#include <bits/stdint-uintn.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <array>
 #include <cstring>
-#include <limits>
 #include <optional>
 
-#include "dhcp/common.h"
 #include "dhcp/config.h"
 #include "dhcp/dhcp_packet.h"
+#include "dhcp/log.h"
 
 namespace dhcp {
+
+std::string timeOrInfinite(net32 time) {
+    if (time == INFINITY_TIME)
+        return "Infinite";
+    return std::to_string(time);
+}
+
+void printInfo(const Config & config) {
+    log("Binded to " + config.address);
+
+    log("Range from " + config.range.from().toString() + " to " +
+        config.range.to().toString());
+
+    if (!config.router.empty())
+        log("Gateway: " + config.router);
+
+    if (!config.dnsServer.empty())
+        log("DNS server: " + config.dnsServer);
+
+    if (!config.mask.empty())
+        log("Subnet mask: " + config.mask);
+
+    if (!config.broadcast.empty())
+        log("Broadcast address: " + config.broadcast);
+
+    log("Default lease time: " + timeOrInfinite(config.defaultLeaseTime));
+    log("Max lease time: " + timeOrInfinite(config.maxLeaseTime));
+}
 
 DhcpServer::DhcpServer(const Config & config) noexcept
     : mStopped{false}, mConfig{config}, mAllocator{config.range} {
@@ -22,7 +48,7 @@ DhcpServer::DhcpServer(const Config & config) noexcept
     mBroadcastSocket = bindedSocket("255.255.255.255");
 
     if (mSocket >= 0 && mBroadcastSocket >= 0) {
-        logInfo("Binded " + config.address);
+        printInfo(mConfig);
         mThreadIp = std::thread{&DhcpServer::threadStart, this, mSocket};
         mThreadBroadcast =
             std::thread{&DhcpServer::threadStart, this, mBroadcastSocket};
@@ -52,20 +78,20 @@ int DhcpServer::bindedSocket(const std::string & address) noexcept {
     int opt = 1;
 
     if (setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
-        logInfo("Setsockopt reuseaddr", LogType::ERRNO);
+        log("Setsockopt reuseaddr", LogType::ERRNO);
 
     struct timeval tv;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
 
     if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
-        logInfo("Setsockopt rcvtimeo", LogType::ERRNO);
+        log("Setsockopt rcvtimeo", LogType::ERRNO);
 
     if (setsockopt(socket, SOL_SOCKET, SO_BROADCAST, &opt, sizeof(opt)) < 0)
-        logInfo("Setsockopt broadcast", LogType::ERRNO);
+        log("Setsockopt broadcast", LogType::ERRNO);
 
     if (bind(socket, casted, sizeof(sockaddr)) < 0) {
-        logInfo("Binding " + address, LogType::ERRNO);
+        log("Binding " + address, LogType::ERRNO);
         close(socket);
         return -1;
     }
@@ -74,7 +100,7 @@ int DhcpServer::bindedSocket(const std::string & address) noexcept {
 }
 
 std::optional<DhcpPacket> DhcpServer::receivePacket(int socket) const noexcept {
-    std::array<char, 512> buffer;
+    std::array<char, 1500> buffer;
     sockaddr_in address;
     socklen_t socklen;
 
@@ -125,7 +151,7 @@ void DhcpServer::onDiscover(DhcpPacket * packet) noexcept {
     if (auto yiaddr = mAllocator.reserve(requestedIp); yiaddr.has_value()) {
         packet->yiaddr = *yiaddr;
     } else {
-        logInfo("No free ip to reserve", LogType::WARNING);
+        log("No free ip to reserve", LogType::WARNING);
         return;
     }
 
@@ -138,7 +164,7 @@ void DhcpServer::onRequest(DhcpPacket * packet) noexcept {
     auto clientId = packet->clientId();
 
     if (serverId != mId && serverId != UNDEFINED_IP) {
-        logInfo("Client sent packet to another server", LogType::WARNING);
+        log("Client sent packet to another server", LogType::WARNING);
         nack(packet);
         return;
     }
@@ -152,14 +178,14 @@ void DhcpServer::onRequest(DhcpPacket * packet) noexcept {
         else
             lease = onRequestUpdateLeaseTime(packet);
     } else {
-        logInfo("There is no info about this client", LogType::WARNING);
+        log("There is no info about this client", LogType::WARNING);
         nack(packet);
         return;
     }
 
     if (!lease.isActive()) {
         nack(packet);
-        logInfo("Cannot lease an ip address", LogType::WARNING);
+        log("Cannot lease an ip address", LogType::WARNING);
         return;
     }
 
@@ -179,7 +205,7 @@ Lease DhcpServer::onRequestUpdateLeaseTime(DhcpPacket * packet) noexcept {
     auto requestedTime = defineLeaseTime(packet);
 
     if (client == nullptr) {
-        logInfo("Unkown client with specified ciaddr", LogType::WARNING);
+        log("Unkown client with specified ciaddr", LogType::WARNING);
         return Lease{};
     }
 
@@ -191,7 +217,7 @@ Lease DhcpServer::onRequestUpdateLeaseTime(DhcpPacket * packet) noexcept {
 
     auto lease = mAllocator.tryToAllocate(requestedTime, ip);
     if (!lease.isActive())
-        logInfo("Clients lease is out-of-date", LogType::WARNING);
+        log("Clients lease is out-of-date", LogType::WARNING);
 
     return lease;
 }
@@ -214,7 +240,7 @@ Lease DhcpServer::onRequestFromNewClient(DhcpPacket * packet) noexcept {
     auto lease = mAllocator.allocate(leaseTime, clientIp);
 
     if (!lease.isActive()) {
-        logInfo("No free ip for new client", LogType::WARNING);
+        log("No free ip for new client", LogType::WARNING);
         return lease;
     }
 
@@ -229,20 +255,20 @@ Lease DhcpServer::onRequestFromKnownClient(DhcpPacket * packet) noexcept {
     auto requestedIp = packet->requestedIp();
 
     if (!requestedIp.has_value()) {
-        logInfo("No requested ip", LogType::WARNING);
+        log("No requested ip", LogType::WARNING);
         return Lease{};
     }
 
     auto leaseTime = defineLeaseTime(packet);
     if (client->lease.isActive() && client->lease.ip() == *requestedIp) {
-        logInfo("Client has active lease");
+        log("Client has active lease");
         client->lease.updateTime(leaseTime);
         return std::move(client->lease);
     }
 
     auto lease = mAllocator.tryToAllocate(leaseTime, *requestedIp);
     if (!lease.isActive())
-        logInfo("Requested ip is currenlty allocated", LogType::WARNING);
+        log("Requested ip is currenlty allocated", LogType::WARNING);
 
     return lease;
 }
@@ -261,8 +287,7 @@ void DhcpServer::onDecline(DhcpPacket * packet) noexcept {
 
         // permanentally allocate busy ip
         mAllocator.allocate(INFINITY_TIME, busyIp);
-        logInfo(
-            "Client has defined that " + busyIp.toString() +
+        log("Client has defined that " + busyIp.toString() +
                 " is used by someone",
             LogType::WARNING);
     }
@@ -313,9 +338,6 @@ void DhcpServer::preparePacket(DhcpPacket * packet) noexcept {
 
     if (!mConfig.mask.empty())
         packet->setSubnetMask(IpType::fromString(mConfig.mask));
-
-    if (!mConfig.router.empty())
-        packet->setRouter(IpType::fromString(mConfig.router));
 
     if (!mConfig.router.empty())
         packet->setRouter(IpType::fromString(mConfig.router));

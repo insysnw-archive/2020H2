@@ -1,10 +1,9 @@
 #include "dhcp/range.h"
 
-#include <arpa/inet.h>
 #include <algorithm>
 #include <string_view>
 
-#include "dhcp/common.h"
+#include "dhcp/log.h"
 
 namespace dhcp {
 

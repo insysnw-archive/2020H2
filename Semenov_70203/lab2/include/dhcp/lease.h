@@ -2,8 +2,8 @@
 
 #include <atomic>
 #include <limits>
-#include <memory>
 #include <mutex>
+
 #include "dhcp/ip_type.h"
 #include "dhcp/net_int.h"
 #include "dhcp/timer.h"

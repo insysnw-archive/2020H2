@@ -1,10 +1,8 @@
 #pragma once
 
-#include <arpa/inet.h>
-#include <algorithm>
-#include <atomic>
 #include <string>
-#include "dhcp/common.h"
+
+#include "dhcp/log.h"
 
 namespace dhcp {
 

@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-#include "dhcp/common.h"
+#include "dhcp/log.h"
 
 namespace dhcp {
 
@@ -29,7 +29,7 @@ IpType IpType::fromRaw(RawType::const_iterator raw) noexcept {
 IpType IpType::fromString(const std::string & str) noexcept {
     auto inaddr = initInAddr();
     if (inet_pton(AF_INET, str.data(), &inaddr) <= 0) {
-        logInfo("Cannot convert string to ip", LogType::ERRNO);
+        log("Cannot convert string to ip", LogType::ERRNO);
         return 0;
     }
 

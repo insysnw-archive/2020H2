@@ -1,11 +1,9 @@
 #pragma once
 
-#include <optional>
 #include <vector>
 
 #include "dhcp/dhcp_packet.h"
-#include "dhcp/ip_allocator.h"
-#include "dhcp/timer.h"
+#include "dhcp/lease.h"
 
 namespace dhcp {
 

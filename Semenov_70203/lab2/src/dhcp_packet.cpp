@@ -1,15 +1,11 @@
 #include "dhcp/dhcp_packet.h"
 
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/types.h>
 #include <algorithm>
 #include <chrono>
 #include <iostream>
-#include <iterator>
 #include <sstream>
 
-#include "dhcp/common.h"
+#include "dhcp/log.h"
 #include "dhcp/net_int.h"
 
 namespace dhcp {

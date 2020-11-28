@@ -3,7 +3,7 @@
 #include <signal.h>
 #include <cstring>
 
-#include "dhcp/common.h"
+#include "dhcp/log.h"
 
 namespace dhcp {
 
@@ -41,7 +41,7 @@ void Timer::createTimer() noexcept {
     event.sigev_value.sival_ptr = reinterpret_cast<void *>(mNotifier.get());
 
     if (timer_create(CLOCK_MONOTONIC, &event, &mPosixTimer) < 0)
-        logInfo("Cannot create timer", LogType::ERRNO);
+        log("Cannot create timer", LogType::ERRNO);
 }
 
 Timer::Timer() noexcept {
@@ -66,15 +66,12 @@ void Timer::setCallback(CallbackType callback) noexcept {
 }
 
 void Timer::start(size_t sec) noexcept {
-    if (sec != 0)
-        logInfo("Lease time: " + std::to_string(sec) + " sec");
-
     itimerspec timespec;
     std::memset(&timespec, 0, sizeof(timespec));
     timespec.it_value.tv_sec = sec;
 
     if (timer_settime(mPosixTimer, 0, &timespec, nullptr) < 0)
-        logInfo("timer_settime", LogType::ERRNO);
+        log("timer_settime", LogType::ERRNO);
 }
 
 time_t Timer::stop() noexcept {

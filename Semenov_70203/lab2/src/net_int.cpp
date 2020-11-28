@@ -1,5 +1,7 @@
 #include "dhcp/net_int.h"
 
+#include <arpa/inet.h>
+
 namespace dhcp {
 
 template <class T>

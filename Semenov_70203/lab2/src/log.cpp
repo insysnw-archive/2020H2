@@ -1,4 +1,4 @@
-#include "dhcp/common.h"
+#include "dhcp/log.h"
 
 #include <unistd.h>
 
@@ -10,7 +10,7 @@
 
 namespace dhcp {
 
-void logInfo(std::string_view info, LogType type) noexcept {
+void log(std::string_view info, LogType type) noexcept {
     static std::mutex lMutex;
     std::lock_guard lock{lMutex};
 

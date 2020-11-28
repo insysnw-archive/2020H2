@@ -6,10 +6,10 @@
 #include <thread>
 
 #include "dhcp/client.h"
-#include "dhcp/common.h"
 #include "dhcp/config.h"
 #include "dhcp/dhcp_packet.h"
 #include "dhcp/ip_allocator.h"
+#include "dhcp/log.h"
 #include "dhcp/net_int.h"
 
 namespace dhcp {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <arpa/inet.h>
+#include <optional>
 #include <string>
 
 #include "dhcp/net_int.h"
