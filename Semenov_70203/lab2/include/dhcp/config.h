@@ -11,10 +11,11 @@ struct Config {
 
     NetInt<in_port_t> serverPort = 67;
     NetInt<in_port_t> clientPort = 68;
-    std::string address = "192.168.0.2";
+    std::string address;
+    std::string dnsServer;
     std::string router = "192.168.0.1";
-    std::string dnsServer = "8.8.8.8";
     std::string mask = "255.255.255.0";
+    std::string broadcast = "255.255.255.255";
 
     float t1 = 0.5f;
     float t2 = 0.9f;

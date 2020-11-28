@@ -1,6 +1,5 @@
 #include "dhcp/config.h"
 
-#include <sys/socket.h>
 #include <unistd.h>
 #include <iostream>
 #include <string>
@@ -8,30 +7,53 @@
 namespace dhcp {
 
 Config::Config(int argc, char * argv[]) noexcept {
-    auto arguments = "r:i:p:d:m:h";
+    auto arguments = "i:g:k:b:d:r:p:m:t:h";
     int option;
 
     while ((option = getopt(argc, argv, arguments)) != -1) {
         switch (option) {
-            case 'r': range = Range{optarg};
             case 'i': address = optarg; break;
+            case 'g': router = optarg; break;
+            case 'k': mask = optarg; break;
+            case 'b': broadcast = optarg; break;
+            case 'd': dnsServer = optarg; break;
+            case 'r': range = Range{optarg}; break;
             case 'p': serverPort = std::stoi(optarg); break;
-            case 'd': defaultLeaseTime = std::stoi(optarg); break;
             case 'm': maxLeaseTime = std::stoi(optarg); break;
+            case 't': defaultLeaseTime = std::stoi(optarg); break;
             case 'h': [[fallthrough]];
             default:
                 // clang-format off
                 std::cout
-                    << "Usage: dhcp_server [-r ip:ip] [-i addr] [-p port] [-m max] [-d default]\n"
-                    << "-r      set ip range (default 192.168.0.101:192.168.0.200)\n"
-                    << "-i      specify ip address (default 0.0.0.0)\n"
-                    << "-p      specify port (default 67)\n"
-                    << "-m      set max lease time (default 7200 sec)\n"
-                    << "-d      set default lease time (default 3600 sec)" << std::endl;
+                    << "Usage: dhcp_server <-i addr> <-g addr> <-k mask> [-d addr] \n"
+                    << "       [-r ip:ip] [-p port] [-m max] [-t lease]\n"
+                    << "    -i      server ip address\n"
+                    << "    -g      gateway ip address (default 192.168.0.1)\n"
+                    << "    -k      subnet mask (default 255.255.255.0)\n"
+                    << "    -b      broadcast address (default 255.255.255.255)\n"
+                    << "    -d      dns server\n"
+                    << "    -r      ip range (default 192.168.0.101:192.168.0.200)\n"
+                    << "    -p      server port (default 67)\n"
+                    << "    -m      max lease time (default INFINITY)\n"
+                    << "    -t      default lease time (default 3600 sec)" << std::endl;
                 // clang-format on
                 exit(0);
         }
     }
+
+    if (address.empty()) {
+        logInfo("You must set server's ip address", LogType::WARNING);
+        exit(EXIT_FAILURE);
+    }
+
+    if (mask.empty())
+        logInfo("You should set subnet mask", LogType::WARNING);
+
+    if (router.empty())
+        logInfo("You should set gateway ip address", LogType::WARNING);
+
+    if (dnsServer.empty())
+        logInfo("You should set dns server's ip address", LogType::WARNING);
 }
 
 }  // namespace dhcp

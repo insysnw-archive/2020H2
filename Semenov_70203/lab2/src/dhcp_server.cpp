@@ -122,8 +122,8 @@ void DhcpServer::onDiscover(DhcpPacket * packet) noexcept {
     else if (auto ip = packet->requestedIp(); ip != UNDEFINED_IP)
         requestedIp = *ip;
 
-    if (auto yiaddr = mAllocator.reserve(requestedIp); yiaddr.isActive()) {
-        packet->yiaddr = yiaddr.ip();
+    if (auto yiaddr = mAllocator.reserve(requestedIp); yiaddr.has_value()) {
+        packet->yiaddr = *yiaddr;
     } else {
         logInfo("No free ip to reserve", LogType::WARNING);
         return;
@@ -168,6 +168,7 @@ void DhcpServer::onRequest(DhcpPacket * packet) noexcept {
     client->lease = std::move(lease);
     client->lastMessageType = packet->messageType();
     packet->yiaddr = client->lease.ip();
+    packet->setLeaseTime(client->lease.remainingTime());
 
     ack(packet);
 }
@@ -306,10 +307,21 @@ void DhcpServer::preparePacket(DhcpPacket * packet) noexcept {
     packet->op = 2;
     packet->siaddr = 0;
     packet->setServerId(mId);
-    packet->setDnsServer(IpType::fromString(mConfig.dnsServer));
-    packet->setSubnetMask(IpType::fromString(mConfig.mask));
-    packet->setRouter(IpType::fromString(mConfig.router));
-    packet->setBroadcast(IpType::fromString("255.255.255.255"));
+
+    if (!mConfig.dnsServer.empty())
+        packet->setDnsServer(IpType::fromString(mConfig.dnsServer));
+
+    if (!mConfig.mask.empty())
+        packet->setSubnetMask(IpType::fromString(mConfig.mask));
+
+    if (!mConfig.router.empty())
+        packet->setRouter(IpType::fromString(mConfig.router));
+
+    if (!mConfig.router.empty())
+        packet->setRouter(IpType::fromString(mConfig.router));
+
+    if (!mConfig.broadcast.empty())
+        packet->setBroadcast(IpType::fromString(mConfig.broadcast));
 
     if (leaseTime.has_value()) {
         packet->setT1(*leaseTime * mConfig.t1);
