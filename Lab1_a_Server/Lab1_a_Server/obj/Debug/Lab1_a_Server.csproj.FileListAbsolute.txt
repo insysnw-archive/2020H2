@@ -1,0 +1,5 @@
+E:\Education\7Sem\Nets\Lab1\Lab1_a_Server\Lab1_a_Server\bin\Debug\Lab1_a_Server.exe
+E:\Education\7Sem\Nets\Lab1\Lab1_a_Server\Lab1_a_Server\bin\Debug\Lab1_a_Server.pdb
+E:\Education\7Sem\Nets\Lab1\Lab1_a_Server\Lab1_a_Server\obj\Debug\Lab1_a_Server.csproj.CoreCompileInputs.cache
+E:\Education\7Sem\Nets\Lab1\Lab1_a_Server\Lab1_a_Server\obj\Debug\Lab1_a_Server.exe
+E:\Education\7Sem\Nets\Lab1\Lab1_a_Server\Lab1_a_Server\obj\Debug\Lab1_a_Server.pdb
