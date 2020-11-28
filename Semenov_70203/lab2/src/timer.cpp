@@ -83,7 +83,13 @@ time_t Timer::stop() noexcept {
 time_t Timer::remainingTime() const noexcept {
     itimerspec timespec;
     timer_gettime(mPosixTimer, &timespec);
-    return timespec.it_value.tv_sec;
+
+    // round up
+    auto sec = timespec.it_value.tv_sec;
+    if (timespec.it_value.tv_nsec != 0)
+        sec += 1;
+
+    return sec;
 }
 
 void Timer::onTimerElapsed() noexcept {
