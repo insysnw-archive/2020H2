@@ -1,0 +1,7 @@
+E:\Education\7Sem\Nets\Lab1\Lab1_b_Server\Lab1_b_Server\bin\Debug\Lab1_b_Server.exe.config
+E:\Education\7Sem\Nets\Lab1\Lab1_b_Server\Lab1_b_Server\bin\Debug\Lab1_b_Server.exe
+E:\Education\7Sem\Nets\Lab1\Lab1_b_Server\Lab1_b_Server\bin\Debug\Lab1_b_Server.pdb
+E:\Education\7Sem\Nets\Lab1\Lab1_b_Server\Lab1_b_Server\obj\Debug\Lab1_b_Server.csprojAssemblyReference.cache
+E:\Education\7Sem\Nets\Lab1\Lab1_b_Server\Lab1_b_Server\obj\Debug\Lab1_b_Server.csproj.CoreCompileInputs.cache
+E:\Education\7Sem\Nets\Lab1\Lab1_b_Server\Lab1_b_Server\obj\Debug\Lab1_b_Server.exe
+E:\Education\7Sem\Nets\Lab1\Lab1_b_Server\Lab1_b_Server\obj\Debug\Lab1_b_Server.pdb

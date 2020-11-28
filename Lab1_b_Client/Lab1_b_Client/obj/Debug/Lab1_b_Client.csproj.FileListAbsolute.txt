@@ -1,0 +1,7 @@
+E:\Education\7Sem\Nets\Lab1\Lab1_b_Client\Lab1_b_Client\bin\Debug\Lab1_b_Client.exe.config
+E:\Education\7Sem\Nets\Lab1\Lab1_b_Client\Lab1_b_Client\bin\Debug\Lab1_b_Client.exe
+E:\Education\7Sem\Nets\Lab1\Lab1_b_Client\Lab1_b_Client\bin\Debug\Lab1_b_Client.pdb
+E:\Education\7Sem\Nets\Lab1\Lab1_b_Client\Lab1_b_Client\obj\Debug\Lab1_b_Client.csprojAssemblyReference.cache
+E:\Education\7Sem\Nets\Lab1\Lab1_b_Client\Lab1_b_Client\obj\Debug\Lab1_b_Client.csproj.CoreCompileInputs.cache
+E:\Education\7Sem\Nets\Lab1\Lab1_b_Client\Lab1_b_Client\obj\Debug\Lab1_b_Client.exe
+E:\Education\7Sem\Nets\Lab1\Lab1_b_Client\Lab1_b_Client\obj\Debug\Lab1_b_Client.pdb
