@@ -25,11 +25,11 @@ ip link set up dev <device>
 ip addr add <ip address>/<mask> dev <device>
 ```
 
-You need root privileges to use 67 port. Program locates in `build/bin/dhcp_server`
+You need the root privileges to use 67 port. The executable locates in `build/bin/dhcp_server`
 ```bash
 ./dhcp_server -i <assigned ip address>
 ```
-You can specify some parameters such as a dns server, gateway, mask and other.
-To know more run `./dhcp_server -h`
-All ip addresses are written in \*.\*.\*.\* format including a subnet mask.
-Range is presented as two ip address separated by semicolon.
+You can specify some parameters such as dns server, gateway, mask and other.
+To know more, run `./dhcp_server -h`
+All ip addresses are written in \*\*\*.\*\*\*.\*\*\*.\*\*\* format including a subnet mask.
+Range is presented as two ip addresses separated by semicolon.
