@@ -10,65 +10,115 @@ namespace dhcp {
 namespace details {
 
 void posixTimerStop(sigval value) {
-    auto listener = reinterpret_cast<ITimerListener *>(value.sival_ptr);
-    if (listener != nullptr)
-        listener->onTimer();
+    auto notifier = reinterpret_cast<Notifier *>(value.sival_ptr);
+    if (notifier != nullptr)
+        notifier->notify();
 }
 
 }  // namespace details
 
-Timer::Timer(ITimerListener * listener) noexcept : mListener{listener} {
+Notifier::Notifier() noexcept : mTimer{nullptr} {}
+
+void Notifier::setTimer(ITimerAccessor * timer) noexcept {
+    std::lock_guard lock{mMutex};
+    mTimer = timer;
+}
+
+void Notifier::notify() noexcept {
+    std::lock_guard lock{mMutex};
+    if (mTimer)
+        mTimer->onTimerElapsed();
+}
+
+void Timer::createTimer() noexcept {
+    mNotifier = std::make_unique<Notifier>();
+    mNotifier->setTimer(this);
+
     sigevent event;
     std::memset(&event, 0, sizeof(event));
     event.sigev_notify = SIGEV_THREAD;
     event.sigev_notify_function = details::posixTimerStop;
-    event.sigev_value.sival_ptr = reinterpret_cast<void *>(mListener);
+    event.sigev_value.sival_ptr = reinterpret_cast<void *>(mNotifier.get());
 
-    if (timer_create(CLOCK_MONOTONIC, &event, &mTimer) < 0)
-        logError("Cannot create timer");
+    if (timer_create(CLOCK_MONOTONIC, &event, &mPosixTimer) < 0)
+        logInfo("Cannot create timer", LogType::ERRNO);
 }
 
-Timer::Timer(Timer && other) noexcept {
-    mTimer = other.mTimer;
-    mListener = other.mListener;
-    other.mListener = nullptr;
-    other.mTimer = 0;
+Timer::Timer() noexcept {
+    createTimer();
+}
+
+Timer::Timer(CallbackType callback) noexcept : Timer() {
+    mCallback = callback;
+}
+
+Timer::Timer(Timer && other) noexcept : Timer() {
+    assign(std::move(other));
 }
 
 Timer::~Timer() noexcept {
-    if (mTimer)
-        timer_delete(mTimer);
+    timerDelete();
 }
 
-void Timer::lease(size_t sec) noexcept {
-    logInfo("Lease time: " + std::to_string(sec) + " sec");
+void Timer::setCallback(CallbackType callback) noexcept {
+    std::lock_guard lock{mMutex};
+    mCallback = callback;
+}
+
+void Timer::start(size_t sec) noexcept {
+    if (sec != 0)
+        logInfo("Lease time: " + std::to_string(sec) + " sec");
+
     itimerspec timespec;
     std::memset(&timespec, 0, sizeof(timespec));
     timespec.it_value.tv_sec = sec;
-    if (timer_settime(mTimer, 0, &timespec, nullptr) < 0)
-        logError("timer_settime");
+
+    if (timer_settime(mPosixTimer, 0, &timespec, nullptr) < 0)
+        logInfo("timer_settime", LogType::ERRNO);
 }
 
-void Timer::release() noexcept {
-    lease(0);
+time_t Timer::stop() noexcept {
+    auto time = remainingTime();
+    start(0);
+    return time;
 }
 
 time_t Timer::remainingTime() const noexcept {
     itimerspec timespec;
-    timer_gettime(mTimer, &timespec);
+    timer_gettime(mPosixTimer, &timespec);
     return timespec.it_value.tv_sec;
 }
 
-bool Timer::isStopped() const noexcept {
-    return remainingTime() == 0;
+void Timer::onTimerElapsed() noexcept {
+    std::lock_guard lock{mMutex};
+    if (mCallback)
+        mCallback();
 }
 
 Timer & Timer::operator=(Timer && other) noexcept {
-    std::memcpy(&mTimer, other.mTimer, sizeof(mTimer));
-    mListener = other.mListener;
-    other.mListener = nullptr;
-    other.mTimer = 0;
+    timerDelete();
+    assign(std::move(other));
     return *this;
+}
+
+void Timer::timerDelete() noexcept {
+    if (mPosixTimer) {
+        timer_delete(mPosixTimer);
+        mPosixTimer = nullptr;
+    }
+}
+
+void Timer::assign(Timer && other) noexcept {
+    std::unique_lock l1{mMutex, std::defer_lock};
+    std::unique_lock l2{other.mMutex, std::defer_lock};
+    std::lock(l1, l2);
+
+    mNotifier = std::move(other.mNotifier);
+    mNotifier->setTimer(this);
+
+    mPosixTimer = std::move(other.mPosixTimer);
+    other.mPosixTimer = nullptr;
+    other.mCallback = nullptr;
 }
 
 }  // namespace dhcp

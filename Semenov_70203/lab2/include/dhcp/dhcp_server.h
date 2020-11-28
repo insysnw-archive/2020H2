@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <mutex>
+#include <string>
 #include <thread>
 
 #include "dhcp/client.h"
@@ -9,6 +10,7 @@
 #include "dhcp/config.h"
 #include "dhcp/dhcp_packet.h"
 #include "dhcp/ip_allocator.h"
+#include "dhcp/net_int.h"
 
 namespace dhcp {
 
@@ -21,6 +23,10 @@ class DhcpServer {
     void stop() noexcept;
 
  private:
+    net32 defineLeaseTime(const DhcpPacket * packet) noexcept;
+
+    int bindedSocket(const std::string & address) noexcept;
+
     std::optional<DhcpPacket> receivePacket(int socket) const noexcept;
 
     void sendPacket(const DhcpPacket * packet) const noexcept;

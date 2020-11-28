@@ -7,6 +7,7 @@
 #include "dhcp/common.h"
 #include "dhcp/config.h"
 #include "dhcp/dhcp_server.h"
+#include "dhcp/ip_allocator.h"
 
 std::unique_ptr<dhcp::DhcpServer> server;
 

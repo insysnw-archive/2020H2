@@ -1,6 +1,7 @@
 #include "dhcp/ip_allocator.h"
 
 #include "dhcp/common.h"
+#include "dhcp/ip_type.h"
 #include "dhcp/net_int.h"
 
 namespace dhcp {
@@ -42,6 +43,13 @@ Lease IpAllocator::allocate(net32 time, IpType preference) noexcept {
         return Lease{preference, time, this};
     }
     return allocate(time);
+}
+
+Lease IpAllocator::tryToAllocate(net32 time, IpType ip) noexcept {
+    std::lock_guard lock{mMutex};
+    if (isFree(ip))
+        return allocate(time, ip);
+    return Lease{};
 }
 
 IpAllocator::Reserve IpAllocator::reserve() noexcept {

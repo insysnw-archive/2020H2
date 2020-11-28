@@ -29,7 +29,7 @@ IpType IpType::fromRaw(RawType::const_iterator raw) noexcept {
 IpType IpType::fromString(const std::string & str) noexcept {
     auto inaddr = initInAddr();
     if (inet_pton(AF_INET, str.data(), &inaddr) <= 0) {
-        logError("Cannot convert string to ip");
+        logInfo("Cannot convert string to ip", LogType::ERRNO);
         return 0;
     }
 

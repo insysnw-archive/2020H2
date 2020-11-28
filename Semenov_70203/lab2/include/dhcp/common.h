@@ -9,12 +9,8 @@
 
 namespace dhcp {
 
-struct Config;
+enum class LogType { INFO, WARNING, ERRNO };
 
-void logError(std::string_view source) noexcept;
-
-void logInfo(std::string_view info) noexcept;
-
-int bindedSocket(const Config & setup) noexcept;
+void logInfo(std::string_view info, LogType type = LogType::INFO) noexcept;
 
 }  // namespace dhcp

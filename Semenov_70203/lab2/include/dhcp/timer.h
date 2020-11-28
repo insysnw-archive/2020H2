@@ -1,20 +1,41 @@
 #pragma once
 
 #include <time.h>
-#include <vector>
+#include <atomic>
+#include <functional>
+#include <memory>
+#include <mutex>
 
 namespace dhcp {
 
-class ITimerListener {
+class ITimerAccessor {
  public:
-    virtual ~ITimerListener() = default;
+    virtual ~ITimerAccessor() = default;
 
-    virtual void onTimer() noexcept = 0;
+    virtual void onTimerElapsed() noexcept = 0;
 };
 
-class Timer {
+class Notifier {
  public:
-    explicit Timer(ITimerListener * listener) noexcept;
+    Notifier() noexcept;
+
+    void setTimer(ITimerAccessor * timer) noexcept;
+
+    void notify() noexcept;
+
+ private:
+    mutable std::mutex mMutex;
+    ITimerAccessor * mTimer;
+};
+
+class Timer : public ITimerAccessor {
+ public:
+    using CallbackType = std::function<void()>;
+
+ public:
+    Timer() noexcept;
+
+    explicit Timer(CallbackType callback) noexcept;
 
     Timer(const Timer &) = delete;
 
@@ -22,21 +43,33 @@ class Timer {
 
     ~Timer() noexcept;
 
-    void lease(size_t sec) noexcept;
+    void setCallback(CallbackType callback) noexcept;
 
-    void release() noexcept;
+    void start(size_t sec) noexcept;
+
+    time_t stop() noexcept;
 
     time_t remainingTime() const noexcept;
-
-    bool isStopped() const noexcept;
 
     Timer & operator=(const Timer &) = delete;
 
     Timer & operator=(Timer &&) noexcept;
 
  private:
-    timer_t mTimer;
-    ITimerListener * mListener;
+    void onTimerElapsed() noexcept override;
+
+    void createTimer() noexcept;
+
+    void timerDelete() noexcept;
+
+    void assign(Timer && other) noexcept;
+
+ private:
+    mutable std::mutex mMutex;
+
+    std::unique_ptr<Notifier> mNotifier;
+    std::function<void()> mCallback;
+    timer_t mPosixTimer;
 };
 
 }  // namespace dhcp

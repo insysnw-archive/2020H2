@@ -21,6 +21,8 @@ class IpAllocator {
 
     Lease allocate(net32 time, IpType preference) noexcept;
 
+    Lease tryToAllocate(net32 time, IpType ip) noexcept;
+
     Reserve reserve() noexcept;
 
     Reserve reserve(IpType preference) noexcept;
