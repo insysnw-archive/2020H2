@@ -39,33 +39,6 @@ void print_usage(std::ostream & output, const std::string_view & program, const 
 )";
 }
 
-bool is_here(const zone::addresses_t & addresses, const ekutils::net::endpoint & coresponsent) {
-	switch (coresponsent.family()) {
-		case ekutils::net::family_t::ipv4: {
-			const auto & endpoint = dynamic_cast<const ekutils::net::ipv4::endpoint &>(coresponsent);
-			for (const auto & address : addresses) {
-				if (std::holds_alternative<ekutils::net::ipv4::address>(address)) {
-					if (std::get<ekutils::net::ipv4::address>(address) == endpoint.address())
-						return true;
-				}
-			}
-			break;
-		}
-		case ekutils::net::family_t::ipv6: {
-			const auto & endpoint = dynamic_cast<const ekutils::net::ipv6::endpoint &>(coresponsent);
-			for (const auto & address : addresses) {
-				if (std::holds_alternative<ekutils::net::ipv6::address>(address)) {
-					if (std::get<ekutils::net::ipv6::address>(address) == endpoint.address())
-						return true;
-				}
-			}
-			break;
-		}
-		default: log_fatal("unreachable");
-	}
-	return false;
-}
-
 int main(int argc, char ** argv) {
 	using namespace std::string_literals;
 
@@ -124,7 +97,7 @@ int main(int argc, char ** argv) {
 		database db(names);
 		read(db, node);
 		log_verbose("database:\n" + db.to_string());
-		auto targets = ekutils::net::resolve(ekutils::net::socket_types::datagram, args.bind);
+		auto targets = ekutils::net::resolve(ekutils::net::socket_types::datagram, args.bind, 53);
 		if (targets.empty())
 			throw std::runtime_error("there is no ip address associated with " + args.bind);
 		auto server = ekutils::net::bind_datagram_any(targets.begin(), targets.end());
@@ -132,7 +105,7 @@ int main(int argc, char ** argv) {
 		packet p(names);
 		varbytes response;
 		ktlo::dns::client client(names); 
-		
+
 		for (;;) {
 			p.head.id = 0u;
 			std::unique_ptr<ekutils::net::endpoint> coresponsent;
@@ -146,6 +119,8 @@ int main(int argc, char ** argv) {
 				if (args.dump)
 					std::basic_ofstream<byte_t>("req-" + dump_str) << actual;
 				log_debug("incoming:\n" + p.to_string());
+				if (p.head.opcode != opcodes::QUERY)
+					throw dns_error(rcodes::not_implemented, "only basic queries are implemented");
 				if (p.head.is_response) {
 					throw dns_error(rcodes::format_error, "query packet expected");
 				}
@@ -154,16 +129,11 @@ int main(int argc, char ** argv) {
 				p.head.rcode = rcodes::no_error;
 				for (question & q : p.questions) {
 					zone & z = db.zoneof(q.qname);
-					if (!z.allowed.empty()) {
-						if (!is_here(z.allowed, *coresponsent))
-							throw dns_error(rcodes::refused, "corespondent not in the allow list");
-					}
-					if (!z.denied.empty()) {
-						if (is_here(z.denied, *coresponsent))
-							throw dns_error(rcodes::refused, "corespondent is in the deny list");
+					if (!z.filter.is_allowed(*coresponsent)) {
+						throw dns_error(rcodes::refused, "corespondent is not allowed");
 					}
 					const auto & forward = z.forward;
-					if (!forward.empty()) {
+					if (p.head.recursion_desired && !forward.empty()) {
 						// do recursive request
 						const ekutils::uri & uri = forward[rand() % forward.size()];
 						auto port = uri.get_port();

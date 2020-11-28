@@ -12,7 +12,7 @@ arguments::arguments() :
 		opt.c = 'v';
 	})),
 	bind(add<string>("bind", [](string & opt) {
-		opt.value = "udp://localhost:53";
+		opt.value = "udp://localhost";
 		opt.hint = "network address to bind to";
 	})),
 	verb(add<variant<ekutils::log_level>>("verb", [](variant<ekutils::log_level> & opt) {

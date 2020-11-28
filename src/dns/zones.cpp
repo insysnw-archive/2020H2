@@ -83,34 +83,19 @@ void operator<<(zone_settings & settings, const YAML::Node & node) {
 	}
 }
 
-void add_resolved(zone::addresses_t & addresses, const YAML::Node & node) {
+void add_resolved(ekutils::net::ip_filter & filter, const YAML::Node & node, bool allow) {
 	switch (node.Type()) {
 		case YAML::NodeType::Undefined:
 			return;
-		case YAML::NodeType::Null:
-			addresses.clear();
-			return;
 		case YAML::NodeType::Sequence:
 			for (const auto & item : node)
-				add_resolved(addresses, item);
+				add_resolved(filter, item, allow);
 			return;
 		case YAML::NodeType::Scalar:
-			try {
-				auto targets = ekutils::net::resolve(node.as<std::string>(), "domain", ekutils::net::protocols::udp);
-				for (auto & target : targets) {
-					switch (target.address->family()) {
-						case ekutils::net::family_t::ipv4:
-							addresses.emplace_back(dynamic_cast<ekutils::net::ipv4::endpoint &>(*target.address).address());
-							break;
-						case ekutils::net::family_t::ipv6:
-							addresses.emplace_back(dynamic_cast<ekutils::net::ipv6::endpoint &>(*target.address).address());
-							break;
-						default: log_fatal("unreachable");
-					}
-				}
-			} catch (const std::exception & e) {
-				throw zone_error(node.Mark(), e.what());
-			}
+			if (allow)
+				filter.allow(node.as<std::string>());
+			else
+				filter.deny(node.as<std::string>());
 			return;
 		default: throw zone_error(node.Mark(), "wrong YAML type for address");
 	}
@@ -148,9 +133,9 @@ void read_zone(zone & _zone, const YAML::Node & node) {
 	if (auto forward = node["$forward"])
 		add_forwarder(_zone.forward, forward);
 	if (auto allow = node["$allow"])
-		add_resolved(_zone.allowed, allow);
+		add_resolved(_zone.filter, allow, true);
 	if (auto deny = node["$deny"])
-		add_resolved(_zone.denied, deny);
+		add_resolved(_zone.filter, deny, false);
 
 	for (const auto & subnode : node) {
 		const YAML::Node & first = subnode.first;
