@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="651a4c6b-ebe4-4b7e-9715-0d069d72faed" name="Default Changelist" comment="Initial commit" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ExternalProjectsData">
+    <projectState path="$PROJECT_DIR$">
+      <ProjectState />
+    </projectState>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Kotlin Interface" />
+        <option value="Kotlin File" />
+        <option value="Kotlin Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="lab1" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="UPDATE_TYPE" value="REBASE" />
+  </component>
+  <component name="KotlinCodeInsightWorkspaceSettings">
+    <option name="optimizeImportsOnTheFly" value="true" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHome" value="$APPLICATION_HOME_DIR$/plugins/maven/lib/maven3" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProjectId" id="1kqYbJ5HpA4lm3ruZC54RgZ1gKq" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="compactDirectories" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="restartRequiresConfirmation" value="false" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyKotlinDeclarationDialog.RECENTS_KEY">
+      <recent name="" />
+    </key>
+    <key name="MoveKotlinTopLevelDeclarationsDialog.RECENTS_KEY">
+      <recent name="network" />
+      <recent name="ui" />
+      <recent name="styles" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Kotlin.MainKt">
+    <configuration default="true" type="ArquillianJUnit" factoryName="" nameIsGenerated="true">
+      <option name="arquillianRunConfiguration">
+        <value>
+          <option name="containerStateName" value="" />
+        </value>
+      </option>
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="network1 [shadowJar]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value="shadowJar" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <GradleScriptDebugEnabled>true</GradleScriptDebugEnabled>
+      <method v="2" />
+    </configuration>
+    <configuration name="MainKt" type="JetRunConfigurationType" temporary="true" nameIsGenerated="true">
+      <module name="network1.main" />
+      <option name="VM_PARAMETERS" />
+      <option name="PROGRAM_PARAMETERS" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <option name="MAIN_CLASS_NAME" value="MainKt" />
+      <option name="WORKING_DIRECTORY" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Kotlin.MainKt" />
+        <item itemvalue="Gradle.network1 [shadowJar]" />
+        <item itemvalue="Kotlin.MainKt" />
+        <item itemvalue="Gradle.network1 [shadowJar]" />
+        <item itemvalue="Kotlin.MainKt" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="651a4c6b-ebe4-4b7e-9715-0d069d72faed" name="Default Changelist" comment="" />
+      <created>1606429661605</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1606429661605</updated>
+      <workItem from="1606429665338" duration="29570000" />
+    </task>
+    <task id="LOCAL-00001" summary="Initial commit">
+      <created>1606511900409</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1606511900409</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Initial commit">
+      <created>1606514259141</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1606514259141</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Initial commit">
+      <created>1606560203347</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1606560203350</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Initial commit" />
+    <option name="LAST_COMMIT_MESSAGE" value="Initial commit" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="249" y="189" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1606559351599">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state x="249" y="189" key="#com.intellij.fileTypes.FileTypeChooser/0.25.1280.716@0.25.1280.716" timestamp="1606559351599" />
+    <state x="409" y="103" key="#com.intellij.ide.util.MemberChooser" timestamp="1606468046657">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state x="409" y="103" key="#com.intellij.ide.util.MemberChooser/0.25.1280.716@0.25.1280.716" timestamp="1606468046657" />
+    <state x="414" y="178" key="#org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinTopLevelDeclarationsDialog" timestamp="1606467352706">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state x="414" y="178" key="#org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinTopLevelDeclarationsDialog/0.25.1280.716@0.25.1280.716" timestamp="1606467352706" />
+    <state x="0" y="25" key="CommitChangelistDialog2" timestamp="1606560179438">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state x="0" y="25" key="CommitChangelistDialog2/0.25.1280.716@0.25.1280.716" timestamp="1606560179438" />
+    <state width="619" height="175" key="GridCell.Tab.0.bottom" timestamp="1606513962258">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state width="619" height="175" key="GridCell.Tab.0.bottom/0.25.1280.716@0.25.1280.716" timestamp="1606513962258" />
+    <state width="619" height="175" key="GridCell.Tab.0.center" timestamp="1606513962257">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state width="619" height="175" key="GridCell.Tab.0.center/0.25.1280.716@0.25.1280.716" timestamp="1606513962257" />
+    <state width="619" height="175" key="GridCell.Tab.0.left" timestamp="1606513962256">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state width="619" height="175" key="GridCell.Tab.0.left/0.25.1280.716@0.25.1280.716" timestamp="1606513962256" />
+    <state width="619" height="175" key="GridCell.Tab.0.right" timestamp="1606513962258">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state width="619" height="175" key="GridCell.Tab.0.right/0.25.1280.716@0.25.1280.716" timestamp="1606513962258" />
+    <state width="1238" height="219" key="GridCell.Tab.1.bottom" timestamp="1606485619854">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state width="1238" height="219" key="GridCell.Tab.1.bottom/0.25.1280.716@0.25.1280.716" timestamp="1606485619854" />
+    <state width="1238" height="219" key="GridCell.Tab.1.center" timestamp="1606485619849">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state width="1238" height="219" key="GridCell.Tab.1.center/0.25.1280.716@0.25.1280.716" timestamp="1606485619849" />
+    <state width="1238" height="219" key="GridCell.Tab.1.left" timestamp="1606485619847">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state width="1238" height="219" key="GridCell.Tab.1.left/0.25.1280.716@0.25.1280.716" timestamp="1606485619847" />
+    <state width="1238" height="219" key="GridCell.Tab.1.right" timestamp="1606485619851">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state width="1238" height="219" key="GridCell.Tab.1.right/0.25.1280.716@0.25.1280.716" timestamp="1606485619851" />
+    <state x="51" y="107" key="RollbackChangesDialog" timestamp="1606560816215">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state x="51" y="107" key="RollbackChangesDialog/0.25.1280.716@0.25.1280.716" timestamp="1606560816215" />
+    <state x="149" y="25" width="982" height="716" key="SettingsEditor" timestamp="1606511668808">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state x="149" y="25" width="982" height="716" key="SettingsEditor/0.25.1280.716@0.25.1280.716" timestamp="1606511668808" />
+    <state x="240" y="107" key="Vcs.Push.Dialog.v2" timestamp="1606595061114">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state x="240" y="107" key="Vcs.Push.Dialog.v2/0.25.1280.716@0.25.1280.716" timestamp="1606595061114" />
+    <state x="442" y="301" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1606595039941">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state x="442" y="301" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.25.1280.716@0.25.1280.716" timestamp="1606595039941" />
+    <state x="143" y="118" width="993" height="623" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2" timestamp="1606473334389">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state x="143" y="118" width="993" height="623" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2/0.25.1280.716@0.25.1280.716" timestamp="1606473334389" />
+    <state x="305" y="65" width="670" height="676" key="search.everywhere.popup" timestamp="1606510083666">
+      <screen x="0" y="25" width="1280" height="716" />
+    </state>
+    <state x="305" y="65" width="670" height="676" key="search.everywhere.popup/0.25.1280.716@0.25.1280.716" timestamp="1606510083666" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <breakpoint type="java-exception">
+          <properties class="java.util.ConcurrentModificationException" package="java.util" />
+          <option name="timeStamp" value="6" />
+        </breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>
