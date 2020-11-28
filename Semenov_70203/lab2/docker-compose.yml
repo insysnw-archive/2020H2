@@ -1,0 +1,9 @@
+version: "2"
+services:
+    tcp_chat:
+        build: .
+        container_name: "dhcp_builder"
+        working_dir: "/usr/dhcp/build"
+        command: bash -c "cmake -DCMAKE_BUILD_TYPE=Release .. && cmake --build . -j4"
+        volumes:
+            - ".:/usr/dhcp"
