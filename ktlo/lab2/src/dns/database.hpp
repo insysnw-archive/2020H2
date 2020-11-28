@@ -8,6 +8,7 @@
 
 #include <ekutils/uri.hpp>
 #include <ekutils/socket_d.hpp>
+#include <ekutils/ip_filter.hpp>
 
 #include "namez.hpp"
 #include "record.hpp"
@@ -28,9 +29,7 @@ struct zone final {
 	name domain;
 	zone_settings settings;
 	std::vector<ekutils::uri> forward;
-	typedef std::vector<std::variant<ekutils::net::ipv4::address, ekutils::net::ipv6::address>> addresses_t;
-	addresses_t allowed;
-	addresses_t denied;
+	ekutils::net::ip_filter filter;
 	std::multimap<name, std::unique_ptr<const record>> records;
 
 	zone(database & zdb, name n) : db(zdb), domain(n) {}

@@ -99,6 +99,9 @@ Test:x86_64-alpine-linux-musl:
   image: reg.handtruth.com/roots/cpp-meson/build:alpine
   variables:
     TARGET: x86_64-alpine-linux-musl
+  script:
+    - cd build/$TARGET
+    - meson test --print-errorlogs --suite regular
   dependencies:
     - Restore:x86_64-alpine-linux-musl
     - Build:x86_64-alpine-linux-musl
@@ -192,6 +195,9 @@ ImageAmd64NTP:
   <<: *image_amd
   variables:
     TYPE: ntp
+    DOCKER_HOST: tcp://docker:2375/
+    LATEST_TAG: $CI_REGISTRY_IMAGE/amd64:$TYPE-latest
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/amd64:$TYPE-$CI_COMMIT_TAG
 
 ImageArmhf: &image_arm
   stage: image
@@ -220,4 +226,7 @@ ImageArmhf: &image_arm
 ImageArmhfNTP:
   <<: *image_arm
   variables:
-    TYPE: ntp 
+    TYPE: ntp
+    DOCKER_HOST: tcp://docker:2375/
+    LATEST_TAG: $CI_REGISTRY_IMAGE/armhf:$TYPE-latest
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/armhf:$TYPE-$CI_COMMIT_TAG
