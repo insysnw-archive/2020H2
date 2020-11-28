@@ -1,0 +1,5 @@
+/.gradle
+/build
+/subprojects/*/build
+/.idea
+/ntpclient.py
