@@ -93,13 +93,12 @@ class DNS_Answer:
     def unpack(self, data: bytes):
         unpacked_data = struct.unpack(DNS_Answer.pack_format, data)
 
-        self.name_first_32 = unpacked_data[0]
-        self.name_last_32 = unpacked_data[1]
-        self._type = unpacked_data[2]
-        self._class = unpacked_data[3]
-        self.ttl = unpacked_data[4]
-        self.rdlength = unpacked_data[5]
-        self.rdata = unpacked_data[6]
+        self.name = unpacked_data[0]
+        self._type = unpacked_data[1]
+        self._class = unpacked_data[2]
+        self.ttl = unpacked_data[3]
+        self.rdlength = unpacked_data[4]
+        self.rdata = unpacked_data[5]
 
         return self
         
