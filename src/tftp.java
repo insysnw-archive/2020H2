@@ -43,11 +43,11 @@ public class tftp {
                 TftpPacket in = TftpPacket.receive(socket);
                 if (in instanceof ReadPacket) {
                     System.out.println("Read Request from " + in.getAddress());
-                    ReadRequest r = new ReadRequest((ReadPacket) in);
+                    new ReadRequest((ReadPacket) in);
                 }
                 else if (in instanceof WritePacket) {
                     System.out.println("Write Request from " + in.getAddress());
-                    WriteRequest w = new WriteRequest((WritePacket) in);
+                    new WriteRequest((WritePacket) in);
                 }
             }
         } catch (SocketException e) {
@@ -60,10 +60,10 @@ public class tftp {
     private static void printUsage() {
         System.out.println("Usage: [-h] [--host HOST] [-p PORT]\n" +
                 "optional arguments:\n" +
-                "  -h, --help            show this help message and exit\n" +
+                "  -h                    show this help message and exit\n" +
                 "  --host HOST           IP of the interface the server will listen on.\n" +
                 "                        Default: 127.0.0.1\n" +
-                "  -p PORT, --port PORT  Port the server will listen on. Default: 69. TFTP\n" +
+                "  -p PORT               Port the server will listen on. Default: 69. TFTP\n" +
                 "                        standard-compliant port: 69 - requires superuser\n" +
                 "                        privileges.");
     }
