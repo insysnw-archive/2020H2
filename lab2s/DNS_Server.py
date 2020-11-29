@@ -115,7 +115,7 @@ def build_response(data):
     responce_header.rd = request_header.rd
     responce_header.ra=0b1
     responce_header.rcode=0b0000
-    responce_header.qdcount=request_header.qdcount
+    responce_header.qdcount=0b0001
     responce_header.ancount=len(responce_answers)
     responce_header.nscount=0x0000
     responce_header.arcount=0x0000
