@@ -27,7 +27,7 @@ void Notifier::setTimer(ITimerAccessor * timer) noexcept {
 void Notifier::notify() noexcept {
     std::lock_guard lock{mMutex};
     if (mTimer)
-        mTimer->onTimerElapsed();
+        mTimer->onTimer();
 }
 
 void Timer::createTimer() noexcept {
@@ -92,7 +92,7 @@ time_t Timer::remainingTime() const noexcept {
     return sec;
 }
 
-void Timer::onTimerElapsed() noexcept {
+void Timer::onTimer() noexcept {
     std::lock_guard lock{mMutex};
     if (mCallback)
         mCallback();

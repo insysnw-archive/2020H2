@@ -1,7 +1,6 @@
 #pragma once
 
 #include <time.h>
-#include <atomic>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -12,7 +11,7 @@ class ITimerAccessor {
  public:
     virtual ~ITimerAccessor() = default;
 
-    virtual void onTimerElapsed() noexcept = 0;
+    virtual void onTimer() noexcept = 0;
 };
 
 class Notifier {
@@ -56,7 +55,7 @@ class Timer : public ITimerAccessor {
     Timer & operator=(Timer &&) noexcept;
 
  private:
-    void onTimerElapsed() noexcept override;
+    void onTimer() noexcept override;
 
     void createTimer() noexcept;
 

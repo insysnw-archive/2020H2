@@ -12,6 +12,10 @@ auto findIp(const IpAllocator::IpContainer & container, IpType ip) {
     return std::find(container.begin(), container.end(), ip);
 }
 
+IpAllocator::~IpAllocator() noexcept {
+    mClearReservedTimer.stop();
+}
+
 Lease IpAllocator::allocate(net32 time) noexcept {
     std::lock_guard lock{mMutex};
     for (auto ip = mRange.from(); ip <= mRange.to(); ip++)

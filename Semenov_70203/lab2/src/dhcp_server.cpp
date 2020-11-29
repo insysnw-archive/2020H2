@@ -61,6 +61,8 @@ DhcpServer::~DhcpServer() noexcept {
 
     if (mThreadBroadcast.joinable())
         mThreadBroadcast.join();
+
+    mClients.clear();
 }
 
 int DhcpServer::bindedSocket(const std::string & address) noexcept {

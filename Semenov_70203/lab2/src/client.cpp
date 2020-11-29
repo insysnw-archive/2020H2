@@ -34,12 +34,7 @@ Client * ClientManager::newClient(const RawType & id) noexcept {
 }
 
 void ClientManager::clear() noexcept {
-    for (auto & client : mClients)
-        if (!client.lease.isActive()) {
-            auto removeFrom =
-                std::remove(mClients.begin(), mClients.end(), client);
-            mClients.erase(removeFrom, mClients.end());
-        }
+    mClients.clear();
 }
 
 bool ClientManager::has(const RawType & id) const noexcept {

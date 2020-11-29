@@ -17,6 +17,8 @@ class IpAllocator {
  public:
     explicit IpAllocator(const Range & range) noexcept;
 
+    ~IpAllocator() noexcept;
+
     Lease allocate(net32 time) noexcept;
 
     Lease allocate(net32 time, IpType preference) noexcept;

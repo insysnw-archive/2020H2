@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atomic>
 #include <limits>
 #include <mutex>
 
@@ -43,7 +42,7 @@ class Lease {
     IpType mIp;
     Timer mTimer;
     IpAllocator * mAllocator;
-    std::atomic_bool mIsActive;
+    bool mIsActive;
     mutable std::mutex mMutex;
 };
 

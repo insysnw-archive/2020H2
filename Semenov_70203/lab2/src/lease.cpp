@@ -14,7 +14,7 @@ Lease::Lease(IpType ip, net32 time, IpAllocator * allocator) noexcept
         mTimer.start(time);
 }
 
-Lease::Lease(Lease && other) noexcept {
+Lease::Lease(Lease && other) noexcept : Lease() {
     assign(std::move(other));
 }
 
@@ -43,9 +43,10 @@ void Lease::updateTime(net32 time) noexcept {
 void Lease::release() noexcept {
     std::lock_guard lock{mMutex};
     if (mIsActive) {
-        mAllocator->deallocate(mIp);
-        mIsActive.store(false);
+        mIsActive = false;
         mTimer.stop();
+        log(mIp.toString());
+        mAllocator->deallocate(mIp);
     }
 }
 
@@ -59,12 +60,14 @@ void Lease::assign(Lease && other) noexcept {
     std::unique_lock l2{mMutex, std::defer_lock};
     std::lock(l1, l2);
 
+    mIsActive = other.mIsActive;
+    other.mIsActive = false;
+
     mIp = other.mIp;
     mTimer = std::move(other.mTimer);
     mTimer.setCallback([this]() { this->release(); });
     mAllocator = other.mAllocator;
     other.mAllocator = nullptr;
-    mIsActive = other.mIsActive.exchange(false);
 }
 
 }  // namespace dhcp
