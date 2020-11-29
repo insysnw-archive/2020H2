@@ -142,7 +142,7 @@ def get_error_packet_with_rcode(data, rcode):
     responce_header.rd = request_header.rd
     responce_header.ra=0b1
     responce_header.rcode=rcode
-    responce_header.qdcount=0x0000
+    responce_header.qdcount=0x0001
     responce_header.ancount=0x0000
     responce_header.nscount=0x0000
     responce_header.arcount=0x0000
