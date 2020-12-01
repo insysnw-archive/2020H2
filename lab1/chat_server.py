@@ -102,7 +102,7 @@ while True:
                 user = clients[some_socket]
 
                 print('Closed connection from: {}'.format(clients[some_socket]['data'].decode('utf-8')))
-                message=f"User {user['data'].decode('utf-8')} leaved the channel".encode('utf-8')
+                message=f"User {user['data'].decode('utf-8')} left the channel".encode('utf-8')
                 if(len(message)>=pow(2,8*HEADER_LENGTH)):
                     message=message[:pow(2,8*HEADER_LENGTH)-1]
                 message_header=len(message).to_bytes(HEADER_LENGTH, byteorder='big')
