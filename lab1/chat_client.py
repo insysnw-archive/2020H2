@@ -32,9 +32,9 @@ client_socket.setblocking(False)
 my_username = input("Username: ")
 # Prepare username and header(username length) and send them
 username = my_username.encode('utf-8')
-if(len(username)>=pow(10,HEADER_LENGTH)):
-    username=username[:pow(10,HEADER_LENGTH)-1]
-username_header = f"{len(username):<{HEADER_LENGTH}}".encode('utf-8')
+if(len(username)>=pow(2,8*HEADER_LENGTH)):
+    username=username[:pow(2,8*HEADER_LENGTH)-1]
+username_header = len(username).to_bytes(HEADER_LENGTH, byteorder='big')
 client_socket.send(username_header + username)
 print("Yay, successfull, you can now start messaging")
 
@@ -53,14 +53,14 @@ def message_update():
                     sys.exit()
 
                 # Convert header to int value
-                username_length = int(username_header.decode('utf-8').strip())
+                username_length = int.from_bytes(username_header,byteorder='big',signed=False)
 
                 # Receive and decode username
                 username = client_socket.recv(username_length).decode('utf-8')
 
                 # Do the same for message
                 message_header = client_socket.recv(HEADER_LENGTH)
-                message_length = int(message_header.decode('utf-8').strip())
+                message_length = int.from_bytes(message_header,byteorder='big',signed=False)
                 message = client_socket.recv(message_length).decode('utf-8')
 
                 # Print message
@@ -80,7 +80,6 @@ def message_update():
                     client_socket.close()
                     sys.exit()
 
-
             except Exception as e:
                 # Any other exception - something bad happened, exit
                 print('Reading error: '.format(str(e)))
@@ -99,9 +98,9 @@ while True:
     if message:
 
         enc_message = message.encode('utf-8')
-        if(len(enc_message)>=pow(10,HEADER_LENGTH)):
-            enc_message=enc_message[:pow(10,HEADER_LENGTH)-1]
-        message_header = f"{len(enc_message):<{HEADER_LENGTH}}".encode('utf-8')
+        if(len(enc_message)>=pow(2,8*HEADER_LENGTH)):
+            enc_message=enc_message[:pow(2,8*HEADER_LENGTH)-1]
+        message_header = len(enc_message).to_bytes(HEADER_LENGTH, byteorder='big')
         client_socket.send(message_header + enc_message)
 
         curr_time=datetime.datetime.now().strftime('%H:%M')
