@@ -2,11 +2,13 @@ import argparse
 import os
 import random
 import signal
+import sys
 from socket import *
+from enum import Enum
 
-dns_argument_ip = "8.8.8.8"
-TIMEOUT = 2
+TIMEOUT = 3
 PORT = 53
+dns_argument_ip = None
 
 
 def _to_bits(data: bytes):
@@ -89,28 +91,52 @@ class DnsQuery:
         return self._size
 
 
+class DnsType(Enum):
+    A = 1
+    NS = 2
+    MD = 3
+    MF = 4
+    CNAME = 5
+    SOA = 6
+    MB = 7
+    MG = 8
+    MR = 9
+    NULL = 10
+    WKS = 11
+    PTR = 12
+    HINFO = 13
+    MINFO = 14
+    MX = 15
+    TXT = 16
+    AAAA = 28
+
+
 class DnsResponse:
     def __init__(self, full_data: bytes, start: int):
         self.name, offset = _parse_name(full_data, start)
         self._size = offset
         data = full_data[start + offset:]
-        self.type = int.from_bytes(data[0:2], byteorder="big")
+        self.type = DnsType(int.from_bytes(data[0:2], byteorder="big"))
         self.rclass = int.from_bytes(data[2:4], byteorder="big")
         self.ttl = int.from_bytes(data[4:8], byteorder="big")
         self.rdlength = int.from_bytes(data[8:10], byteorder="big")
         self.rdata = data[10:10 + self.rdlength]
+        convertion = {
+            DnsType.A: lambda rd: inet_ntop(AF_INET, rd),
+            DnsType.AAAA: lambda rd: inet_ntop(AF_INET6, rd),
+            DnsType.CNAME: lambda _: _parse_name(full_data, offset + 10)[0]}.get(self.type, str)
+        self.rdata = convertion(self.rdata)
         self._size += 10 + self.rdlength
 
     def __str__(self):
+
         string = str()
         string += "    Name: " + str(self.name) + "\n"
-        string += "    Type: " + str(self.type) + "\n"
+        string += "    Type: " + f"{self.type.value} ({self.type.name})\n"
         string += "   Class: " + str(self.rclass) + "\n"
         string += "     TTL: " + str(self.ttl) + "\n"
         string += "Rdlength: " + str(self.rdlength) + "\n"
-        string += "   Rdata: " + str(self.rdata)
-        # for ip in self.rdata:
-        # string += "Ip: " + inet_ntop(AF_INET, ip)
+        string += "   Rdata: " + str(self.rdata) + "\n"
         return string
 
     def __len__(self):
@@ -132,6 +158,7 @@ class DnsPacket:
         self.rcode = int(bits[28: 32], 2)
         self.qdcount, self.ancount, self.nscount, self.arcount = [
             int(bits[32 + i * 16:32 + (i + 1) * 16], 2) for i in range(0, 4)]
+        self.dns_server = ""
 
     def __init__(self, raw: bytes = None):
         self.questions = []
@@ -159,7 +186,11 @@ class DnsPacket:
         return 12
 
     def __str__(self):
+        rcode_str = {0: "No errors", 1: "Format error", 2: "Server failure",
+                     3: "Name error", 4: "Not implemented", 5: "Refused"}
+
         string = str()
+        string += "  Server: " + str(self.dns_server) + "\n"
         string += "      ID: " + str(hex(self.id)) + "\n"
         string += "      QR: " + str(self.qr) + "\n"
         string += "  Opcode: " + str(self.opcode) + "\n"
@@ -168,7 +199,8 @@ class DnsPacket:
         string += "      RD: " + str(self.rd) + "\n"
         string += "      RA: " + str(self.ra) + "\n"
         string += "       Z: " + str(self.z) + "\n"
-        string += "   Rcode: " + str(self.rcode) + "\n"
+        string += "   Rcode: " + \
+            f"{str(self.rcode)} ({rcode_str[self.rcode]})\n"
         string += " Qdcount: " + str(self.qdcount) + "\n"
         string += " Ancount: " + str(self.ancount) + "\n"
         string += " Nscount: " + str(self.nscount) + "\n"
@@ -213,13 +245,11 @@ def get_dns_from_config():
     with open(conf, "r") as resolve:
         for line in resolve:
             line = line.strip()
-            if line.startswith("#"):
-                continue
-            dns_ip = line.split()[-1]
-            yield dns_ip
+            if line.startswith("nameserver"):
+                yield line.split()[-1]
 
 
-def _send_query(ip: str, name: str):
+def _get_response_from_server(ip: str, name: str):
     if len(ip) == 0:
         return None
 
@@ -233,8 +263,14 @@ def _send_query(ip: str, name: str):
         s.sendto(query.raw(), (ip, PORT))
 
         while True:
-            bytes, _ = s.recvfrom(1024)
+            try:
+                bytes, _ = s.recvfrom(512)
+            except timeout:
+                sys.stderr.write(f"No response from {ip}\n")
+                return None
+
             response = DnsPacket(bytes)
+            response.dns_server = ip
 
             # Response to another client or from a client
             if response.qr != 1 or response.id != query.id:
@@ -260,21 +296,36 @@ def _send_query(ip: str, name: str):
 
 def resolve_name(name: str):
     dns_ips = [dns_argument_ip]
-    # dns_ips.extend(get_dns_from_config())
+    dns_ips.extend(get_dns_from_config())
 
-    for dns_ip in dns_ips:
-        packet = _send_query(dns_ip, name)
-        # if packet is not None:
-        # return inet_ntop(AF_INET, packet.data.ip)
-        print(packet)
+    for server_ip in dns_ips:
+        if server_ip is None:
+            continue
+
+        packet = _get_response_from_server(server_ip, name)
+        if packet is None:
+            continue
+        return packet
+
     return None
 
 
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, lambda *args: exit(0))
-    # while True:
-    # try:
-    # cite_name = input()
-    resolve_name("www.northeastern.edu")
-    # except EOFError:
-    # break
+    parser = argparse.ArgumentParser("Domain name resolver")
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="increase output verbosity")
+    parser.add_argument("-s", "--server", type=str, help="dns server ip")
+    parser.add_argument("dname", type=str, help="domain name")
+    args = parser.parse_args()
+    dns_argument_ip = args.server
+    packet = resolve_name(args.dname)
+
+    if packet is None:
+        exit()
+
+    if (args.verbose):
+        print(packet)
+    ips = [a.rdata for a in packet.answers if a.type in (
+        DnsType.A, DnsType.AAAA)]
+    if len(ips) != 0:
+        print("\n".join(sorted(ips)))
