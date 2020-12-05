@@ -1,0 +1,9 @@
+version: "2"
+services:
+    tcp_chat:
+        build: .
+        container_name: "tcpchat_builder"
+        working_dir: "/usr/tcpchat/build"
+        command: bash -c "cmake .. && cmake --build . -j4"
+        volumes:
+            - ".:/usr/tcpchat"
