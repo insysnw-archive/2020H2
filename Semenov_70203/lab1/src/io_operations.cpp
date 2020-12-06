@@ -1,90 +1,80 @@
 #include "io_operations.h"
 
-#include "utils.h"
-
 #include <unistd.h>
 
 #include <algorithm>
 #include <memory>
 
-IoReadTask::IoReadTask(int socket, CallbackType callback) noexcept
-    : mSocket{socket}, mCallback{callback} {}
+IoReadTask::IoReadTask(
+    int socket,
+    MessageBuilder * builder,
+    TaskReadCallback callback) noexcept
+    : mSocket{socket}, mBuilder{builder}, mCallback{callback} {}
 
 void IoReadTask::run() noexcept {
     std::array<char, BUFFER_SIZE> buffer;
-    std::vector<char> rawMessage;
-
     while (true) {
         auto bytes = read(mSocket, buffer.begin(), buffer.size());
-
-        if (bytes < 0) {
-            logError("read");
-            return;
-        }
-        if (bytes == 0)
-            return;
-
-        std::copy(
-            buffer.begin(), buffer.begin() + bytes,
-            std::back_inserter(rawMessage));
-
-        auto message =
-            Message::deserialize(rawMessage.data(), rawMessage.size());
-
-        if (message.has_value()) {
-            auto messageSize = message->size();
-            logInfo("Received " + std::to_string(messageSize) + " bytes");
-
-            if (mCallback)
-                mCallback(*message);
-
-            rawMessage.erase(
-                rawMessage.begin(), rawMessage.begin() + messageSize);
-
-            if (rawMessage.empty())
-                return;
-        }
+        if (bytes <= 0)
+            break;
+        mBuilder->append(mSocket, buffer.data(), bytes);
     }
+
+    if (mCallback)
+        mCallback(mSocket);
 }
 
-IoWriteTask::IoWriteTask(int socket, const Message & message) noexcept
-    : mSocket{socket}, mMessage{message} {}
+IoWriteTask::IoWriteTask(int socket, const Message & message) noexcept {
+    mFrom = 0;
+    mTo = 1;
+    mMessage = std::make_shared<Message>(message);
+    mSockets = std::make_shared<int[]>(mTo);
+    mSockets[0] = socket;
+}
+
+IoWriteTask::IoWriteTask(
+    const std::vector<int> & sockets,
+    const Message & message) noexcept
+    : mMessage{std::make_shared<Message>(message)} {
+    mFrom = 0;
+    mTo = sockets.size();
+    mMessage = std::make_shared<Message>(message);
+    mSockets = std::make_shared<int[]>(mTo);
+    for (int i = 0; i < sockets.size(); i++)
+        mSockets[i] = sockets[i];
+}
 
 void IoWriteTask::run() noexcept {
-    auto serialized = mMessage.serialize();
-    if (write(mSocket, serialized.data(), serialized.size()) < 0)
-        logError("write");
-}
-
-IoBroadcastTask::IoBroadcastTask(
-    const SocketList & sockets,
-    const Message & message) noexcept
-    : mSockets{std::make_shared<SocketList>(sockets)},
-      mMessage{std::make_shared<Message>(message)} {}
-
-void IoBroadcastTask::run() noexcept {
     auto serialized = mMessage->serialize();
+    auto data = serialized.data();
+    auto size = serialized.size();
 
     for (int i = mFrom; i < mTo; ++i) {
-        if (write((*mSockets)[i], serialized.data(), serialized.size()) < 0)
-            logError("write");
+        size_t bytes = 0;
+        do {
+            auto written = write(mSockets[i], data, size);
+            if (written < 0)
+                break;
+
+            bytes += written;
+        } while (bytes != mMessage->size());
     }
 }
 
-IoBroadcastTask::BroadcastTaskList IoBroadcastTask::split(int splits) noexcept {
+IoWriteTask::WriteTaskList IoWriteTask::split(int splits) noexcept {
     const auto size = mTo - mFrom;
     const auto splitsNumber = std::min(splits, size);
     const auto part = size / splitsNumber;
 
-    BroadcastTaskList tasks;
+    WriteTaskList tasks;
     for (auto i = 1; i < splitsNumber; ++i) {
-        IoBroadcastTask copy{*this};
+        IoWriteTask copy{*this};
         copy.mFrom = this->mFrom + (i - 1) * part;
         copy.mTo = i * part;
-        tasks.emplace_back(std::make_unique<IoBroadcastTask>(std::move(copy)));
+        tasks.emplace_back(std::make_unique<IoWriteTask>(std::move(copy)));
     }
 
     mFrom = (splitsNumber - 1) * part;
-    tasks.emplace_back(std::make_unique<IoBroadcastTask>(std::move(*this)));
+    tasks.emplace_back(std::make_unique<IoWriteTask>(std::move(*this)));
     return tasks;
 }

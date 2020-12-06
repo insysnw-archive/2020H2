@@ -26,6 +26,10 @@ Total: 14 + length(author) + length(text) bytes
 Integer fields are aware of endianness.
 Converting a Message object fields to the communication format and back implemented in [message.cpp](src/message.cpp) file.
 
+# Non-blocking socket
+Class `MessageBuilder` combines parts of received messages into whole ones. It solves the problem of partial message reading, when
+the non-blocking read loop is faster than data comes to the system buffer.
+
 # Arguments
 To specify globally ip address or port you should set CHAT\_IP or CHAT\_PORT environment variables.
 Also you can set them explicitly passing as arguments. Arguments have higher priority than environment variables.

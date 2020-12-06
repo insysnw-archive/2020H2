@@ -1,6 +1,7 @@
 #pragma once
 
 #include "message.h"
+#include "message_builder.h"
 #include "task.h"
 
 #include <functional>
@@ -8,56 +9,46 @@
 #include <vector>
 
 class IoReadTask : public ITask {
-public:
+ public:
     static constexpr auto BUFFER_SIZE = 64;
+    using TaskReadCallback = std::function<void(int)>;
 
-public:
-    using CallbackType = std::function<void(Message)>;
-
-public:
+ public:
     explicit IoReadTask(
         int socket,
-        CallbackType callback = CallbackType{}) noexcept;
+        MessageBuilder * builder,
+        TaskReadCallback callback) noexcept;
 
     void run() noexcept override;
 
-private:
+ private:
     int mSocket;
-    CallbackType mCallback;
+    MessageBuilder * mBuilder;
+    TaskReadCallback mCallback;
 };
 
 class IoWriteTask : public ITask {
-public:
+ public:
+    using SharedMessage = std::shared_ptr<Message>;
+    using SharedSockets = std::shared_ptr<int[]>;
+    using WriteTaskList = std::vector<std::unique_ptr<IoWriteTask>>;
+
+ public:
     explicit IoWriteTask(int socket, const Message & message) noexcept;
 
-    void run() noexcept override;
-
-private:
-    int mSocket;
-    Message mMessage;
-};
-
-class IoBroadcastTask : public ITask {
-public:
-    using SocketList = std::vector<int>;
-    using SharedMessage = std::shared_ptr<Message>;
-    using SharedSockets = std::shared_ptr<SocketList>;
-    using BroadcastTaskList = std::vector<std::unique_ptr<IoBroadcastTask>>;
-
-public:
-    explicit IoBroadcastTask(
-        const SocketList & sockets,
+    explicit IoWriteTask(
+        const std::vector<int> & sockets,
         const Message & message) noexcept;
 
-    IoBroadcastTask(const IoBroadcastTask &) noexcept = default;
+    IoWriteTask(const IoWriteTask &) noexcept = default;
 
     void run() noexcept override;
 
-    BroadcastTaskList split(int splits) noexcept;
+    WriteTaskList split(int splits) noexcept;
 
-private:
+ private:
     SharedSockets mSockets;
     SharedMessage mMessage;
-    int mFrom = 0;
-    int mTo = mSockets->size();
+    mutable int mFrom;
+    mutable int mTo;
 };

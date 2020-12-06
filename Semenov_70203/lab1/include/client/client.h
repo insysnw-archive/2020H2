@@ -1,14 +1,14 @@
 #pragma once
 
 #include "event_listener_adapter.h"
+#include "message.h"
+#include "message_builder.h"
 #include "setup.h"
 
 #include <QMainWindow>
 #include <QString>
 
 #include <atomic>
-
-struct Message;
 
 namespace Ui {
 class Client;
@@ -17,10 +17,10 @@ class Client;
 class Client : public QMainWindow {
     Q_OBJECT
 
-private:
+ private:
     static constexpr int RECONNECT_TIME = 1000;
 
-public:
+ public:
     explicit Client(
         QStringView name,
         const EndpointSetup & setup,
@@ -28,21 +28,24 @@ public:
 
     ~Client() noexcept;
 
-public slots:
+ public slots:
     void onIncomingMessage() noexcept;
 
     void onConnectionLost() noexcept;
 
     void onSendClicked() noexcept;
 
-private slots:
+ private slots:
     void connectToServer() noexcept;
 
-private:
+    void onMessageReceived(int, Message message) noexcept;
+
+ private:
     int mSocket;
     std::atomic_bool mSendClicked;
     QString mName;
     ConnectionSetup mSetup;
+    MessageBuilder mBuilder;
 
     EventListenerAdapter mListener;
     Ui::Client * ui;

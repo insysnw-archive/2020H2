@@ -21,6 +21,9 @@ Client::Client(
       mListener{setup.eventBufferSize, setup.timeout}, ui{new Ui::Client} {
     ui->setupUi(this);
 
+    mBuilder.setOnFullReadCallback(
+        [this](int s, Message m) { this->onMessageReceived(s, m); });
+
     QObject::connect(
         ui->sendButton, &QPushButton::clicked, this, &Client::onSendClicked);
 
@@ -42,20 +45,9 @@ Client::~Client() noexcept {
 }
 
 void Client::onIncomingMessage() noexcept {
-    auto callback = [this](const Message & message) {
-        auto widget = new MessageWidget{message, ui->messagesListWidget};
-        auto item = new QListWidgetItem{ui->messagesListWidget};
-        item->setSizeHint(widget->sizeHint());
-        ui->messagesListWidget->addItem(item);
-        ui->messagesListWidget->setItemWidget(item, widget);
-        ui->messagesListWidget->scrollToBottom();
-        if (mSendClicked.exchange(false))
-            ui->messageTextEdit->clear();
-    };
-
-    IoReadTask read{mSocket, callback};
+    IoReadTask read{
+        mSocket, &mBuilder, [this](int s) { this->mListener.oneshot(s); }};
     read.run();
-    mListener.oneshot(mSocket);
 }
 
 void Client::onConnectionLost() noexcept {
@@ -104,6 +96,17 @@ void Client::connectToServer() noexcept {
         return;
     }
 
+    makeNonBlocking(mSocket);
     ui->statusLabel->hide();
     mListener.add(mSocket);
+}
+void Client::onMessageReceived(int, Message message) noexcept {
+    auto widget = new MessageWidget{message, ui->messagesListWidget};
+    auto item = new QListWidgetItem{ui->messagesListWidget};
+    item->setSizeHint(widget->sizeHint());
+    ui->messagesListWidget->addItem(item);
+    ui->messagesListWidget->setItemWidget(item, widget);
+    ui->messagesListWidget->scrollToBottom();
+    if (mSendClicked.exchange(false))
+        ui->messageTextEdit->clear();
 }

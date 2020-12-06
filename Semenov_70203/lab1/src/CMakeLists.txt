@@ -15,6 +15,7 @@ add_library(
     ${PROJECT_SOURCE_DIR}/src/looped_thread.cpp
     ${PROJECT_SOURCE_DIR}/src/manual_control.cpp
     ${PROJECT_SOURCE_DIR}/src/message.cpp
+    ${PROJECT_SOURCE_DIR}/src/message_builder.cpp
     ${PROJECT_SOURCE_DIR}/src/utils.cpp
     ${PROJECT_SOURCE_DIR}/src/worker.cpp
     ${PROJECT_SOURCE_DIR}/src/workers_pool.cpp)
