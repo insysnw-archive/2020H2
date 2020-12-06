@@ -24,13 +24,8 @@ void IoReadTask::run() noexcept {
         mCallback(mSocket);
 }
 
-IoWriteTask::IoWriteTask(int socket, const Message & message) noexcept {
-    mFrom = 0;
-    mTo = 1;
-    mMessage = std::make_shared<Message>(message);
-    mSockets = std::make_shared<int[]>(mTo);
-    mSockets[0] = socket;
-}
+IoWriteTask::IoWriteTask(int socket, const Message & message) noexcept
+    : IoWriteTask{std::vector{socket}, message} {}
 
 IoWriteTask::IoWriteTask(
     const std::vector<int> & sockets,
