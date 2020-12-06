@@ -14,17 +14,17 @@ struct Message;
 class Server : public IConnectionHandler,
                public IncomingEventHandler,
                public ManualControl {
-public:
+ public:
     using SocketList = std::vector<int>;
 
-public:
+ public:
     explicit Server(const EndpointSetup & setup) noexcept;
 
     ~Server() noexcept;
 
     void join() noexcept override;
 
-private:
+ private:
     void onStart() noexcept override;
 
     void onStop() noexcept override;
@@ -35,9 +35,9 @@ private:
 
     void onConnectionLost(int socket) noexcept override;
 
-    void onMessageReceived(int socket, const Message & message) noexcept;
+    void onMessageReceived(int socket, Message message) noexcept;
 
-private:
+ private:
     std::mutex mMutex;
     SocketList mSockets;
 

@@ -40,7 +40,6 @@ void Server::onStop() noexcept {
 
 void Server::onNewConnection(int socket) noexcept {
     std::lock_guard lock{mMutex};
-    //makeNonBlocking(socket);
     mSockets.push_back(socket);
 
     mIncomingEventsListener.add(socket);
@@ -48,9 +47,9 @@ void Server::onNewConnection(int socket) noexcept {
 }
 
 void Server::onIncomingMessageFrom(int socket) noexcept {
-    auto readTask = std::make_unique<IoReadTask>(
-        socket, [this, socket](const Message & message) {
-            onMessageReceived(socket, message);
+    auto readTask =
+        std::make_unique<IoReadTask>(socket, [this, socket](Message message) {
+            onMessageReceived(socket, std::move(message));
         });
     mWorkers.addTask(std::move(readTask));
 }
@@ -65,11 +64,12 @@ void Server::onConnectionLost(int socket) noexcept {
     logInfo("Connection lost");
 }
 
-void Server::onMessageReceived(int socket, const Message & message) noexcept {
+void Server::onMessageReceived(int socket, Message message) noexcept {
     mIncomingEventsListener.oneshot(socket);
+    message.datetime = time(nullptr);
 
     std::lock_guard lock{mMutex};
-    auto broadcastTask = std::make_unique<IoBroadcastTask>(mSockets, message);
+    auto broadcastTask = std::make_unique<IoWriteTask>(mSockets, message);
 
     for (auto & subtask : broadcastTask->split(mWorkers.size()))
         mWorkers.addTask(std::move(subtask));
