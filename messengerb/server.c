@@ -14,9 +14,37 @@
 #define TRUE 1
 #define FALSE 0
 #define PORT 8888
+#define MSG_LIM 2000
 
 static int current_clients = 0;
-char names[256][256];
+
+enum opcode
+{
+    MSG,
+    ERROR
+};
+
+typedef union
+{
+
+    uint16_t opcode;
+
+    struct
+    {
+        uint16_t opcode; //MSG
+        uint8_t hours;
+        uint8_t minutes;
+        uint8_t username[16];
+        uint8_t message[MSG_LIM];
+    } message;
+
+    struct
+    {
+        uint16_t opcode; // ERROR
+        uint8_t error_string[512];
+    } error;
+
+} chat_packet;
 
 int main(int argc, char *argv[])
 {
@@ -26,13 +54,10 @@ int main(int argc, char *argv[])
     int max_sd;
     struct sockaddr_in address;
 
-    char buffer[2000]; //data buffer of 1K
-
     //set of socket descriptors
     fd_set readfds;
 
-    //a message
-    char *message = "Enter your username: \n";
+    chat_packet packet;
 
     //initialise all client_socket[] to 0 so not checked
     for (i = 0; i < max_clients; i++)
@@ -76,7 +101,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
     puts("Waiting for connections ...");
-    
+
     addrlen = sizeof(address);
 
     fcntl(new_socket, F_SETFL, O_NONBLOCK);
@@ -91,13 +116,6 @@ int main(int argc, char *argv[])
             //inform user of socket number - used in send and receive commands
             printf("New connection , socket fd is %d , ip is : %s , port : %d \n", new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
-            //send new connection greeting message
-            if (send(new_socket, message, strlen(message), 0) != strlen(message))
-            {
-                perror("send");
-            }
-
-            puts("Welcome message sent successfully");
             fcntl(new_socket, F_SETFL, O_NONBLOCK);
             //add new socket to array of sockets
             for (i = 0; i < max_clients; i++)
@@ -120,7 +138,7 @@ int main(int argc, char *argv[])
 
             if (sd != 0)
             {
-                valread = recv(sd, buffer, 1024, 0);
+                valread = recv(sd, &packet, sizeof(chat_packet), 0);
                 //Check if it was for closing , and also read the
                 //incoming message
                 if (valread == 0)
@@ -134,53 +152,35 @@ int main(int argc, char *argv[])
                     //Close the socket and mark as 0 in list for reuse
                     close(sd);
                     client_socket[i] = 0;
-                    names[i][0] = 0;
                     current_clients--;
                 }
 
                 //Echo back the message that came in
                 else if (valread > 0)
                 {
-                    buffer[valread] = '\0';
-                    if (names[i][0] == 0)
+                    if (packet.opcode == MSG)
                     {
-                        strcpy(names[i], buffer);
-                        send(sd, buffer, strlen(buffer), 0);
-                        //printf("%s, %s\n", names[i], buffer);
-                    }
-                    else
-                    {
-                        char temp[2048];
-                        char hours[3];
-                        char mins[3];
-
-                        time_t T = time(NULL);
-                        struct tm tm = *localtime(&T);
-
-                        sprintf(hours, "%02d", tm.tm_hour);
-                        sprintf(mins, "%02d", tm.tm_min);
-                        strcpy(temp, "<");
-                        strcat(temp, hours);
-                        strcat(temp, ":");
-                        strcat(temp, mins);
-                        strcat(temp, "> ");
-                        strcat(temp, "[");
-                        strcat(temp, names[i]);
-                        strcat(temp, "] ");
-                        strcat(temp, buffer);
-
                         for (int i = 0; i < max_clients; i++)
                         {
                             if (client_socket[i] != 0)
                             {
-                                send(client_socket[i], temp, strlen(temp), 0);
+                                send(client_socket[i], &packet, sizeof(packet), 0);
                             }
                         }
+                    }
+                    if (packet.opcode == ERROR)
+                    {
+                        getpeername(sd, (struct sockaddr *)&address,
+                                    (socklen_t *)&addrlen);
+                        printf("Host sent error , ip %s , port %d \n",
+                               inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+                        printf("Error message: %s", packet.error.error_string);
                     }
                 }
             }
         }
-    }
 
+
+    }
     return 0;
 }
