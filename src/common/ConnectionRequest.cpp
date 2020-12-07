@@ -6,7 +6,7 @@
 
 
 ConnectionRequest::ConnectionRequest(char *data) {
-    unsigned int packetLength;
+    unsigned int packetLength{};
     memcpy(&packetLength, data + sizeof(headers::header_t), sizeof(packetlen_t));
     const unsigned int nameLength = packetLength - sizeof(headers::header_t) - sizeof(packetlen_t);
     char nameArray[nameLength + 1];
