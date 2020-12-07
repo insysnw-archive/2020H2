@@ -9,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 public class Main {
     public static int PORT = 8000;
     public static String IP = "127.0.0.1";
-    public static int buffer = 255;
 
     //имя получаем из командной строки
     public static void main(String[] args) throws IOException {
@@ -20,12 +19,20 @@ public class Main {
             System.out.println("name anon");
             System.out.println("path default");
         } else if (args.length == 1){
-            name = args[0];
+            if(args[0].length()>12){
+                name = args[0].substring(0, 12);
+            }else{
+                name = args[0];
+            }
             path = "default";
             System.out.println("name "+ name);
             System.out.println("path default");
         }else{
-            name = args[0];
+            if(args[0].length()>12){
+                name = args[0].substring(0, 12);
+            }else{
+                name = args[0];
+            }
             path = args[1];
             System.out.println("name " + name);
             System.out.println("path " + path);
@@ -37,10 +44,8 @@ public class Main {
                 BufferedReader bufferedReader = new BufferedReader(fileReader);
                 PORT = Integer.parseInt(bufferedReader.readLine());
                 IP = bufferedReader.readLine();
-                buffer = Integer.parseInt(bufferedReader.readLine());
                 System.out.println("Port = " + PORT);
                 System.out.println("IP = " + IP);
-                System.out.println("buffer = " + buffer);
             }catch (FileNotFoundException e){
                 System.out.println("Cannot find config file. Program will use default values");
             }
@@ -65,9 +70,9 @@ class ClientListener {
         }
         try {
             name = userName;
-            userInp = new BufferedReader(new InputStreamReader(System.in), Main.buffer);
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()), Main.buffer);
-            out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()), Main.buffer);
+            userInp = new BufferedReader(new InputStreamReader(System.in));
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             new ReadMsg().start();
             new WriteMsg().start();
         } catch (IOException e) {
@@ -84,17 +89,19 @@ class ClientListener {
                 String userWord;
                 try {
                     userWord = userInp.readLine();
-
-                    char nameLength = (char) name.length();
-
-                    if (userWord.length() >= Main.buffer) {
-                        userWord = userWord.substring(0, Main.buffer - 4);
-                        userWord = userWord + "...";
-                    }
-                    char userWordLength = (char) userWord.length();
+                    //System.out.println("userInp: " + userWord);
+                    char nameLength = (char) (name.length());
+                    //System.out.println("nameLength before: "+(int)nameLength);
+                    nameLength = (char) (name.length()+ 30) ;
+                    //System.out.println("nameLength: "+(int)nameLength);
+                    char userWordLength = (char) (userWord.length()+ 30);
+                    //System.out.println("userWordLength:" + (int)userWordLength);
                     String output = nameLength + name + userWordLength + userWord;
+                    //System.out.println("output: "+ output);
                     out.write(output + "\n");
-
+//                    output += "\n";//
+//                    char[] outputChars = output.toCharArray();//
+//                    out.write(outputChars);//
                     out.flush();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -115,6 +122,7 @@ class ClientListener {
         @Override
         public void run() {
             String str;
+
             try {
                 while (true) {
                     str = in.readLine();
@@ -135,11 +143,15 @@ class ClientListener {
          */
         private void consoleWriter(String str){
             int dateLength = str.charAt(0); // получаем длину даты
+
             String dateGMTStr = str.substring(1, dateLength+1);// получаем строку даты
-            int nameLength = str.charAt(dateLength+1); // получаем длину имени
+            int nameLength = str.charAt(dateLength+1);
+            //System.out.println("nameLength before: " + nameLength);
+            nameLength = str.charAt(dateLength+1)-30; // получаем длину имени
+            //System.out.println("nameLength: " + nameLength);
             String name = str.substring(2+dateLength, 2+dateLength+nameLength); // получаем строку имени
-            int msgLength = str.charAt(2+dateLength+nameLength); // получаем длину сообщения
-            String message = str.substring(3+dateLength+nameLength, 3+dateLength + nameLength + msgLength); // получаем сообщение
+            int msgLength = str.charAt(2+dateLength+nameLength) -30; // получаем длину сообщения
+            String message = str.substring(3+dateLength+nameLength); // получаем сообщение
             //приведение даты в формат местного времени из Гринвича
             Calendar calendar = new GregorianCalendar();
             TimeZone mTimeZone = calendar.getTimeZone();
