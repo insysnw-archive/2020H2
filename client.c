@@ -92,11 +92,9 @@ void sendText(GtkButton *sendButton, gpointer data)
 
         chat_packet packet;
 
-        time_t T = time(NULL);
-        struct tm tm = *localtime(&T);
         packet.message.opcode = MSG;
-        packet.message.hours = tm.tm_hour;
-        packet.message.minutes = tm.tm_min;
+        packet.message.hours = 0;
+        packet.message.minutes = 0;
         strcpy(packet.message.username, username);
         strcpy(packet.message.message, message);
         ret = sendto(sockfd, &packet, sizeof(chat_packet), 0, (struct sockaddr *)&addr, sizeof(addr));

@@ -196,6 +196,10 @@ int main(int argc, char *argv[])
                          //uint16_t opcode = htons(packet.opcode);
                          if (packet.opcode == MSG)
                          {
+                              time_t T = time(NULL);
+                              struct tm tm = *localtime(&T);
+                              packet.message.hours = tm.tm_hour;
+                              packet.message.minutes = tm.tm_min;
                               for (int i = 0; i < max_clients; i++)
                               {
                                    if (client_socket[i] != 0)
