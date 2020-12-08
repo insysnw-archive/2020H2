@@ -7,101 +7,104 @@ import java.util.concurrent.TimeUnit;
 
 
 public class Main {
-    public static int PORT = 8000;
-    public static String IP = "127.0.0.1";
+    public static int PORT;
+    public static String IP;
+    public static String PATH;
+    public static String NAME;
 
-    //имя получаем из командной строки
-    public static void main(String[] args) throws IOException {
-        String name; // имя пользователя
-        String path = "default";
-        if (args.length == 0){
-            name = "anon"; // если аргументов командной строки нет, имя пользователя - "anon", путь до файла по-умолчанию
-            System.out.println("name anon");
-            System.out.println("path default");
-        } else if (args.length == 1){
-            if(args[0].length()>12){
-                name = args[0].substring(0, 12);
-            }else{
-                name = args[0];
-            }
-            path = "default";
-            System.out.println("name "+ name);
-            System.out.println("path default");
-        }else{
-            if(args[0].length()>12){
-                name = args[0].substring(0, 12);
-            }else{
-                name = args[0];
-            }
-            path = args[1];
-            System.out.println("name " + name);
-            System.out.println("path " + path);
+    public static void main(String[] args) {
+        argsParser(args);
+        fileReader();
+        new ClientListener(IP, PORT, NAME);
+    }
+
+    private static void argsParser(String[] args) {
+        if (args.length == 0) {
+            PATH = "default";
+            NAME = "Anon";
+            System.out.println("Using default name and path");
+        } else if (args.length == 1) {
+            PATH = "default";
+            NAME = args[0];
+            System.out.println("Using default path");
+        } else if (args.length == 2) {
+            PATH = args[1];
+            NAME = args[0];
+            System.out.println("Successfully set name and path");
+        } else {
+            System.out.println("Incorrect input. Program will use default values");
         }
-        if (!path.equals("default")){
-            try{
-                File file = new File(path);
+        if (NAME.length() > 12) {
+            NAME = NAME.substring(0, 13);
+        }
+    }
+
+    private static void fileReader() {
+        if (!PATH.equals("default")) {
+            try {
+                File file = new File(PATH);
                 FileReader fileReader = new FileReader(file);
                 BufferedReader bufferedReader = new BufferedReader(fileReader);
                 PORT = Integer.parseInt(bufferedReader.readLine());
                 IP = bufferedReader.readLine();
-                System.out.println("Port = " + PORT);
-                System.out.println("IP = " + IP);
-            }catch (FileNotFoundException e){
-                System.out.println("Cannot find config file. Program will use default values");
+                System.out.println("Config read successfully");
+            } catch (Exception e) {
+                System.out.println("Cannot find config file or it is incorrect. Program will use default values");
+                PORT = 8000;
+                IP = "127.0.0.1";
             }
+        } else {
+            PORT = 8000;
+            IP = "127.0.0.1";
+            System.out.println("Given default path. Program will use default values");
         }
-        new ClientListener(IP, PORT, name); //запускаем клиент
     }
 
 }
 
 class ClientListener {
+    private BufferedReader in;
+    private BufferedWriter out;
+    private BufferedReader userInp;
+    private String name;
     private Socket socket;
-    private BufferedReader in; // буферезированный поток на ввод в консоль
-    private BufferedWriter out; // буферизированный поток на получение из сокета
-    private BufferedReader userInp; // буферизированный поток на запись в сокет
-    private String name; // имя пользователя
 
-    public ClientListener(String ip, int port, String userName) throws IOException {
+    public ClientListener(String ip, int port, String userName) {
         try {
-            this.socket = new Socket(ip, port);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            name = userName;
-            userInp = new BufferedReader(new InputStreamReader(System.in));
+            socket = new Socket(ip, port);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            userInp = new BufferedReader(new InputStreamReader(System.in));
+            name = userName;
             new ReadMsg().start();
             new WriteMsg().start();
         } catch (IOException e) {
-            in.close();
-            out.close();
-            socket.close();
+            closer();
         }
     }
 
-    public class WriteMsg extends Thread {
+    private void closer() {
+        try {
+            in.close();
+            out.close();
+            userInp.close();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private class WriteMsg extends Thread {
         @Override
         public void run() {
             while (true) {
                 String userWord;
                 try {
                     userWord = userInp.readLine();
-                    //System.out.println("userInp: " + userWord);
-                    char nameLength = (char) (name.length());
-                    //System.out.println("nameLength before: "+(int)nameLength);
-                    nameLength = (char) (name.length()+ 30) ;
-                    //System.out.println("nameLength: "+(int)nameLength);
-                    char userWordLength = (char) (userWord.length()+ 30);
-                    //System.out.println("userWordLength:" + (int)userWordLength);
+                    char nameLength = (char) (name.length() + 30);
+                    char userWordLength = (char) (userWord.length() + 30);
                     String output = nameLength + name + userWordLength + userWord;
-                    //System.out.println("output: "+ output);
                     out.write(output + "\n");
-//                    output += "\n";//
-//                    char[] outputChars = output.toCharArray();//
-//                    out.write(outputChars);//
                     out.flush();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -110,23 +113,16 @@ class ClientListener {
         }
     }
 
-    /**
-     * класс, принимающий сообщения от сервера
-     * in - входной поток
-     * str - полученная строка из входного потока
-     */
+
     private class ReadMsg extends Thread {
-        /**
-         * запуск класса чтения сообщения в отдельном потоке
-         */
+
         @Override
         public void run() {
             String str;
-
             try {
                 while (true) {
                     str = in.readLine();
-                    if (str != null && !str.isEmpty()){ //строка не сразу успевает прийти, но так как цикл итерирует часто, в какой-то момент эта проверка сработает
+                    if (str != null && !str.isEmpty()) {
                         consoleWriter(str);
                     }
                 }
@@ -135,55 +131,47 @@ class ClientListener {
             }
         }
 
-
-        /**
-         *
-         * @param str - принимаемая от сервера сырая строка с сообщением
-         *            Метод принимает сырую строку, парсит её, работая по факту имплементацией протокола для отображения
-         *            полученной сырой строки.
-         */
-        private void consoleWriter(String str){
-            int dateLength = str.charAt(0); // получаем длину даты
-
-            String dateGMTStr = str.substring(1, dateLength+1);// получаем строку даты
-            int nameLength = str.charAt(dateLength+1);
-            //System.out.println("nameLength before: " + nameLength);
-            nameLength = str.charAt(dateLength+1)-30; // получаем длину имени
-            //System.out.println("nameLength: " + nameLength);
-            String name = str.substring(2+dateLength, 2+dateLength+nameLength); // получаем строку имени
-            int msgLength = str.charAt(2+dateLength+nameLength) -30; // получаем длину сообщения
-            String message = str.substring(3+dateLength+nameLength); // получаем сообщение
-            //приведение даты в формат местного времени из Гринвича
-            Calendar calendar = new GregorianCalendar();
-            TimeZone mTimeZone = calendar.getTimeZone();
-            int gmtRawOffset = mTimeZone.getRawOffset(); // offset в миллисекундах
-            int gmtOffset = (int)TimeUnit.HOURS.convert(gmtRawOffset, TimeUnit.MILLISECONDS); // offset в часах
-            String dateUTCStr = timeConverter(dateGMTStr, gmtOffset); //вызов метода конвертера времени и получения местного времени
-            System.out.println("<" + dateUTCStr + "> [" + name + "] " + message); // формирование строки
+        private void consoleWriter(String str) {
+            String[] parsedInput = inputParser(str);
+            System.out.println("<" + parsedInput[0] + "> [" + parsedInput[1] + "] " + parsedInput[2]);
 
         }
 
-        /**
-         * @param GMTTime - время в Гринвиче
-         * @param offset - часовой пояс относительно Гринвича( + или -)
-         * @return время в конкретном часовом поясе
-         */
-        private String timeConverter(String GMTTime, int offset){
-            String hoursString = GMTTime.substring(0,2);
+        private String[] inputParser(String input) {
+            String[] result = new String[3];
+            int timeLength = input.charAt(0) - 30;
+            int nameLength = input.charAt(timeLength + 1) - 30;
+            int messLength = input.charAt(timeLength + nameLength + 2) - 30;
+            String time = timeConverter(input.substring(1, timeLength + 1));
+            String name = input.substring(timeLength + 2, timeLength + nameLength + 2);
+            String mess = input.substring(3 + timeLength + nameLength);
+            result[0] = time;
+            result[1] = name;
+            result[2] = mess;
+            return result;
+        }
+
+        private String timeConverter(String GMTTime) {
+            Calendar calendar = new GregorianCalendar();
+            TimeZone mTimeZone = calendar.getTimeZone();
+            int gmtRawOffset = mTimeZone.getRawOffset();
+            int offset = (int) TimeUnit.HOURS.convert(gmtRawOffset, TimeUnit.MILLISECONDS);
+            String hoursString = GMTTime.substring(0, 2);
             int hours = Integer.parseInt(hoursString);
-            if(hours + offset > 23 && offset > 0){
+            if (hours + offset > 23 && offset > 0) {
                 hours = hours - 24;
                 int offsetTime = hours + offset;
                 return offsetTime + GMTTime.substring(2);
-            }else if (hours + offset < 0 && offset < 0){
+            } else if (hours + offset < 0 && offset < 0) {
                 hours = hours + 24;
                 int offsetTime = hours + offset;
                 return offsetTime + GMTTime.substring(2);
-            }else{
+            } else {
                 int offsetTime = hours + offset;
                 return offsetTime + GMTTime.substring(2);
             }
         }
+
     }
 }
 

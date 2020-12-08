@@ -6,42 +6,60 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.TimeZone;
 
+
 public class Main {
 
-    public static int PORT = 8000;
-    public static int buffer = 255;
+    public static int PORT;
+    public static int BUFFER;
+    public static String PATH;
     public static LinkedList<ServerListener> serverList = new LinkedList<>();
 
     public static void main(String[] args) throws IOException {
-        String path;
-        if (args.length == 0){
-            path = "default";
-        }else{
-            path = args[0];
-        }
-        if ( !path.equals("default")){
-            try{
-                File file = new File(path);
-                FileReader fileReader = new FileReader(file);
-                BufferedReader bufferedReader = new BufferedReader(fileReader);
-                PORT = Integer.parseInt(bufferedReader.readLine());
-                buffer = Integer.parseInt(bufferedReader.readLine());
-            }catch (FileNotFoundException e){
-                System.out.println("Cannot find config file. Program will use default values");
-            }
-        }
+        argsParser(args);
+        fileReader();
+
         try (ServerSocket server = new ServerSocket(PORT)) {
             System.out.println("Server starts successfully");
-            while (true) {
+            while (server.isBound()) {
                 Socket socket = server.accept();
                 try {
                     serverList.add(new ServerListener(socket));
                     System.out.println("socket was added");
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     System.out.println("socket was not created");
                     socket.close();
                 }
+            }
+        }
+    }
+
+    private static void argsParser(String[] args) {
+        if (args.length == 0) {
+            PATH = "default";
+            System.out.println("No path given. Program will use default values");
+        } else if (args.length == 1) {
+            PATH = args[0];
+        } else {
+            PATH = "default";
+            System.out.println("Incorrect input given. Program will use default values");
+        }
+    }
+
+    private static void fileReader() {
+        if (PATH.equals("default")) {
+            PORT = 8000;
+            BUFFER = 255;
+        } else {
+            try {
+                File file = new File(PATH);
+                FileReader fileReader = new FileReader(file);
+                BufferedReader bufferedReader = new BufferedReader(fileReader);
+                PORT = Integer.parseInt(bufferedReader.readLine());
+                BUFFER = Integer.parseInt(bufferedReader.readLine());
+            } catch (IOException e) {
+                PORT = 8000;
+                BUFFER = 255;
+                System.out.println("Unable to read file. Program will use default values");
             }
         }
     }
@@ -49,91 +67,92 @@ public class Main {
 
 class ServerListener extends Thread {
 
-    public Socket socket;
-    private BufferedReader in;
-    private BufferedWriter out;
+    private final Socket socket;
+    private final BufferedReader in;
+    private final BufferedWriter out;
 
     public ServerListener(Socket socket) throws IOException {
         this.socket = socket;
-        //DataInputStream ins = new DataInputStream(socket.getInputStream());
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         start();
-
     }
+
     @Override
     public void run() {
         String word;
-
+        String[] parsedValues;
         try {
             while (true) {
                 word = in.readLine();
+                word = inputCutter(word);
+                parsedValues = inputParser(word);
+                System.out.println("Server: <" + parsedValues[0] + "> [" + parsedValues[1] + "] " + parsedValues[2] + "\n");
                 for (ServerListener vr : Main.serverList) {
-                    vr.send(word); // отправка сообщения всем клиентам
+                    vr.send(parsedValues);
                 }
             }
         } catch (IOException e) {
-            try {
-                closer();
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
-            }
+            closer();
         }
     }
 
-    /**
-     *
-     * @param msg - передаваемая сырая строка
-     * метод send получает на вход строку, которую кто-то отправил на сервер, разбивает её в соответствии с протоколом
-     * на составляющие, добавляет к ним время по Гринвичу, чтобы вывести в читаемом виде в консоль сервера;
-     * При этом к изначальной сырой строке просто добавляет время и отправляет клиентам, так как уже дело клиента - как
-     * разбивать эту строку на составляющие.
-     */
-    private void send(String msg) {
-        try {
-            //имплементация протокола для получения читаемых данных из сырого получаемого источника msg
-            //System.out.println("msg: "+ msg);
-            int nameLength = msg.charAt(0);
-            //System.out.println("nameLength before: " + nameLength);
-            nameLength = msg.charAt(0) - 30; //получение длины имени
-            //System.out.println("nameLength: " + nameLength);
-            String name = msg.substring(1, nameLength+1); //откусываем имя из сырой строки
-            //System.out.println("name: " + name);
-            int msgLength = msg.charAt(nameLength+1) - 30; //получение длины строки пользовательского сообщения
-            //System.out.println("msgLength: " + msgLength);
-            String message = msg.substring(2+ nameLength); // откусываем само сообщение из сырой строки
-            //System.out.println("message: "+ message);
-            if (message.length() >= Main.buffer) {
-                message = message.substring(0, Main.buffer - 4);
-                message = message + "...";
-            }
-            //конец имплементации
-            //получение времени
-            Date time = new Date(); // получаем объект для хранения времени
-            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm"); //из года, месяца, дня итд оставляем только часы и минуты с помощью форматирования
-            sdf.setTimeZone(TimeZone.getTimeZone("GMT")); //задаём timezone как время по Гринвичу
-            String ti = sdf.format(time); //получаем время по гринвичу
-            int timeLength = ti.length(); //получаем его длину, чтобы передать клиентам
-            msg = (char)timeLength + ti + msg; //формируем сообщение с временем для передачи клиентам
-            //еще одна деталь имплементации
-            System.out.println("Server: <" + ti + "> [" + name + "] " + message + "\n");// формируем строку, которая будет видна в консоли сервера. Приводим в читаемый вид
-            //timeLength+=30;
-            nameLength+=30;
-            msgLength+=30;
-            //конец еще одной детали имплементации
-            out.write( (char)timeLength+ti+(char)nameLength+name+(char)msgLength+message+ "\n"); // пишем в выходной поток и отправляем клиентам
-            out.flush(); //очищаем поток
-        } catch (IOException ignored) {
 
-        } catch (StringIndexOutOfBoundsException sioobe){
-            sioobe.printStackTrace();
+    private void send(String[] msg) {
+        String message = outputGlue(msg);
+        try {
+            out.write(message + "\n");
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (StringIndexOutOfBoundsException ex) {
+            ex.printStackTrace();
             System.out.println("incorrect message, please try again");
         }
     }
 
-    private void closer() throws IOException {
-        in.close();
-        out.close();
-        socket.close();
+    private String getTime() {
+        Date time = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return sdf.format(time);
+    }
+
+    private String inputCutter(String input) {
+        if (input.length() >= Main.BUFFER) return input.substring(0, Main.BUFFER - 4) + "...";
+        else return input;
+    }
+
+    private String[] inputParser(String input) {
+        String[] result = new String[3];
+        int nameLength = input.charAt(0) - 30;
+        String name = input.substring(1, nameLength + 1);
+        int msgLength = input.charAt(nameLength + 1) - 30;
+        String message = input.substring(2 + nameLength);
+        String time = getTime();
+        result[0] = time;
+        result[1] = name;
+        result[2] = message;
+        return result;
+    }
+
+    private String outputGlue(String[] output) {
+        String result;
+        int timeLength = output[0].length() + 30;
+        int nameLength = output[1].length() + 30;
+        int messLength = output[2].length() + 30;
+        result = (char) timeLength + output[0] + (char) nameLength + output[1] + (char) messLength + output[2];
+        return result;
+    }
+
+    private void closer() {
+        try {
+            in.close();
+            out.close();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }
