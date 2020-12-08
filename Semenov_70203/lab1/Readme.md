@@ -22,7 +22,8 @@ Server and client use this message format to communicate each other:
 
 Total: 14 + length(author) + length(text) bytes
 ```
-
+Server time is counted from the unix epoch. Each client represent this time to local time.
+All integer fields are presented in the `unsigned int` type. The name and text must not have a length that exceeds the length fields.
 Integer fields are aware of endianness.
 Converting a Message object fields to the communication format and back implemented in [message.cpp](src/message.cpp) file.
 
