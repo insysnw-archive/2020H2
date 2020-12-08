@@ -1,13 +1,29 @@
 import select
 import socket
+import datetime
 
-address = (socket.gethostname(), 8686)
-
-max_connections = 20
+address = ("0.0.0.0", 8686)
 
 inputs = list()
 outs = list()
+clients = dict()
 
+header_length = 5
+
+def create_packet(sock,size_msg,msg,time):
+    ans = bytearray()
+    # 0 - отправка сообщения, 1 - сообщение о новом пользователе
+    ans.append(0)
+    # 2 байта времени (часы,минуты)
+    ans.append(int(time[:2]))
+    ans.append(int(time[3:]))
+    # 5 байт длина nickname, далее сам nickname
+    ans += (len(clients[sock])).to_bytes(header_length,"big")
+    ans += clients[sock].encode()
+    # 5 байт длина сообщения, далее само сообщение
+    ans += (size_msg).to_bytes(header_length,"big")
+    ans += msg.encode()
+    return ans
 
 def get_socket():
 
@@ -19,7 +35,7 @@ def get_socket():
     server.bind(address)
 
     # Установливаем максимальное количество подключений
-    server.listen(max_connections)
+    server.listen()
 
     return server
 
@@ -38,26 +54,39 @@ def handle_connections(conn, server):
         else:
             data = ""
             try:
-                data = resource.recv(1024)
-
+                data = resource.recv(1)
             except ConnectionResetError:
-                pass
-
+                pass 
+            
             if data:
-                # Вывод полученных данных на консоль
-                print(data.decode('utf-8'))
 
                 if resource not in outs:
                     outs.append(resource)
 
+                # Первый пакет от клиента с nickом
+                if data[0] == 1:
+                    data += resource.recv(header_length)
+                    size_nick = int.from_bytes(data[1:],"big")
+                    data += resource.recv(size_nick)
+                    nick = data[6:].decode()
+                    print("New user " + nick)
+                    clients[resource] = nick
+                # Пакет с сообщением
+                else:
+                    time = datetime.datetime.now().strftime("%H:%M")
+                    size_msg = int.from_bytes(resource.recv(header_length),"big")
+                    msg = resource.recv(size_msg).decode()
+                    data = create_packet(resource,size_msg,msg,time)
+                    print('<{0}> [{1}] {2}'.format(time,clients[resource],msg))
+
                 # Отправка данных всем клиентам
                 for i in outs:
-                    i.sendall(data)
-                    
+                    i.sendall(data)                   
 
             else:
                 # Очистка данных о ресурсе
                 clear_resource(resource)
+                del clients[resource]
 
 
 def clear_resource(resource):
@@ -80,8 +109,8 @@ if __name__ == '__main__':
     print("Server is running, please, press ctrl+c to stop")
     try:
         while True:
-            conn, writables, exception = select.select(inputs, outs, inputs)
-            handle_connections(conn, server_socket)
+            read_socks, write_socks, exception = select.select(inputs, outs, inputs)
+            handle_connections(read_socks, server_socket)
 
     except KeyboardInterrupt:
         clear_resource(server_socket)
