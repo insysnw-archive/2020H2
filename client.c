@@ -7,6 +7,7 @@
 #include "netdb.h"
 #include <gtk/gtk.h>
 #include <pthread.h>
+#include <fcntl.h>
 
 #define PORT 8888
 #define MSG_LIM 2000
@@ -92,11 +93,9 @@ void sendText(GtkButton *sendButton, gpointer data)
 
         chat_packet packet;
 
-        time_t T = time(NULL);
-        struct tm tm = *localtime(&T);
         packet.message.opcode = MSG;
-        packet.message.hours = tm.tm_hour;
-        packet.message.minutes = tm.tm_min;
+        packet.message.hours = 0;
+        packet.message.minutes = 0;
         strcpy(packet.message.username, username);
         strcpy(packet.message.message, message);
         ret = sendto(sockfd, &packet, sizeof(chat_packet), 0, (struct sockaddr *)&addr, sizeof(addr));
@@ -196,6 +195,7 @@ int main(int argc, char **argv)
         exit(1);
     }
     printf("Connected to the server...\n");
+    fcntl(sockfd, F_SETFL, O_NONBLOCK);
 
     while (textArea == NULL && textBuffer == NULL)
     {
@@ -213,7 +213,7 @@ int main(int argc, char **argv)
         ret = recv(sockfd, &packet, sizeof(chat_packet), 0);
         if (ret < 0)
         {
-            printf("Error receiving data!\n");
+            continue;
         }
         else
         {
