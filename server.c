@@ -32,8 +32,7 @@ typedef union
     struct
     {
         uint16_t opcode; //MSG
-        uint8_t hours;
-        uint8_t minutes;
+        uint64_t time;
         uint8_t username[16];
         uint8_t message[MSG_LIM];
     } message;
@@ -158,10 +157,7 @@ int main(int argc, char *argv[])
                 //Echo back the message that came in
                 else if (valread > 0)
                 {
-                    time_t T = time(NULL);
-                    struct tm tm = *localtime(&T);
-                    packet.message.hours = tm.tm_hour;
-                    packet.message.minutes = tm.tm_min;
+                    packet.message.time = time(NULL);
                     if (packet.opcode == MSG)
                     {
                         for (int i = 0; i < max_clients; i++)

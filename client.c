@@ -38,8 +38,7 @@ typedef union
     struct
     {
         uint16_t opcode; //MSG
-        uint8_t hours;
-        uint8_t minutes;
+        uint64_t time;
         uint8_t username[USRNAME_LIM];
         uint8_t message[MSG_LIM];
     } message;
@@ -94,8 +93,7 @@ void sendText(GtkButton *sendButton, gpointer data)
         chat_packet packet;
 
         packet.message.opcode = MSG;
-        packet.message.hours = 0;
-        packet.message.minutes = 0;
+        packet.message.time = 0;
         strcpy(packet.message.username, username);
         strcpy(packet.message.message, message);
         ret = sendto(sockfd, &packet, sizeof(chat_packet), 0, (struct sockaddr *)&addr, sizeof(addr));
@@ -222,9 +220,9 @@ int main(int argc, char **argv)
             char temp[2048];
             char hours[3];
             char mins[3];
-
-            sprintf(hours, "%02d", packet.message.hours);
-            sprintf(mins, "%02d", packet.message.minutes);
+            struct tm tm = *localtime(&packet.message.time);
+            sprintf(hours, "%02d", tm.tm_hour);
+            sprintf(mins, "%02d", tm.tm_min);
             strcpy(temp, "<");
             strcat(temp, hours);
             strcat(temp, ":");
