@@ -74,14 +74,18 @@ class DNS_Answer:
 
         self.rdlength= 0 # Length in bytes of the RDATA field (16 bits)
 
+        self.txtlength= 0 # Field for TXT records
+
+        self.preference=0 # Field for MX records
+
         self.rdata= 0 # Resourse data (32 bits)
        
-    def pack(self):
+    def pack(self, req_type):
 
-        pack_format = f"!H H H I H 4s" # "!"- big endian, standard type sizes, 
+        if req_type==1 or req_type==28:
+            pack_format = f"!H H H I H {self.rdlength}s" # "!"- big endian, standard type sizes, 
                                  #B -unsigned char, signed char, I - unsigned int
-
-        return struct.pack(pack_format,
+            return struct.pack(pack_format,
                 self.name, 
                 self._type,
                 self._class,
@@ -89,6 +93,29 @@ class DNS_Answer:
                 self.rdlength,
                 self.rdata)
 
+        elif req_type==16:
+            pack_format = f"!H H H I H B {self.txtlength}s" # "!"- big endian, standard type sizes, 
+                                 #B -unsigned char, signed char, I - unsigned int
+            return struct.pack(pack_format,
+                self.name, 
+                self._type,
+                self._class,
+                self.ttl,
+                self.rdlength,
+                self.txtlength,
+                self.rdata)
+
+        elif req_type==15:
+            pack_format = f"!H H H I H H {self.rdlength-2}s" # "!"- big endian, standard type sizes, 
+                                 #B -unsigned char, signed char, I - unsigned int
+            return struct.pack(pack_format,
+                self.name, 
+                self._type,
+                self._class,
+                self.ttl,
+                self.rdlength,
+                self.preference,
+                self.rdata)
 
     def unpack(self, data: bytes):
         unpacked_data = struct.unpack(DNS_Answer.pack_format, data)

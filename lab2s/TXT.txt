@@ -1,0 +1,9 @@
+youtube.com. : v=spf1 include:google.com mx -all
+youtube.com. : google-site-verification=QtQWEwHWM8tHiJ4s-jJWzEQrD_fF3luPnpzNDH-Nw-w
+youtube.com. : facebook-domain-verification=64jdes7le4h7e7lfpi22rijygx58j1
+google.com. : docusign=05958488-4752-4ef2-95eb-aa7ba8a3bd0e
+google.com. : globalsign-smime-dv=CDYX+XFHUw2wml6/Gb8+59BsH31KzUr6c1l2BPvqKX8=
+google.com. : facebook-domain-verification=22rm551cu4k0ab0bxsw536tlds4h95
+google.com. : docusign=1b0a6754-49b1-4db5-8540-d2c12664b289
+google.com. : v=spf1 include:_spf.google.com ~all
+cyberpunk.net. : v=spf1 mx include:_spf.google.com -all
