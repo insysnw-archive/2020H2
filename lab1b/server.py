@@ -18,7 +18,7 @@ def receiving_name_length(sock):
     clients[sock]['data_length'] += control_length(sock, 8)
     if clients[sock]['actual_length'] == 8:
         clients[sock]['actual_length'] = 0
-        clients[sock]['data_length'] = int(clients[sock]['data_length'].decode('UTF-8'))
+        clients[sock]['data_length'] = int.from_bytes(clients[sock]['data_length'],byteorder='big',signed=False)
         clients[sock]['mode'] = 'name_mode'
 
 #receiving name from clients

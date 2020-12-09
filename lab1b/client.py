@@ -41,18 +41,15 @@ PORT = 5001
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect((SERVER, PORT))
 login = bytes(input("Please, write your username:  "), 'UTF-8')
-length_login = bytes('{:08d}'.format(len(login)), 'UTF-8')
-client.send(length_login)
-client.send(login)
+length_login = len(login).to_bytes(8, byteorder='big')
+client.send(length_login + login)
 print("Now you can start a conversation!")
 thread_receive = ReceivingThread(client)
 thread_receive.start()
 while True:
     out_data = input()
     length = '{:08d}'.format(len(out_data))
-    client.send(bytes(str(length), 'UTF-8'))
-    client.send(bytes(datetime.datetime.utcnow().strftime("%H:%M"), 'UTF-8'))
-    client.send(bytes(out_data, 'UTF-8'))
+    client.send(bytes(str(length), 'UTF-8') + bytes(datetime.datetime.utcnow().strftime("%H:%M"), 'UTF-8') + bytes(out_data, 'UTF-8'))
     if out_data == 'exit':
         break
 client.shutdown(socket.SHUT_WR)
