@@ -131,6 +131,7 @@ class ClientListener {
             try {
                 while (true) {
                     int i = in.read(bStr);
+                    //System.out.println(new String(bStr, StandardCharsets.UTF_16));
                     consoleWriter(bStr);
                 }
             } catch (IOException e) {
