@@ -42,15 +42,6 @@ test:
   cache:
     policy: pull
 
-lint:
-  stage: test
-  script:
-    - $GRADLE ktlintCheck
-  needs:
-    - assemble
-  cache:
-    policy: pull
-
 coverage:
   stage: analysis
   script:

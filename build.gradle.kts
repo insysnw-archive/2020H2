@@ -5,16 +5,12 @@ import org.jetbrains.dokka.gradle.DokkaPlugin
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapper
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
-import org.jlleitschuh.gradle.ktlint.KtlintExtension
-import org.jlleitschuh.gradle.ktlint.KtlintPlugin
-import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 plugins {
     base
     id("com.gladed.androidgitversion")
     kotlin("jvm") apply false
     id("org.jetbrains.dokka")
-    id("org.jlleitschuh.gradle.ktlint") apply false
     jacoco
 }
 
@@ -52,7 +48,6 @@ fun Project.kotlinProject() {
     apply<JacocoPlugin>()
     apply<MavenPublishPlugin>()
     apply<DokkaPlugin>()
-    apply<KtlintPlugin>()
 
     configure<PublishingExtension> {
         if (!System.getenv("CI").isNullOrEmpty()) repositories {
@@ -92,19 +87,6 @@ fun Project.kotlinProject() {
 
         testImplementation(kotlin("test-junit5"))
         testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
-    }
-
-    configure<KtlintExtension> {
-        version.set("0.39.0")
-        verbose.set(true)
-        outputToConsole.set(true)
-        outputColorName.set("RED")
-        disabledRules.add("no-wildcard-imports")
-
-        reporters {
-            reporter(ReporterType.PLAIN)
-            reporter(ReporterType.CHECKSTYLE)
-        }
     }
 
     configure<JacocoPluginExtension> {
