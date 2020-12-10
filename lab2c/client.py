@@ -2,10 +2,17 @@ import socket
 import datetime
 import time
 import struct
+import sys
 
-ntp_ip = socket.gethostname()
-ntp_port = 123
+#ntp_ip = "pool.ntp.org"
 
+if len(sys.argv) != 3:
+    print("python3 client.py [Server IP] [Server port]")
+    sys.exit()
+
+ntp_ip = sys.argv[1]
+
+ntp_port = int(sys.argv[2]) #123
 
 class NTPPacket:
 
@@ -138,7 +145,8 @@ class NTPClient:
             response.unpack(data)
             #print(response.display())
 
-        delta = response.receive - response.originate - time_of_arrival + response.transmit
+        delta = response.receive - response.originate - (time_of_arrival - \
+        	response.originate - response.transmit + response.receive)/2
 
         return datetime.datetime.fromtimestamp(time.time() + delta).strftime("%c")
 
@@ -148,7 +156,7 @@ def main():
     client = NTPClient(ntp_ip,ntp_port)
     while True:
         print(client.get_time())
-        time.sleep(5)
+        time.sleep(10)
 
 
 if __name__ == '__main__':
