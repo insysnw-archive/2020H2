@@ -20,22 +20,13 @@ def send_udp_message(message, address, port):
     return binascii.hexlify(data).decode("utf-8")
 
 
-def format_hex(hex):
-    #format_hex returns a pretty version of a hex string
-    octets = [hex[i:i+2] for i in range(0, len(hex), 2)]
-    pairs = [" ".join(octets[i:i+2]) for i in range(0, len(octets), 2)]
-    return "\n".join(pairs)
-
-
 def encode_url(url):
-    first = url.split(".")[0]
-    first_length = len(first)
-    second = url.split(".")[1]
-    second_length = len(second)
-    return binascii.hexlify(first_length.to_bytes(1, byteorder='big')) \
-        + binascii.hexlify(bytes(first, encoding='utf-8')) \
-        + binascii.hexlify(second_length.to_bytes(1, byteorder='big')) \
-        + binascii.hexlify(bytes(second, encoding='utf-8'))
+    splitted_url=url.split(".")
+    parts=b''
+    for i in splitted_url:
+        length=len(i)
+        parts+= (binascii.hexlify(length.to_bytes(1, byteorder='big'))+ binascii.hexlify(bytes(i, encoding='utf-8')))
+    return parts
 
 
 def print_ip(res):
@@ -66,7 +57,6 @@ def main():
 
     message = ID + PARAMS + QUESTIONS_COUNT + ANSWERS_COUNT + NS_COUNT + OTHER \
         + encode_url(domain).decode("utf-8") + " 00 00 01 00 01"
-
     response = send_udp_message(message, "1.1.1.1", 53) if (ONLINE) \
         else send_udp_message(message, "127.0.0.1", 5005)
 
