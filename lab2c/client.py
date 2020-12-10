@@ -154,9 +154,14 @@ class NTPClient:
 
 def main():
     client = NTPClient(ntp_ip,ntp_port)
-    while True:
-        print(client.get_time())
-        time.sleep(10)
+    try:
+        while True:
+            request = input("Press enter to get time ")
+            if (request == ''):
+                print(client.get_time())
+    except Exception as e:
+        print("Exception: " + str(e))
+        sys.exit()
 
 
 if __name__ == '__main__':
