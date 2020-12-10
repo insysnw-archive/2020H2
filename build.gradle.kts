@@ -1,13 +1,12 @@
 @file:Suppress("UNUSED_VARIABLE")
 
 import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
-import org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapper
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.dokka.gradle.DokkaPlugin
-import org.jlleitschuh.gradle.ktlint.KtlintPlugin
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
+import org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapper
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
+import org.jlleitschuh.gradle.ktlint.KtlintPlugin
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 plugins {
@@ -23,7 +22,7 @@ androidGitVersion {
     prefix = "v"
 }
 
-val groupString = "com.handtruth.example"
+val groupString = "com.handtruth.net.lab3"
 val versionString: String = androidGitVersion.name()
 
 allprojects {
@@ -68,17 +67,16 @@ fun Project.kotlinProject() {
                 }
             }
         }
+        publications {
+            create<MavenPublication>("maven") {
+                from(components["java"])
+            }
+        }
     }
-
-    lateinit var jvmMainSourceSet: KotlinSourceSet
 
     configure<KotlinJvmProjectExtension> {
         target.compilations.all {
             kotlinOptions.jvmTarget = "1.8"
-        }
-        sourceSets {
-            val main by getting
-            jvmMainSourceSet = main
         }
     }
 
@@ -100,8 +98,8 @@ fun Project.kotlinProject() {
         version.set("0.39.0")
         verbose.set(true)
         outputToConsole.set(true)
-        enableExperimentalRules.set(true)
         outputColorName.set("RED")
+        disabledRules.add("no-wildcard-imports")
 
         reporters {
             reporter(ReporterType.PLAIN)
@@ -125,7 +123,7 @@ configure<JacocoPluginExtension> {
     toolVersion = "0.8.6"
 }
 
-val thisProjects = kotlinProjects.map { project(":$name-$it") }
+val thisProjects = kotlinProjects.map { project(":$it") }
 
 thisProjects.forEach {
     it.kotlinProject()

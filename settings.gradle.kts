@@ -19,19 +19,42 @@ pluginManagement {
     }
 }
 
-rootProject.name = "kotlin-jvm"
+rootProject.name = "net-lab3"
 
 val kotlinProjects = listOf(
-    "lib"
+    "common",
+    "nrating-common",
+    "nrating-client",
+    "nrating-server",
+    "sevent-common",
+    "sevent-client",
+    "sevent-server"
 )
 
 fun subproject(name: String) {
-    include(":${rootProject.name}-$name")
-    project(":${rootProject.name}-$name").projectDir = file("subprojects/$name")
+    val pName = ":$name"
+    include(pName)
+    project(pName).projectDir = file("modules/$name")
+}
+
+fun subproject(name: String, category: String) {
+    val pName = ":$name-$category"
+    include(pName)
+    project(pName).projectDir = file("modules/$name/$category")
 }
 
 subproject("bom")
-kotlinProjects.forEach { subproject(it) }
+subproject("nrating")
+subproject("sevent")
+
+kotlinProjects.forEach {
+    val list = it.split('-').toTypedArray()
+    if (list.size == 2) {
+        subproject(list[0], list[1])
+    } else {
+        subproject(it)
+    }
+}
 
 gradle.allprojects {
     extra["kotlinProjects"] = kotlinProjects

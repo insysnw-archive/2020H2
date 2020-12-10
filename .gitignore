@@ -1,4 +1,6 @@
 /.gradle
 /build
-/subprojects/*/build
+/modules/*/build
+/modules/*/*/build
+/public
 /.idea
