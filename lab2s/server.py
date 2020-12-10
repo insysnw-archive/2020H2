@@ -3,7 +3,7 @@ import random
 import os.path
 import threading
 
-tftp_ip = socket.gethostname()
+tftp_ip = "0.0.0.0"
 tftp_port = 69
 
 tftp_opcodes = {
@@ -40,9 +40,7 @@ def create_data_packet(block, filename, mode):
     data.append(3)
 
     # Номер блока
-    b = f'{block:02}'
-    data.append(int(b[0]))
-    data.append(int(b[1]))
+    data += (block).to_bytes(2,"big")
 
     # Содержимое
     content = read_file(block, filename)
@@ -57,9 +55,7 @@ def create_ack_packet(block):
     ack.append(4)
 
     # Номер блока
-    b = f'{block:02}'
-    ack.append(int(b[0]))
-    ack.append(int(b[1]))
+    ack += (block).to_bytes(2,"big")
 
     return ack
 
@@ -71,9 +67,7 @@ def create_error_packet(error_code):
     err.append(5)
 
     # Код ошибки
-    ec = f'{error_code:02}'
-    err.append(int(ec[0]))
-    err.append(int(ec[1]))
+    err += (error_code).to_bytes(error_code,"big")
 
     # Сообщение
     msg = bytearray(tftp_errors[error_code].encode('utf-8'))
@@ -252,7 +246,7 @@ def main():
 
             client_socket = create_udp_socket(port=port)
             send_packet(packet, client_socket, addr)
-            client = threading.Thread(target=listen, args=(client_socket, filename, mode))
+            client = threading.Thread(target=listen, args=(client_socket, filename, mode),daemon=True)
             client.start()
             client.join()
         
