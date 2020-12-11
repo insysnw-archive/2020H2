@@ -128,7 +128,7 @@ class DnsResponse:
             DnsType.AAAA: lambda rd: inet_ntop(AF_INET6, rd),
             DnsType.TXT: lambda rd: rd.decode("UTF-8"),
             DnsType.CNAME: lambda _: _parse_name(full_data, start + offset + 10)[0],
-            DnsType.MX: lambda rd: _parse_name(full_data, start + offset + 12)[0] + f"\nPriority: {int.from_bytes(rd[0:2], 'big')}"}.get(self.type, str)
+            DnsType.MX: lambda rd: _parse_name(full_data, start + offset + 12)[0] + f" ({int.from_bytes(rd[0:2], 'big')})"}.get(self.type, str)
 
         self.rdata = convertion(self.rdata)
         self._size += 10 + self.rdlength
