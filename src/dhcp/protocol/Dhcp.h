@@ -48,6 +48,7 @@ static constexpr uint8_t DHCP_CLIENT_PORT = 68;
 
 static constexpr uint8_t HARDWARE_TYPE_ETHERNET_10 = 1;
 
+static constexpr uint8_t OPTION_REQUESTED_IP = 50;
 static constexpr uint8_t OPTION_MESSAGE_TYPE = 53;
 static constexpr uint8_t OPTION_SERVER_IDENTIFIER = 54;
 static constexpr uint8_t OPTION_END = 255;
