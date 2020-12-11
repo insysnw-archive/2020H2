@@ -8,6 +8,7 @@ from enum import Enum
 
 TIMEOUT = 3
 PORT = 53
+
 dns_argument_ip = None
 
 
@@ -48,49 +49,6 @@ def _parse_name(full_data: bytes, start: int):
         return ".".join(name), position + 1
 
 
-class DnsQuery:
-    def __init__(self, data_address, start=0):
-        if isinstance(data_address, bytes):
-            full_data = data_address
-            self.name, offset = _parse_name(full_data, start)
-            data = full_data[start + offset:]
-            self.qtype = int.from_bytes(data[0:2], byteorder="big")
-            self.qclass = int.from_bytes(data[2:4], byteorder="big")
-            self._size = offset + 4
-
-        elif isinstance(data_address, str):
-            self.name = data_address
-            self.qtype = 1
-            self.qclass = 1
-            self._size = len(self.name) + 5
-        else:
-            raise ValueError("Data has invalid type")
-
-    def raw(self):
-        raw_str = str()
-        for part in self.name.split("."):
-            part_bytes = "".join("{:08b}".format(ord(c)) for c in part)
-            raw_str += f"{len(part):08b}"
-            raw_str += part_bytes
-        raw_str += str().zfill(8)
-
-        for value in [self.qtype, self.qclass]:
-            raw_str += f"{value:016b}"
-
-        size = len(raw_str) // 8
-        return int(raw_str, 2).to_bytes(size, byteorder="big")
-
-    def __str__(self):
-        string = str()
-        string += "    Name: " + str(self.name) + "\n"
-        string += "   Qtype: " + str(self.qtype) + "\n"
-        string += "  Qclass: " + str(self.qclass)
-        return string
-
-    def __len__(self):
-        return self._size
-
-
 class DnsType(Enum):
     A = 1
     NS = 2
@@ -111,6 +69,49 @@ class DnsType(Enum):
     AAAA = 28
 
 
+class DnsQuery:
+    def __init__(self, data_address, start=0, qtype=DnsType.A):
+        if isinstance(data_address, bytes):
+            full_data = data_address
+            self.name, offset = _parse_name(full_data, start)
+            data = full_data[start + offset:]
+            self.qtype = DnsType(int.from_bytes(data[0:2], byteorder="big"))
+            self.qclass = int.from_bytes(data[2:4], byteorder="big")
+            self._size = offset + 4
+
+        elif isinstance(data_address, str):
+            self.name = data_address
+            self.qtype = qtype
+            self.qclass = 1
+            self._size = len(self.name) + 5
+        else:
+            raise ValueError("Data has invalid type")
+
+    def raw(self):
+        raw_str = str()
+        for part in self.name.split("."):
+            part_bytes = "".join("{:08b}".format(ord(c)) for c in part)
+            raw_str += f"{len(part):08b}"
+            raw_str += part_bytes
+        raw_str += str().zfill(8)
+
+        for value in [self.qtype.value, self.qclass]:
+            raw_str += f"{value:016b}"
+
+        size = len(raw_str) // 8
+        return int(raw_str, 2).to_bytes(size, byteorder="big")
+
+    def __str__(self):
+        string = str()
+        string += "    Name: " + str(self.name) + "\n"
+        string += "   Qtype: " + f"{self.qtype.value} ({self.qtype.name})\n"
+        string += "  Qclass: " + str(self.qclass)
+        return string
+
+    def __len__(self):
+        return self._size
+
+
 class DnsResponse:
     def __init__(self, full_data: bytes, start: int):
         self.name, offset = _parse_name(full_data, start)
@@ -121,15 +122,18 @@ class DnsResponse:
         self.ttl = int.from_bytes(data[4:8], byteorder="big")
         self.rdlength = int.from_bytes(data[8:10], byteorder="big")
         self.rdata = data[10:10 + self.rdlength]
+
         convertion = {
             DnsType.A: lambda rd: inet_ntop(AF_INET, rd),
             DnsType.AAAA: lambda rd: inet_ntop(AF_INET6, rd),
-            DnsType.CNAME: lambda _: _parse_name(full_data, offset + 10)[0]}.get(self.type, str)
+            DnsType.TXT: lambda rd: rd.decode("UTF-8"),
+            DnsType.CNAME: lambda _: _parse_name(full_data, start + offset + 10)[0],
+            DnsType.MX: lambda rd: _parse_name(full_data, start + offset + 12)[0] + f"\nPriority: {int.from_bytes(rd[0:2], 'big')}"}.get(self.type, str)
+
         self.rdata = convertion(self.rdata)
         self._size += 10 + self.rdlength
 
     def __str__(self):
-
         string = str()
         string += "    Name: " + str(self.name) + "\n"
         string += "    Type: " + f"{self.type.value} ({self.type.name})\n"
@@ -158,9 +162,9 @@ class DnsPacket:
         self.rcode = int(bits[28: 32], 2)
         self.qdcount, self.ancount, self.nscount, self.arcount = [
             int(bits[32 + i * 16:32 + (i + 1) * 16], 2) for i in range(0, 4)]
-        self.dns_server = ""
 
     def __init__(self, raw: bytes = None):
+        self.dns_server = ""
         self.questions = []
         self.answers = []
         if raw is not None:
@@ -249,12 +253,12 @@ def get_dns_from_config():
                 yield line.split()[-1]
 
 
-def _get_response_from_server(ip: str, name: str):
+def _get_response_from_server(ip: str, name: str, qtype: DnsType):
     if len(ip) == 0:
         return None
 
     query = DnsPacket()
-    query.questions.append(DnsQuery(name))
+    query.questions.append(DnsQuery(name, qtype=qtype))
 
     with socket(AF_INET, SOCK_DGRAM) as s:
         s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
@@ -294,7 +298,7 @@ def _get_response_from_server(ip: str, name: str):
             return response
 
 
-def resolve_name(name: str):
+def resolve_name(name: str, qtype=DnsType.A):
     dns_ips = [dns_argument_ip]
     dns_ips.extend(get_dns_from_config())
 
@@ -302,7 +306,7 @@ def resolve_name(name: str):
         if server_ip is None:
             continue
 
-        packet = _get_response_from_server(server_ip, name)
+        packet = _get_response_from_server(server_ip, name, qtype)
         if packet is None:
             continue
         return packet
@@ -315,17 +319,25 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="increase output verbosity")
     parser.add_argument("-s", "--server", type=str, help="dns server ip")
+    parser.add_argument("-t", "--type", type=str, help="which question type")
     parser.add_argument("dname", type=str, help="domain name")
     args = parser.parse_args()
     dns_argument_ip = args.server
-    packet = resolve_name(args.dname)
+
+    qtype = DnsType.A
+    if args.type is not None:
+        for name, member in DnsType.__members__.items():
+            if args.type.lower() == name.lower():
+                qtype = member
+                break
+
+    packet = resolve_name(args.dname, qtype)
 
     if packet is None:
         exit()
 
     if (args.verbose):
         print(packet)
-    ips = [a.rdata for a in packet.answers if a.type in (
-        DnsType.A, DnsType.AAAA)]
+    ips = [a.rdata for a in packet.answers if a.type == qtype]
     if len(ips) != 0:
         print("\n".join(sorted(ips)))

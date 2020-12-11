@@ -32,7 +32,9 @@ define server explicitly using `-s` or `--server` argument.
 
 To know more about received packet, you should add `-v` or `--verbose` flag.
 
+To specify type of question use `-t` or `--type` parameter.
+
 For example:
 ```bash
-python3 dns_client.py --server 1.0.0.1 --verbose github.com
+python3 dns_client.py --server 1.0.0.1 --type AAAA --verbose google.com
 ```
