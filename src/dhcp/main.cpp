@@ -4,7 +4,7 @@
 
 #include <cstring>
 #include "protocol/Dhcp.h"
-#include "UdpSocket.h"
+#include "../common/UdpSocket.h"
 #include "util.h"
 
 Dhcp buildDhcpRequestPacket(

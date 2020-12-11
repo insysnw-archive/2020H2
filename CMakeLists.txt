@@ -5,18 +5,24 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(DNS_SERVER_SRC src/dns/main.cpp)
 
-set(DHCP_CLIENT_SRC src/dhcp/main.cpp src/dhcp/protocol/Dhcp.h src/dhcp/util.cpp src/dhcp/util.h src/dhcp/UdpSocket.cpp src/dhcp/UdpSocket.h src/dhcp/protocol/Dhcp.cpp)
+set(DHCP_CLIENT_SRC
+        src/dhcp/main.cpp
+        src/dhcp/protocol/Dhcp.h src/dhcp/protocol/Dhcp.cpp
+        src/dhcp/util.cpp src/dhcp/util.h
+        )
 
-add_executable(lab2_dns_server ${DNS_SERVER_SRC})
-if(WIN32)
+set(COMMON_SRC src/common/UdpSocket.cpp src/common/UdpSocket.h)
+
+add_executable(lab2_dns_server ${DNS_SERVER_SRC} ${COMMON_SRC})
+if (WIN32)
     target_link_libraries(lab2_dns_server wsock32 ws2_32)
-else()
+else ()
     target_link_libraries(lab2_dns_server pthread)
-endif()
+endif ()
 
-add_executable(lab2_dhcp_client ${DHCP_CLIENT_SRC})
-if(WIN32)
+add_executable(lab2_dhcp_client ${DHCP_CLIENT_SRC} ${COMMON_SRC})
+if (WIN32)
     target_link_libraries(lab2_dhcp_client wsock32 ws2_32)
-else()
+else ()
     target_link_libraries(lab2_dhcp_client pthread)
-endif()
+endif ()
