@@ -3,7 +3,7 @@ project(NetLab2)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(DNS_SERVER_SRC src/dns/main.cpp)
+set(DNS_SERVER_SRC src/dns/main.cpp src/dns/protocol/Dns.h)
 
 set(DHCP_CLIENT_SRC
         src/dhcp/main.cpp
