@@ -73,6 +73,11 @@ fun Project.kotlinProject() {
         target.compilations.all {
             kotlinOptions.jvmTarget = "1.8"
         }
+        sourceSets.all {
+            with(languageSettings) {
+                useExperimentalAnnotation("kotlin.contracts.ExperimentalContracts")
+            }
+        }
     }
 
     val implementation by configurations.getting
