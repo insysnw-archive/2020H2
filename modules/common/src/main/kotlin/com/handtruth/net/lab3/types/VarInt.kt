@@ -19,7 +19,7 @@ private inline fun readVarIntTemplate(readByte: () -> Byte): Int {
 }
 
 /**
- * Декодирует целое число в формате [VarInt](protocol.md#varint) с ограничением
+ * Декодирует целое число в формате varint с ограничением
  * на максимальный размер 32-ух битного числа.
  * @receiver синхронный поток данных, откуда следует считать число
  * @return декодированное целое 32-ух битное число
@@ -27,7 +27,7 @@ private inline fun readVarIntTemplate(readByte: () -> Byte): Int {
 fun Input.readVarInt(): Int = readVarIntTemplate { readByte() }
 
 /**
- * Декодирует целое число в формате [VarInt](protocol.md#varint) с ограничением
+ * Декодирует целое число в формате varint с ограничением
  * на максимальный размер 32-ух битного числа.
  * @receiver асинхронный поток данных, откуда следует считать число
  * @return декодированное целое 32-ух битное число
@@ -47,14 +47,14 @@ private inline fun writeVarIntTemplate(integer: Int, writeByte: (Byte) -> Unit) 
 }
 
 /**
- * Кодирует целое 32-ух битное число в формат [VarInt](protocol.md#varint).
+ * Кодирует целое 32-ух битное число в формат varint.
  * @receiver синхронный поток, куда следует записать закодированное число
  * @param integer 32-ух битное число, которое следует записать
  */
 fun Output.writeVarInt(integer: Int) = writeVarIntTemplate(integer) { writeByte(it) }
 
 /**
- * Кодирует целое 32-ух битное число в формат [VarInt](protocol.md#varint).
+ * Кодирует целое 32-ух битное число в формат varint.
  * @receiver асинхронный поток, куда следует записать закодированное число
  * @param integer 32-ух битное число, которое следует записать
  */

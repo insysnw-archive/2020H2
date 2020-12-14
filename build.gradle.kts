@@ -35,6 +35,10 @@ val kotlinProjects: List<String> by extra
 
 val platformVersion: String by project
 
+val platformRequirements = listOf(
+    "implementation", "runtimeOnly", "providedRuntime", "kapt"
+)
+
 fun KotlinSourceSet.collectSources(): Iterable<File> {
     return kotlin.srcDirs.filter { it.exists() } + dependsOn.flatMap { it.collectSources() }
 }
@@ -87,8 +91,11 @@ fun Project.kotlinProject() {
 
     dependencies {
         val handtruthPlatform = dependencies.platform("com.handtruth.internal:platform:$platformVersion")
-        implementation(handtruthPlatform)
-        runtimeOnly(handtruthPlatform)
+
+        configurations.all {
+            if (name in platformRequirements)
+                name(handtruthPlatform)
+        }
 
         testImplementation(kotlin("test-junit5"))
         testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
