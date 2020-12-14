@@ -28,6 +28,7 @@ inline fun validate(value: Boolean, message: () -> Any) {
  * Вспомогательная функция для удобной проверки формата сообщения.
  * @param value значение, которое будет проверено на отсутствие null
  * @param message генератор сообщения, которое будет положено в [MessageFormatException] случае возникновения ошибки
+ * @return значение, переданное в параметр [value], но гарантированно не равное null
  */
 inline fun <T : Any> validateNotNull(value: T?, message: () -> Any): T {
     contract {
