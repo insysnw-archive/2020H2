@@ -44,8 +44,6 @@ fun subproject(name: String, category: String) {
 }
 
 subproject("bom")
-subproject("nrating")
-subproject("sevent")
 
 kotlinProjects.forEach {
     val list = it.split('-').toTypedArray()

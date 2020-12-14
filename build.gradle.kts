@@ -27,6 +27,7 @@ allprojects {
 
     repositories {
         maven("https://mvn.handtruth.com")
+        maven("https://kotlin.bintray.com/kotlinx")
         jcenter()
     }
 }
@@ -98,6 +99,7 @@ fun Project.kotlinProject() {
         }
 
         testImplementation(kotlin("test-junit5"))
+        testImplementation("io.ktor:ktor-test-dispatcher")
         testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     }
 
