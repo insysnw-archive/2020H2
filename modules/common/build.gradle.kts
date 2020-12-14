@@ -5,8 +5,8 @@ plugins {
 dependencies {
     api("io.ktor:ktor-network")
     api("io.ktor:ktor-io")
-    api("io.ktor:ktor-test-dispatcher")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+    api("org.jetbrains.kotlinx:kotlinx-datetime:0.1.1")
 
     api("com.handtruth.kommon:kommon-log")
 
