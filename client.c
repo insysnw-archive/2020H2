@@ -108,6 +108,10 @@ int main(int argc, char *argv[])
 
     // Send it the NTP packet it wants. If n == -1, it failed.
 
+
+    packet.origTm_s = time(NULL) + NTP_TIMESTAMP_DELTA;
+    uint32_t originalTime = time(NULL) + NTP_TIMESTAMP_DELTA;
+
     n = write(sockfd, (char *)&packet, sizeof(ntp_packet));
 
     if (n < 0)
@@ -116,23 +120,34 @@ int main(int argc, char *argv[])
     // Wait and receive the packet back from the server. If n == -1, it failed.
 
     n = read(sockfd, (char *)&packet, sizeof(ntp_packet));
+    uint32_t destinationTime = time(NULL) + NTP_TIMESTAMP_DELTA;
 
     if (n < 0)
         error("ERROR reading from socket");
+
 
     // These two fields contain the time-stamp seconds as the packet left the NTP server.
     // The number of seconds correspond to the seconds passed since 1900.
     // ntohl() converts the bit/byte order from the network's to host's "endianness".
 
+    
+
     packet.txTm_s = ntohl(packet.txTm_s); // Time-stamp seconds.
     packet.txTm_f = ntohl(packet.txTm_f); // Time-stamp fraction of a second.
+
+    packet.rxTm_s = ntohl(packet.rxTm_s); // Time-stamp seconds.
+    packet.rxTm_f = ntohl(packet.rxTm_f); // Time-stamp fraction of a second.
+
+    uint64_t resultTime = destinationTime + abs(((packet.rxTm_s - originalTime) + (packet.txTm_s - destinationTime))/2) - ((destinationTime - originalTime) - (packet.txTm_s - packet.rxTm_s))/2;
+
+   
 
     // Extract the 32 bits that represent the time-stamp seconds (since NTP epoch) from when the packet left the server.
     // Subtract 70 years worth of seconds from the seconds since 1900.
     // This leaves the seconds since the UNIX epoch of 1970.
     // (1900)------------------(1970)**************************************(Time Packet Left the Server)
 
-    time_t txTm = (time_t)(packet.txTm_s - NTP_TIMESTAMP_DELTA);
+    time_t txTm = (time_t)(resultTime - NTP_TIMESTAMP_DELTA);
 
     // Print the time we got from the server, accounting for local timezone and conversion from UTC time.
 
