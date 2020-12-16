@@ -3,8 +3,8 @@ import threading
 import time
 
 # connection
-host = '127.0.0.1'
-port = 9097
+host = '0.0.0.0'
+port = 9090
 
 # start
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
