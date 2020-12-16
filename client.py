@@ -1,47 +1,63 @@
 import socket
+import sys
 import threading
 import time
 
-# choosing nickname
-nickname = input("Nickname: ")
-server = ('127.0.0.1', 55555)
+if len(sys.argv) != 3:
+    print("Select IP and server port!")
+    sys.exit()
+
+server = (sys.argv[1], int(sys.argv[2]))
 
 # connect to server
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(server)
 
+# choosing nickname
+my_nick = input("Your nickname: ")
+nickname = my_nick.encode('ascii')
+nickname_header = len(nickname).to_bytes(5, byteorder='big')
+client.send(nickname_header + nickname)
 
-# listen to server
-def receive():
+
+def get_package(sock):
+    header = sock.recv(5)
+    length = int.from_bytes(header, byteorder='big', signed=False)
+
+    return sock.recv(length).decode('ascii')
+
+
+def receiving():
     while True:
         try:
-            # Receive Message From Server
-            # If 'NICK' Send Nickname
-            message = client.recv(1024).decode('ascii')
-            if message == 'NICK':
-                client.send(nickname.encode('ascii'))
-            else:
-                print(message)
-        except OSError:
-            break
+            nick = get_package(client)
+            message = get_package(client)
+
+            print('<{}> [{}] {}'.format(time.strftime('%H:%M', time.localtime()), nick, message))
+
+        except Exception as e:
+            # Any other exception - something bad happened, exit
+            print('Reading error: '.format(str(e)))
+            client.close()
+            sys.exit()
 
 
 # send to server
 def write():
     while True:
-        data = input('')
-        if data == "#quit":
-            client.send(data.encode('ascii'))
-            client.close()
-            break
-        else:
-            message = "<{}> [{}] {}".format(time.strftime('%H:%M', time.localtime()), nickname, data)
-            client.send(message.encode('ascii'))
+        message = input()
+
+        if message:
+            enc_message = message.encode('ascii')
+            message_header = len(enc_message).to_bytes(5, byteorder='big')
+            client.send(message_header + enc_message)
+            print('<{}> [{}] {}'.format(time.strftime('%H:%M', time.localtime()), my_nick, message))
 
 
 # start thread for listening and sending
-receive_thread = threading.Thread(target=receive)
+receive_thread = threading.Thread(target=receiving)
 receive_thread.start()
+#write()
 
 write_thread = threading.Thread(target=write)
 write_thread.start()

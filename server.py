@@ -4,59 +4,77 @@ import time
 
 # connection
 host = '127.0.0.1'
-port = 55555
+port = 9097
 
 # start
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server.bind((host, port))
 server.listen()
 
 clients = []
-nicknames = []
+nicknames = {}
 
-print("Server Started")
-
-
-# send to all clients
-def broadcast(message):
-    for client in clients:
-        client.send(message)
+print(f"Server Started!")
 
 
-# handle messages from clients
-def handle(client):
+# send to all clients except the sender
+def broadcast(sock, nick, msg, header):
+    for tmp in clients:
+        if tmp != sock:
+            tmp.send(nick['header'] + nick['data'] + header + msg)
+
+
+# receive messages from clients
+def receive(client):
     while True:
         try:
-            message = client.recv(1024)
-            broadcast(message)
+            header = client.recv(5)
+        except ConnectionResetError:
+            return False
 
-        except:
-            index = clients.index(client)
-            clients.remove(client)
-            nickname = nicknames[index]
-            broadcast("<{}> {} left".format(time.strftime('%H:%M', time.localtime()), nickname).encode('ascii'))
-            print("<{}> {} left".format(time.strftime('%H:%M', time.localtime()), nickname))
-            break
+        if not len(header):
+            return False
+
+        length = int.from_bytes(header, byteorder='big', signed=False)
+
+        return {'header': header, 'data': client.recv(length)}
 
 
-def receive():
-    while True:
-        client, address = server.accept()
-        print("<{}> Connected with {}".format(time.strftime('%H:%M', time.localtime()), str(address)))
+def handle(client, address):
+    if client not in clients:
+        nickname = receive(client)
+        if nickname is False:
+            return
 
-        # store clients and nicknames
-        client.send('NICK'.encode('ascii'))
-        nickname = client.recv(1024).decode('ascii')
-        nicknames.append(nickname)
+        nicknames[client] = nickname
         clients.append(client)
 
-        # print and broadcast nicknames
-        print("Nickname is {}".format(nickname))
-        broadcast("<{}> {} joined".format(time.strftime('%H:%M', time.localtime()), nickname).encode('ascii'))
+        print("<{}> Connected with {}".format(time.strftime('%H:%M', time.localtime()), str(address)))
+        print("Nickname is {}".format(nickname['data'].decode('ascii')))
 
-        # thread for clients
-        thread = threading.Thread(target=handle, args=(client,))
-        thread.start()
+        message = f"{nickname['data'].decode('ascii')} joined!".encode('ascii')
+        message_header = len(message).to_bytes(5, byteorder='big')
+
+        broadcast(client, nickname, message, message_header)
+
+    while True:
+        message = receive(client)
+        nickname = nicknames[client]
+
+        if message is False:
+            print('Connection from {} was closed'.format(nicknames[client]['data'].decode('ascii')))
+            message = f"User {nickname['data'].decode('ascii')} left the chat".encode('ascii')
+            message_header = len(message).to_bytes(5, byteorder='big')
+            broadcast(client, nickname, message, message_header)
+            clients.remove(client_socket)
+            del nicknames[client_socket]
+            break
+
+        broadcast(client, nickname, message['data'], message['header'])
 
 
-receive()
+while True:
+    # thread for clients
+    client_socket, address_socket = server.accept()
+    thread = threading.Thread(target=handle, args=(client_socket, address_socket)).start()
