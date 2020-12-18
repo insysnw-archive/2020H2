@@ -1,3 +1,5 @@
+import org.jetbrains.dokka.gradle.DokkaTask
+
 plugins {
     kotlin("kapt")
 }
@@ -18,10 +20,10 @@ dependencies {
     kaptTest("com.google.auto.service:auto-service")
 }
 
-tasks.withType<org.jetbrains.dokka.gradle.DokkaTask> {
+tasks.withType<DokkaTask> {
     dokkaSourceSets.configureEach {
-        includes.from("protocol.md")
         includes.from("README.md")
+        includes.from("protocol.md")
         samples.from("src/samples")
     }
 }
