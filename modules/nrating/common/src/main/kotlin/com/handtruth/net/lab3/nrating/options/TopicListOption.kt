@@ -16,7 +16,7 @@ data class TopicListOption(val topics: List<Topic>) : Option() {
     }
 
     @AutoService(OptionCompanion::class)
-    companion object : OptionCompanion(0x04) {
+    companion object : OptionCompanion(OptionType.TOPIC_LIST.code) {
         override fun read(input: ByteReadPacket) = with(input) {
             TopicListOption(readVarList { readTopic() })
         }

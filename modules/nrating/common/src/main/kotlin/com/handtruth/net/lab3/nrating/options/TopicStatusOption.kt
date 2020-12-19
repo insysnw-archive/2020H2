@@ -14,7 +14,7 @@ data class TopicStatusOption(val topicStatus: TopicStatus) : Option() {
     }
 
     @AutoService(OptionCompanion::class)
-    companion object : OptionCompanion(0x05) {
+    companion object : OptionCompanion(OptionType.TOPIC_STATUS.code) {
         override fun read(input: ByteReadPacket) = with(input) {
             TopicStatusOption(readTopicStatus())
         }

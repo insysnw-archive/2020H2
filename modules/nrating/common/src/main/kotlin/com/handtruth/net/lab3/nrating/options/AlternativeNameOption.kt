@@ -13,7 +13,7 @@ data class AlternativeNameOption(val name: String) : Option() {
     }
 
     @AutoService(OptionCompanion::class)
-    companion object : OptionCompanion(0x02) {
+    companion object : OptionCompanion(OptionType.ALTERNATIVE_NAME.code) {
         override fun read(input: ByteReadPacket) = with(input) {
             AlternativeNameOption(readVarString())
         }

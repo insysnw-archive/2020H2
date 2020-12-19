@@ -11,7 +11,7 @@ data class AllowMultipleVotesOption(val maxVotes: Short) : Option() {
     }
 
     @AutoService(OptionCompanion::class)
-    companion object : OptionCompanion(0x06) {
+    companion object : OptionCompanion(OptionType.ALLOW_MULTIPLE_VOTES.code) {
         override fun read(input: ByteReadPacket) = with(input) {
             AllowMultipleVotesOption(readShort())
         }

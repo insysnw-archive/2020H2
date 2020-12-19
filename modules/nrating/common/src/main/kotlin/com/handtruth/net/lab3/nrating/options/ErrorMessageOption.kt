@@ -13,7 +13,7 @@ data class ErrorMessageOption(val name: String) : Option() {
     }
 
     @AutoService(OptionCompanion::class)
-    companion object : OptionCompanion(0x03) {
+    companion object : OptionCompanion(OptionType.ERROR_MESSAGE.code) {
         override fun read(input: ByteReadPacket) = with(input) {
             ErrorMessageOption(readVarString())
         }
