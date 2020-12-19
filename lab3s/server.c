@@ -18,7 +18,42 @@
 #define sizeTheme 128
 #define port 5000
 #define maxNews 1024
+#define REQ 0x00
+#define RESP 0x80
+#define RESP_ERR 0xC0
+int is_request(int flag) {
+    return flag & RESP == REQ;
+}
 
+int is_response(int flag) {
+    return flag & RESP == RESP;
+}
+
+int is_err(int flag) {
+    return flag & RESP_ERR == RESP_ERR;
+}
+
+int set_response(int flag) {
+    return flag | RESP;
+}
+
+int set_err(int flag) {
+    return flag | RESP_ERR;
+}
+
+char* itoa(int val, int base){
+
+    static char buf[32] = {0};
+
+    int i = 30;
+
+    for(; val && i ; --i, val /= base)
+
+        buf[i] = "0123456789abcdef"[val % base];
+
+    return &buf[i+1];
+
+}
 //Начальное значение количества тем
 int countThemes = 256;
 //Счетчки новостей 
@@ -36,7 +71,7 @@ void initMassiveTheme(){
 }
 
 char *tempThemes;
-char *tempName;
+int tempName;
 //Определение мьютекса
 pthread_mutex_t mutex;
 //Создаем сокет прослушивающий входящих клиентов
@@ -97,7 +132,7 @@ void closeClient(int socket){
     close(socket);
     for (int i = 0; i < maxClients; i++){
         if((clients[i] !=NULL)  &&(clients[i]->socket==socket)){
-            printf("Клиент с скоетом %d покинул нас\n", clients[i]->socket);
+            printf("Клиент с сокетом %d покинул нас\n", clients[i]->socket);
             clients[i] = NULL;
             break;
         }
@@ -148,6 +183,7 @@ int reciveRequestFromClient(int socket,char *buffer){
     int n;
     //Получаем значение флага
     n = read(socket, &flag, sizeof(int));
+   // printf(n);
     if (n <= 0 || flag == 0) {
         perror("ERROR reading from socket\n");
         closeClient(socket);
@@ -155,6 +191,7 @@ int reciveRequestFromClient(int socket,char *buffer){
 
     switch(flag){
         case 1: {
+            printf("n = %d\n", n);
             printf("Запрос на вывод тем\n");
             break;
         }
@@ -166,8 +203,12 @@ int reciveRequestFromClient(int socket,char *buffer){
         }
         case 3: {
             printf("Запрос на вывод новости\n");
-            tempName = partRead(socket, tempName);
-            printf("Отправить новость %s\n", tempName);
+            n = read(socket, &tempName, sizeof(int));
+            if (n <= 0) {
+                perror("ERROR reading from socket\n");
+                closeClient(socket);
+            }
+            printf("Отправить новость %d\n", tempName);
             break;
         }
         case 4: {
@@ -185,7 +226,19 @@ int reciveRequestFromClient(int socket,char *buffer){
             for (int i = 0; i < tempCount; i++){
                 //теперь саму тему
                 buffer = partRead(socket,buffer);
-                addThemes(buffer);
+                //проверка на добавление темы с одинаковым названием
+                if (countT == 0)
+                    addThemes(buffer);
+                else{
+                for (int i =0; i < countT; i++){
+                if (!strcmp(buffer, themes[i])){
+                    break;
+                }
+                if (i == countT-1){
+                    addThemes(buffer);
+                }}
+            }
+                
                 free(buffer);
             }
             break;
@@ -209,6 +262,8 @@ int reciveRequestFromClient(int socket,char *buffer){
 
             massNews[countNews] = nNews;
             countNews++;
+            if (countT == 0)
+                    addThemes(buffer);
             //Проверка на то что тема есть, если нет добавляет в массив тем
             for (int i =0; i < countT; i++){
                 if (!strcmp(nNews->themes, themes[i])){
@@ -257,12 +312,12 @@ void writePart(int socket, char *message){
 }
 
 news* findCurNews(){
-    for (int i = 0; i < countNews; i++){
-        if (!strcmp(massNews[i]->name, tempName)){
-            return massNews[i];
+        if (tempName<countNews){
+            return massNews[tempName];
         }
-    }
-    return NULL;
+        else {
+            return NULL;
+        }
 }
 
 void sendResponseToClient(int socket, int flag){
@@ -270,6 +325,7 @@ void sendResponseToClient(int socket, int flag){
     switch(flag){
         case 1: {
             int n;
+            flag = set_response(flag);
              //Отправили флаг
             n = write(socket, &flag, sizeof(int));
             if (n < 0) {
@@ -289,6 +345,7 @@ void sendResponseToClient(int socket, int flag){
         }
         case 2: {
             int n;
+            flag = set_response(flag);
              //Отправили флаг
             n = write(socket, &flag, sizeof(int));
             if (n < 0) {
@@ -309,6 +366,11 @@ void sendResponseToClient(int socket, int flag){
             for (int i = 0; i < countNews; i++){
                 printf("Новость %s\n",massNews[i]->name);
                 if (!strcmp(massNews[i]->themes, tempThemes)){
+                    n = write(socket, &i, sizeof(int));
+					if (n < 0) {
+						perror("ERROR writing to socket");
+						closeClient(socket);
+					}
                     writePart(socket, massNews[i]->name);
                 }               
             }
@@ -320,6 +382,7 @@ void sendResponseToClient(int socket, int flag){
             news* new = findCurNews();
 
             if (new != NULL){
+                flag = set_response(flag);
                 //Отправили флаг
                 n = write(socket, &flag, sizeof(int));
                 if (n < 0) {
@@ -337,42 +400,42 @@ void sendResponseToClient(int socket, int flag){
                 printf("Отправлено\n");
             }
             else{
-                int err = 6;
+                int err = 5;
+                err = set_err(err);
                 //отправляем сообщение об ошибке
                 n = write(socket, &err, sizeof(int));
                 if (n < 0) {
                     perror("ERROR writing to socket");
                     closeClient(socket);
                 }
-                char *tempstr = "News is missing";
-                writePart(socket, tempstr);
             }
             break;
         }
         case 4: {
 
             int n;
+            flag = set_response(flag);
             //Отправили флаг
             n = write(socket, &flag, sizeof(int));
             if (n <= 0) {
                 perror("ERROR writing to socket");
                 closeClient(socket);
             }          
-            char *tempstr = "Data accept";
-            writePart(socket, tempstr);
+            
             break;
 
         }
         case 5: {
             int n;
+            flag = 4;
+            flag = set_response(flag);
             //Отправили флаг
             n = write(socket, &flag, sizeof(int));
             if (n <= 0) {
                 perror("ERROR writing to socket");
                 closeClient(socket);
             }          
-            char *tempstr = "Data accept";
-            writePart(socket, tempstr);
+            
             break;
         }
     }
@@ -411,7 +474,6 @@ void* clientWorks(void* clientI){
             case 3: {
                 printf("Отправляем новость клиенту\n");
                 sendResponseToClient(socket,flag);
-                free(tempName);
                 break;
             }
             case 4: {
@@ -420,6 +482,8 @@ void* clientWorks(void* clientI){
                 break;
             }
             case 5: {
+                sendResponseToClient(socket,flag); //--Данные записаны
+                printf("Ответ клиенту отправлен, темы получены и записаны\n");
                 break;
             }
             default: {
@@ -484,7 +548,7 @@ int main(int argc, char *argv[]) {
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(port_number);
 
-    /* Now bind the host address using bind() call.*/
+   
     if (bind(socket_feed, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         perror("ERROR on binding");
         exit(1);
