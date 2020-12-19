@@ -4,14 +4,14 @@
 
 # Опции
 
-|       Option       |    Value Type    |          Description          |
-| ------------------ | ---------------- | ----------------------------- |
-| TopicName          | `VarString`      | Название темы голосования     |
-| AlternativeName    | `VarString`      | Вариант для выбора            |
-| ErrorMessage       | `VarString`      | Причина невыполнения          |
-| TopicList          | `VarList<Topic>` | Информация о теме голосования |
-| TopicStatus        | `TopicStatus`    | Информация о статусе голосования |
-| AllowMultipleVotes | `Short`          | Разрешает отдачу нескольких голосов с одного клиента (указывается макс. количество) |
+|       Option       | OptionId |   Value Type    |          Description          |
+| ------------------ | -------- | --------------- | ----------------------------- |
+| TopicName          | 0x01     | `VarString`     | Название темы голосования     |
+| AlternativeName    | 0x02     | `VarString`     | Вариант для выбора            |
+| ErrorMessage       | 0x03     | `VarString`     | Причина невыполнения          |
+| TopicList          | 0x04     | `VarList<Topic>`| Информация о теме голосования |
+| TopicStatus        | 0x05     | `TopicStatus`   | Информация о статусе голосования |
+| AllowMultipleVotes | 0x06     | `Short`         | Разрешает отдачу нескольких голосов с одного клиента (указывается макс. количество) |
 
 # Типы данных
 
