@@ -36,7 +36,7 @@ inline fun <T : Any> validateNotNull(value: T?, message: () -> Any): T {
         returns() implies (value != null)
     }
     if (value == null) {
-        throw IllegalArgumentException(message().toString())
+        throw MessageFormatException(message().toString())
     } else {
         return value
     }
