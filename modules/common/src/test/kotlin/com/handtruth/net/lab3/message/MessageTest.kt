@@ -9,8 +9,9 @@ import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
-data class MessageWithOptions(val integer: Int, override val options: List<Option>) : Message() {
+data class MessageWithOptions(val integer: Int, override val options: Map<Byte, Option>) : Message() {
 
     override fun writeBody(output: Output) {
         output.writeVarInt(integer)
@@ -18,7 +19,7 @@ data class MessageWithOptions(val integer: Int, override val options: List<Optio
 
     @AutoService(MessageCompanion::class)
     companion object : MessageCompanion(12) {
-        override fun read(input: ByteReadPacket, options: List<Option>) = MessageWithOptions(input.readVarInt(), options)
+        override fun read(input: ByteReadPacket, options: Map<Byte, Option>) = MessageWithOptions(input.readVarInt(), options)
     }
 }
 
@@ -30,7 +31,7 @@ data class MessageWithoutOptions(val integer: Int) : Message() {
 
     @AutoService(MessageCompanion::class)
     companion object : MessageCompanion(13) {
-        override fun read(input: ByteReadPacket, options: List<Option>) = MessageWithoutOptions(input.readVarInt())
+        override fun read(input: ByteReadPacket, options: Map<Byte, Option>) = MessageWithoutOptions(input.readVarInt())
     }
 }
 
@@ -41,13 +42,14 @@ class MessageTest {
         assertEquals(listOf(MessageWithOptions, MessageWithoutOptions), allMessages.values.toList())
 
         val channel = ByteChannel()
-        val options = listOf(TestOption(42))
+        val options = hashMapOf(Pair(TestOption.optionId, TestOption(42)))
 
         channel.writeMessage(MessageWithOptions(24, options))
         channel.flush()
 
         val received = channel.readMessage()
         assertEquals(12, received.id)
+        assertTrue(received.options.containsKey(TestOption.optionId))
         assertEquals(options, received.options)
         assertEquals(24, (received as MessageWithOptions).integer)
 

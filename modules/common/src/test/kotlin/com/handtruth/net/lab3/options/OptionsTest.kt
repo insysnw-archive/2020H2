@@ -43,8 +43,8 @@ class OptionsTest {
         assertEquals(6, packet.remaining)
         val actual = packet.use { it.readOptions() }
         assertEquals(1, actual.size)
-        assertEquals(TestOption(42), actual.first())
-        assertEquals(TestOption, actual.first().companion)
+        assertEquals(TestOption(42), actual[TestOption.optionId])
+        assertEquals(TestOption, actual[TestOption.optionId]?.companion)
 
     }
 
