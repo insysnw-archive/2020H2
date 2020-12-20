@@ -31,10 +31,10 @@ internal const val END_OF_OPTIONS: Byte = 0
  * считан неизвестный тип опции, то в логе появится соответствующее сообщение.
  *
  * @receiver синхронный поток, из которого будут прочитаны и декодированы опции
- * @return список декодированных опций
+ * @return ассоциативный массив декодированных опций
  */
-fun Input.readOptions(): List<Option> {
-    val options = mutableListOf<Option>()
+fun Input.readOptions(): Map<Byte, Option> {
+    val options = mutableMapOf<Byte, Option>()
     forever {
         val optionId = readByte()
         if (optionId == END_OF_OPTIONS) {
@@ -49,7 +49,7 @@ fun Input.readOptions(): List<Option> {
             buildPacket {
                 moveTo(this, optionSize)
             }.use { optionBody ->
-                options += factory.read(optionBody)
+                options.put(optionId, factory.read(optionBody))
             }
         }
     }

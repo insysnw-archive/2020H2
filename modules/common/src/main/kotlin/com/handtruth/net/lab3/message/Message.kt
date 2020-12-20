@@ -25,7 +25,7 @@ abstract class Message {
     /**
      * Опции сообщения.
      */
-    open val options: List<Option> get() = emptyList()
+    open val options: Map<Byte, Option> get() = emptyMap()
 
     /**
      * Функция, кодирующая и записывающая тело данного сообщения в синхронный поток.

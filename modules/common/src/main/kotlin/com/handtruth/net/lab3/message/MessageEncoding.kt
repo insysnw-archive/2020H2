@@ -50,7 +50,7 @@ suspend fun ByteReadChannel.readMessage(): Message {
 suspend fun ByteWriteChannel.writeMessage(message: Message) {
     buildPacket {
         writeByte(message.id)
-        writeOptions(message.options)
+        writeOptions(message.options.values)
         message.writeBody(this)
     }.use { messageBody ->
         writeVarInt(messageBody.remaining.toInt())
