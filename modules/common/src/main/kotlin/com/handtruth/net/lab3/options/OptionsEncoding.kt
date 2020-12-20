@@ -74,3 +74,11 @@ fun Output.writeOptions(options: Iterable<Option>) {
     }
     writeByte(END_OF_OPTIONS)
 }
+
+/**
+ * Трансформирует опции в ассоциативный массив из пар (тип опции, опция).
+ *
+ * @param options опции сообщения
+ * @return ассоциативный массив опций сообщения
+ */
+fun toOptions(vararg options: Option) = options.associateBy { it.id }
