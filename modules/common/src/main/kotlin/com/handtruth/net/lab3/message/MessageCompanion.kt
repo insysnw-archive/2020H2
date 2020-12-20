@@ -26,5 +26,5 @@ abstract class MessageCompanion(val messageId: Byte) {
      * @param options декодированные опции
      * @return сообщение типа, за который отвечает данный объект
      */
-    abstract fun read(input: ByteReadPacket, options: List<Option>): Message
+    abstract fun read(input: ByteReadPacket, options: Map<Byte, Option>): Message
 }
