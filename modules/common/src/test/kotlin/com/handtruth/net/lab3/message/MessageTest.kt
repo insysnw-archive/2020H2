@@ -1,14 +1,18 @@
 package com.handtruth.net.lab3.message
 
 import com.google.auto.service.AutoService
-import com.handtruth.net.lab3.options.*
+import com.handtruth.net.lab3.options.Option
+import com.handtruth.net.lab3.options.TestOption
+import com.handtruth.net.lab3.options.toOptions
 import com.handtruth.net.lab3.types.readVarInt
 import com.handtruth.net.lab3.types.writeVarInt
+import com.handtruth.net.lab3.util.MessageFormatException
 import io.ktor.test.dispatcher.*
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 data class MessageWithOptions(val integer: Int, override val options: Map<Byte, Option>) : Message() {
@@ -42,7 +46,7 @@ class MessageTest {
         assertEquals(listOf(MessageWithOptions, MessageWithoutOptions), allMessages.values.toList())
 
         val channel = ByteChannel()
-        val options = hashMapOf(Pair(TestOption.optionId, TestOption(42)))
+        val options = toOptions(TestOption(42))
 
         channel.writeMessage(MessageWithOptions(24, options))
         channel.flush()
@@ -53,6 +57,8 @@ class MessageTest {
         assertEquals(options, received.options)
         assertEquals(24, (received as MessageWithOptions).integer)
 
+        assertEquals(TestOption(42),  received.getOption<TestOption>())
+
         channel.writeMessage(MessageWithoutOptions(333))
         channel.flush()
 
@@ -60,5 +66,14 @@ class MessageTest {
         assertEquals(13, receivedSecond.id)
         assertEquals(0, receivedSecond.options.size)
         assertEquals(333, (receivedSecond as MessageWithoutOptions).integer)
+    }
+
+    @Test
+    fun noOptionTest() {
+        val message = MessageWithoutOptions(23)
+        val actual = assertFailsWith<MessageFormatException> {
+            message.getOption<TestOption>()
+        }.message
+        assertEquals("no option TestOption in message", actual)
     }
 }
