@@ -10,6 +10,8 @@ import com.handtruth.net.lab3.util.MessageFormatException
 import io.ktor.test.dispatcher.*
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -75,5 +77,28 @@ class MessageTest {
             message.getOption<TestOption>()
         }.message
         assertEquals("no option TestOption in message", actual)
+    }
+
+    @Test
+    fun transmitterTest() = testSuspend {
+        val channel = ByteChannel()
+        val (recv, send) = transmitter(channel, channel)
+        launch {
+            try {
+                send.send(MessageWithoutOptions(-455))
+            } finally {
+                send.close()
+            }
+        }
+
+        val task = async {
+            try {
+                recv.receive() as MessageWithoutOptions
+            } finally {
+                recv.cancel()
+            }
+        }
+
+        assertEquals(MessageWithoutOptions(-455), task.await())
     }
 }

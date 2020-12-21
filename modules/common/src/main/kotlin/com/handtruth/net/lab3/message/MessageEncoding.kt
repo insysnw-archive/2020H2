@@ -7,6 +7,11 @@ import com.handtruth.net.lab3.util.MessageFormatException
 import com.handtruth.net.lab3.util.loadObjects
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.launch
 
 /**
  * Ассоциативный массив, где составлены пары **message_id** и объект
@@ -56,4 +61,50 @@ suspend fun ByteWriteChannel.writeMessage(message: Message) {
         writeVarInt(messageBody.remaining.toInt())
         writePacket(messageBody)
     }
+}
+
+/**
+ * Задача, которая преобразует асинхронные потоки октетов в каналы сообщений.
+ * Удобно для задач параллельного доступа к одному и тому же потоку октетов. Не требуется
+ * дополнительной защиты от параллельной записи в поток, так как поток строго разделён на
+ * сообщения общего протокола на логическом уровне.
+ *
+ * @receiver контекст в котором будут запущены задачи преобразования потоков
+ * @param readChannel входящий асинхронный поток
+ * @param writeChannel исходящий асинхронный поток
+ * @return пара каналов отдельных сообщений общего протокола
+ * @sample com.handtruth.net.lab3.sample.transmitterSample
+ */
+fun CoroutineScope.transmitter(
+    readChannel: ByteReadChannel,
+    writeChannel: ByteWriteChannel
+): Pair<ReceiveChannel<Message>, SendChannel<Message>> {
+    val sender = Channel<Message>()
+    val receiver = Channel<Message>()
+
+    launch {
+        try {
+            for (message in sender) {
+                writeChannel.writeMessage(message)
+                writeChannel.flush()
+            }
+        } finally {
+            sender.cancel()
+            writeChannel.close()
+        }
+    }
+
+    launch {
+        try {
+            while (!readChannel.isClosedForRead) {
+                val message = readChannel.readMessage()
+                receiver.send(message)
+            }
+        } finally {
+            receiver.close()
+            readChannel.cancel()
+        }
+    }
+
+    return receiver to sender
 }
