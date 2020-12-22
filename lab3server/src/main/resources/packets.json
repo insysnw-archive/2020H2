@@ -1,0 +1,62 @@
+{
+  "connectionRequest": {
+    "opcode": 0,
+    "username": "",
+    "buyer": true
+  },
+  "serverReply": {
+    "opcode": 1,
+    "accepted": true
+  },
+  "lotListRequest": {
+    "opcode": 2
+  },
+  "lotListReply": {
+    "opcode": 3,
+    "lots": [
+      {
+        "lotName": "",
+        "seller": "",
+        "lotId": "",
+        "lotInitialPrice": 0,
+        "lotCurrentPrice": 0
+      }
+    ]
+  },
+  "raiseBidRequest": {
+    "opcode": 4,
+    "lotId": "",
+    "bid": 0
+  },
+  "error": {
+    "opcode": 5,
+    "code": 0,
+    "message": ""
+  },
+  "newLotRequest": {
+    "opcode": 6,
+    "lotName": "",
+    "lotId": "",
+    "lotInitialPrice": 0
+  },
+  "lotPriceUpdate": {
+    "opcode": 7,
+    "lotName": "",
+    "lotId": "",
+    "lotCurrentPrice": 0
+  },
+  "endTradeRequest": {
+    "opcode": 8,
+    "lotId": ""
+  },
+  "endTradeResults": {
+    "opcode": 9,
+    "lotId": "",
+    "lotName": "",
+    "lotOwner": "",
+    "highestBid": 0
+  },
+  "disconnectRequest": {
+    "opcode": 10
+  }
+}
