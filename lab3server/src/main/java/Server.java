@@ -13,6 +13,7 @@ public class Server {
     public static JSONObject packets;
     public static final int MSG_LIM = 512;
     public static final int PORT = 3333;
+    private boolean working = true;
 
     public Server(int port) throws SocketException {
         packets = new JSONObject(new JSONTokener(Server.class.getResourceAsStream("/packets.json")));
@@ -24,7 +25,7 @@ public class Server {
             Server server = new Server(PORT);
             server.service();
         } catch (SocketException ex) {
-            System.out.println("Socket error: " + ex.getMessage());
+            System.out.println("Server closed");
         } catch (IOException ex) {
             System.out.println("I/O error: " + ex.getMessage());
         }
@@ -32,7 +33,7 @@ public class Server {
 
     private void service() throws IOException {
         startCommandThread();
-        while (true) {
+        while (working) {
             DatagramPacket request = new DatagramPacket(new byte[MSG_LIM], MSG_LIM);
             socket.receive(request);
             requestHandler(request);
@@ -43,7 +44,7 @@ public class Server {
         Thread commandThread = new Thread(() -> {
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
             String command;
-            while (true) {
+            while (working) {
                 try {
                     command = br.readLine();
                     switch (command) {
@@ -65,6 +66,7 @@ public class Server {
                         }
                         case "quit": {
                             socket.close();
+                            working = false;
                             break;
                         }
                         default: {
