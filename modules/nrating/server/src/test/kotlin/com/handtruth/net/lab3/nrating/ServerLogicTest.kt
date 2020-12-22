@@ -2,6 +2,7 @@ package com.handtruth.net.lab3.nrating
 
 import com.handtruth.net.lab3.nrating.messages.QueryMessage
 import com.handtruth.net.lab3.nrating.types.*
+import com.handtruth.net.lab3.util.ConcurrentMap
 import com.handtruth.net.lab3.util.MessageFormatException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -14,17 +15,20 @@ class ServerLogicTest {
 
     @BeforeEach
     fun init() {
-        serverState = ServerState(mutableMapOf(
-            Pair(1, TopicInternal("To be or not to be?", true, 3, mutableMapOf(
-                Pair (1, AlternativeInternal("To be", 10)),
-                Pair (2, AlternativeInternal("Not to be", 10)),
-                Pair (3, AlternativeInternal("That is the question", 80))
-            ))),
-            Pair(2, TopicInternal("Who shot first?", true, 2, mutableMapOf(
-                Pair (4, AlternativeInternal("Solo", 34)),
-                Pair (5, AlternativeInternal("Grido", 33)),
-            )))
-        ), lastTopicId = 2, lastAlternativeId = 5)
+        serverState = ServerState(
+            ConcurrentMap.wrap(
+                mutableMapOf(
+                    Pair(1, TopicInternal("To be or not to be?", true, 3, mutableMapOf(
+                        Pair (1, AlternativeInternal("To be", 10)),
+                        Pair (2, AlternativeInternal("Not to be", 10)),
+                        Pair (3, AlternativeInternal("That is the question", 80))
+                    ))),
+                    Pair(2, TopicInternal("Who shot first?", true, 2, mutableMapOf(
+                        Pair (4, AlternativeInternal("Solo", 34)),
+                        Pair (5, AlternativeInternal("Grido", 33)),
+                    )))
+                )
+            ), lastTopicId = 2, lastAlternativeId = 5)
     }
 
     @Test

@@ -5,11 +5,13 @@ import com.handtruth.net.lab3.nrating.messages.QueryResponseMessage
 import com.handtruth.net.lab3.nrating.options.TopicListOption
 import com.handtruth.net.lab3.nrating.options.TopicStatusOption
 import com.handtruth.net.lab3.nrating.types.*
+import com.handtruth.net.lab3.options.toOptions
+import com.handtruth.net.lab3.util.ConcurrentMap
 import com.handtruth.net.lab3.util.MessageFormatException
 import java.lang.UnsupportedOperationException
 
 data class ServerState(
-    val topics: MutableMap<Int, TopicInternal> = hashMapOf(),
+    val topics: ConcurrentMap<Int, TopicInternal> = ConcurrentMap(),
     var lastTopicId: Int = 0, var lastAlternativeId: Int = 0
 )
 
@@ -26,7 +28,7 @@ fun handleGetQuery(serverState: ServerState, query: QueryMessage): QueryResponse
     if (query.topic == 0 && query.alternative == 0) {
         // Get Topic List Query
         val topicList = serverState.topics.mapValues { (k, v) -> Topic(k, v.name) }.values.toList()
-        return QueryResponseMessage(query.method, QueryStatus.OK, 0, 0, listOf(TopicListOption(topicList)))
+        return QueryResponseMessage(query.method, QueryStatus.OK, 0, 0, toOptions(TopicListOption(topicList)))
 
     } else if (query.topic > 0 && query.alternative == 0) {
         // Get Topic Query
@@ -41,7 +43,7 @@ fun handleGetQuery(serverState: ServerState, query: QueryMessage): QueryResponse
                     .map { (k, v) -> RatingItem(k, v.name, v.votes, v.votes.toDouble() / totalVotes) }
                     .sortedByDescending { it.votesAbs }
             )
-            QueryResponseMessage(query.method, QueryStatus.OK, query.topic, 0, listOf(TopicStatusOption(topicStatus)))
+            QueryResponseMessage(query.method, QueryStatus.OK, query.topic, 0, toOptions(TopicStatusOption(topicStatus)))
         } else {
             QueryResponseMessage(query.method, QueryStatus.FAILED, query.topic, 0)
             // todo add option

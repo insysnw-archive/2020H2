@@ -14,7 +14,7 @@ data class QueryMessage(
     val method: QueryMethod,
     val topic: Int,
     val alternative: Int,
-    override val options: List<Option> = emptyList()
+    override val options: Map<Byte, Option> = emptyMap()
 ) : Message() {
 
     override fun writeBody(output: Output) {
@@ -25,7 +25,7 @@ data class QueryMessage(
 
     @AutoService(MessageCompanion::class)
     companion object : MessageCompanion(0x31) {
-        override fun read(input: ByteReadPacket, options: List<Option>): Message {
+        override fun read(input: ByteReadPacket, options: Map<Byte, Option>): Message {
             val method = input.readByte().toQueryMethod()
             val topic = input.readVarInt()
             val alternative = input.readVarInt()
