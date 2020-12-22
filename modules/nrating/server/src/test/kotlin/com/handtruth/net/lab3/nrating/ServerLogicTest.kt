@@ -1,13 +1,15 @@
 package com.handtruth.net.lab3.nrating
 
 import com.handtruth.net.lab3.nrating.messages.QueryMessage
+import com.handtruth.net.lab3.nrating.options.*
 import com.handtruth.net.lab3.nrating.types.*
+import com.handtruth.net.lab3.options.toOptions
 import com.handtruth.net.lab3.util.ConcurrentMap
-import com.handtruth.net.lab3.util.MessageFormatException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class ServerLogicTest {
 
@@ -18,15 +20,17 @@ class ServerLogicTest {
         serverState = ServerState(
             ConcurrentMap.wrap(
                 mutableMapOf(
-                    Pair(1, TopicInternal("To be or not to be?", true, 3, mutableMapOf(
-                        Pair (1, AlternativeInternal("To be", 10)),
-                        Pair (2, AlternativeInternal("Not to be", 10)),
-                        Pair (3, AlternativeInternal("That is the question", 80))
-                    ))),
-                    Pair(2, TopicInternal("Who shot first?", true, 2, mutableMapOf(
-                        Pair (4, AlternativeInternal("Solo", 34)),
-                        Pair (5, AlternativeInternal("Grido", 33)),
-                    )))
+                    Pair(1, TopicInternal("To be or not to be?", true, 4, 5,
+                        ConcurrentMap.wrap(mutableMapOf(
+                            Pair (1, AlternativeInternal("To be", 10)),
+                            Pair (2, AlternativeInternal("Not to be", 10)),
+                            Pair (3, AlternativeInternal("That is the question", 80))
+                        )))),
+                    Pair(2, TopicInternal("Who shot first?", false, 3, 1,
+                        ConcurrentMap.wrap(mutableMapOf(
+                            Pair (4, AlternativeInternal("Solo")),
+                            Pair (5, AlternativeInternal("Grido")),
+                        ))))
                 )
             ), lastTopicId = 2, lastAlternativeId = 5)
     }
@@ -41,7 +45,11 @@ class ServerLogicTest {
         assertEquals(0, response.topic)
         assertEquals(0, response.alternative)
 
-        // TODO read options
+        assertTrue(response.options.containsKey(OptionType.TOPIC_LIST.code))
+
+        response.getOption<TopicListOption>().topics.apply {
+            assertEquals(2, this.size)
+        }
     }
 
     @Test
@@ -54,16 +62,141 @@ class ServerLogicTest {
         assertEquals(1, response.topic)
         assertEquals(0, response.alternative)
 
-        // TODO read options
+        assertTrue(response.options.containsKey(OptionType.TOPIC_STATUS.code))
+
+        response.getOption<TopicStatusOption>().topicStatus.apply {
+            assertEquals("To be or not to be?", this.topicData.name)
+            assertTrue(this.isOpen)
+            assertEquals(3, this.rating.size)
+            assertEquals(3, this.rating[0].altId)
+        }
+    }
+
+    @Test
+    fun getMissingTopicQueryTest() {
+        val message = QueryMessage(QueryMethod.GET, 3, 0)
+        val response = handleGetQuery(serverState, message)
+
+        assertEquals(QueryMethod.GET, response.method)
+        assertEquals(QueryStatus.FAILED, response.status)
+        assertEquals(3, response.topic)
+        assertEquals(0, response.alternative)
+
+        assertTrue(response.options.containsKey(OptionType.ERROR_MESSAGE.code))
+        assertEquals("A topic with id 3 is not found.", response.getOption<ErrorMessageOption>().name)
     }
 
     @Test
     fun invalidGetQueryTest() {
         val message = QueryMessage(QueryMethod.GET, 0, 10)
-        val error = assertFailsWith<MessageFormatException> {
-            handleGetQuery(serverState, message)
-        }.message
+        val response = handleGetQuery(serverState, message)
 
-        assertEquals("Invalid Get Query Format", error)
+        assertEquals(QueryMethod.GET, response.method)
+        assertEquals(QueryStatus.FAILED, response.status)
+        assertEquals(0, response.topic)
+        assertEquals(10, response.alternative)
+
+        assertTrue(response.options.containsKey(OptionType.ERROR_MESSAGE.code))
+        assertEquals("Invalid Get Query Format.", response.getOption<ErrorMessageOption>().name)
+    }
+
+    @Test
+    fun addTopicQueryTest() {
+        val message = QueryMessage(QueryMethod.ADD, 0, 2, toOptions(
+            TopicNameOption("Pigman or Piglin???")
+        ))
+        val response = handleAddQuery(serverState, message)
+
+        assertEquals(QueryMethod.ADD, response.method)
+        assertEquals(QueryStatus.OK, response.status)
+        assertEquals(0, response.alternative)
+
+        assertEquals(3, serverState.topics.size)
+        assertEquals("Pigman or Piglin???", serverState.topics[response.topic]?.name)
+    }
+
+    @Test
+    fun addAlternativeQueryTest() {
+        val message = QueryMessage(QueryMethod.ADD, 2, 0, toOptions(
+            AlternativeNameOption("Jar Jar Binks!")
+        ))
+        val response = handleAddQuery(serverState, message)
+
+        assertEquals(QueryMethod.ADD, response.method)
+        assertEquals(QueryStatus.OK, response.status)
+        assertEquals(2, response.topic)
+
+        assertEquals(3, serverState.topics[2]!!.alternatives.size)
+
+        // Can't add another one
+        val badMessage = QueryMessage(QueryMethod.ADD, 2, 0, toOptions(
+            AlternativeNameOption("Jar Jar Binks???")
+        ))
+        val badResponse = handleAddQuery(serverState, badMessage)
+
+        assertEquals(QueryMethod.ADD, badResponse.method)
+        assertEquals(QueryStatus.FAILED, badResponse.status)
+
+        assertTrue(badResponse.options.containsKey(OptionType.ERROR_MESSAGE.code))
+        assertEquals("Alternatives limit is reached.", badResponse.getOption<ErrorMessageOption>().name)
+    }
+
+    @Test
+    fun addAlternativeWhileVoteIsOpenTest() {
+        val message = QueryMessage(QueryMethod.ADD, 1, 0, toOptions(
+            AlternativeNameOption("Or?")
+        ))
+        val response = handleAddQuery(serverState, message)
+
+        assertEquals(QueryMethod.ADD, response.method)
+        assertEquals(QueryStatus.FAILED, response.status)
+        assertEquals(1, response.topic)
+
+        assertTrue(response.options.containsKey(OptionType.ERROR_MESSAGE.code))
+        assertEquals("Vote is on! Can't add new alternatives.", response.getOption<ErrorMessageOption>().name)
+    }
+
+    @Test
+    fun removeTopicQueryTest() {
+        val message = QueryMessage(QueryMethod.DEL, 1, 0)
+        val response = handleDelQuery(serverState, message)
+
+        assertEquals(QueryMethod.DEL, response.method)
+        assertEquals(QueryStatus.OK, response.status)
+        assertEquals(1, response.topic)
+        assertEquals(0, response.alternative)
+
+        assertEquals(1, serverState.topics.size)
+        assertFalse(serverState.topics.containsKey(1))
+    }
+
+    @Test
+    fun removeNotExistingTopicTest() {
+        val message = QueryMessage(QueryMethod.DEL, 42, 0)
+        val response = handleDelQuery(serverState, message)
+
+        assertEquals(QueryMethod.DEL, response.method)
+        assertEquals(QueryStatus.FAILED, response.status)
+        assertEquals(42, response.topic)
+        assertEquals(0, response.alternative)
+
+        assertEquals(2, serverState.topics.size)
+
+        assertTrue(response.options.containsKey(OptionType.ERROR_MESSAGE.code))
+        assertEquals("A topic with id 42 is not found.", response.getOption<ErrorMessageOption>().name)
+    }
+
+    @Test
+    fun removeAlternativeQueryTest() {
+        val message = QueryMessage(QueryMethod.DEL, 2, 4)
+        val response = handleDelQuery(serverState, message)
+
+        assertEquals(QueryMethod.DEL, response.method)
+        assertEquals(QueryStatus.OK, response.status)
+        assertEquals(2, response.topic)
+        assertEquals(4, response.alternative)
+
+        assertEquals(1, serverState.topics[2]!!.alternatives.size)
+        assertFalse(serverState.topics[2]!!.alternatives.containsKey(4))
     }
 }
