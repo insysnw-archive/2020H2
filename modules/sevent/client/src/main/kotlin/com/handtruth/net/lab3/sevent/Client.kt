@@ -1,4 +1,4 @@
-package com.handtruth.net.kab3.sevent
+package com.handtruth.net.lab3.sevent
 
 fun main() {
     println("Hello World!!!")
