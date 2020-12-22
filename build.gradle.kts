@@ -81,6 +81,7 @@ fun Project.kotlinProject() {
         sourceSets.all {
             with(languageSettings) {
                 useExperimentalAnnotation("kotlin.contracts.ExperimentalContracts")
+                useExperimentalAnnotation("kotlin.time.ExperimentalTime")
             }
         }
     }

@@ -1,5 +1,6 @@
 plugins {
     application
+    kotlin("plugin.serialization")
 }
 
 application {
@@ -7,5 +8,7 @@ application {
 }
 
 dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json")
+    implementation("org.jetbrains.kotlinx:kotlinx-cli")
     implementation(project(":sevent-common"))
 }
