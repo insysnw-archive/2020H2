@@ -18,6 +18,7 @@ import java.net.InetSocketAddress
 
 fun main(args: Array<String>) {
     val parser = ArgParser("nrating-server")
+    val address by parser.option(ArgType.String, shortName = "a", description = "Server address").default("127.0.0.1")
     val port by parser.option(ArgType.Int, shortName = "p", description = "Server port").default(3433)
     val strictMode by parser.option(ArgType.Boolean, shortName = "s", description = "Strict Mode").default(false)
     parser.parse(args)
@@ -25,7 +26,7 @@ fun main(args: Array<String>) {
     runBlocking {
         val server = aSocket(ActorSelectorManager(Dispatchers.IO))
             .tcp()
-            .bind(InetSocketAddress("127.0.0.1", port))
+            .bind(InetSocketAddress(address, port))
         println("Started nrating server at port $port ${if(strictMode) " in strict mode" else ""}")
 
         val serverState = ServerState()
