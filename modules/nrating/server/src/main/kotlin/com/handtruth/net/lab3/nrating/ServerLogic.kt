@@ -7,7 +7,6 @@ import com.handtruth.net.lab3.nrating.types.*
 import com.handtruth.net.lab3.options.toOptions
 import com.handtruth.net.lab3.util.ConcurrentMap
 import kotlinx.coroutines.runBlocking
-import java.lang.UnsupportedOperationException
 
 data class ServerState(
     val topics: ConcurrentMap<Int, TopicInternal> = ConcurrentMap(),
@@ -24,7 +23,9 @@ fun handleQueryMessage(serverState: ServerState, query: QueryMessage): QueryResp
         QueryMethod.GET -> handleGetQuery(serverState, query)
         QueryMethod.ADD -> handleAddQuery(serverState, query)
         QueryMethod.DEL -> handleDelQuery(serverState, query)
-        else -> throw UnsupportedOperationException("Query type #${query.method.code} is not supported yet!")
+        QueryMethod.OPEN -> handleOpenQuery(serverState, query)
+        QueryMethod.CLOSE -> handleCloseQuery(serverState, query)
+        QueryMethod.VOTE -> handleVoteQuery(serverState, query)
     }
 }
 
@@ -63,14 +64,9 @@ fun handleAddQuery(serverState: ServerState, query: QueryMessage): QueryResponse
         val maxAlternatives = query.alternative
         val topicName = query.getOptionOrNull<TopicNameOption>()
             ?: return errorResponse(query, "TopicName option is missing.")
-        val maxVotes = query.getOptionOrNull<AllowMultipleVotesOption>()
 
         runBlocking {
-            if (maxVotes != null) {
-                serverState.topics.put(id, TopicInternal(topicName.name, false, maxAlternatives, maxVotes.maxVotes))
-            } else {
-                serverState.topics.put(id, TopicInternal(topicName.name, false, maxAlternatives))
-            }
+            serverState.topics.put(id, TopicInternal(topicName.name, false, maxAlternatives))
         }
         return QueryResponseMessage(query.method, QueryStatus.OK, id, 0)
 
@@ -86,13 +82,13 @@ fun handleAddQuery(serverState: ServerState, query: QueryMessage): QueryResponse
 
             with(serverState.topics[query.topic]!!) {
                 if (this.alternatives.size < this.maxAlternatives) {
-                    if (!this.isOpen) {
+                    if (!this.isOpen && !this.isClosed) {
                         this.alternatives.put(
                             id, AlternativeInternal(alternativeName.name)
                         )
                         QueryResponseMessage(query.method, QueryStatus.OK, query.topic, id)
                     } else {
-                        errorResponse(query, "Vote is on! Can't add new alternatives.")
+                        errorResponse(query, "Vote is locked! Can't add new alternatives.")
                     }
                 } else {
                     errorResponse(query, "Alternatives limit is reached.")
@@ -123,18 +119,104 @@ fun handleDelQuery(serverState: ServerState, query: QueryMessage): QueryResponse
                 errorResponse(query, "A topic with id ${query.topic} is not found.")
             } else {
                 with(serverState.topics[query.topic]!!) {
-                    if (!this.isOpen) {
+                    if (!this.isOpen && !this.isClosed) {
                         if (!this.alternatives.containsKey(query.alternative))
                             errorResponse(query, "An alternative with id ${query.alternative} is not found.")
                         this.alternatives.remove(query.alternative)
                         QueryResponseMessage(query.method, QueryStatus.OK, query.topic, query.alternative)
                     } else {
-                        errorResponse(query, "Vote is on! Can't remove alternatives.")
+                        errorResponse(query, "Vote is locked! Can't remove alternatives.")
                     }
                 }
             }
         }
     } else {
         return errorResponse(query, "Invalid Remove Query Format.")
+    }
+}
+
+fun handleOpenQuery(serverState: ServerState, query: QueryMessage): QueryResponseMessage {
+    return if (query.topic > 0 && query.alternative == 0) {
+        runBlocking {
+            if (serverState.topics.containsKey(query.topic)) {
+                with(serverState.topics[query.topic]!!) {
+                    when {
+                        this.isClosed -> {
+                            errorResponse(query, "A vote is closed and can't be reopened.")
+                        }
+                        this.isOpen -> {
+                            errorResponse(query, "A vote is already on.")
+                        }
+                        else -> {
+                            this.isOpen = true
+                            QueryResponseMessage(query.method, QueryStatus.OK, query.topic, 0)
+                        }
+                    }
+                }
+            } else {
+                errorResponse(query, "A topic with id ${query.topic} is not found.")
+            }
+        }
+    } else {
+        errorResponse(query, "Invalid Open Query Format.")
+    }
+}
+
+fun handleCloseQuery(serverState: ServerState, query: QueryMessage): QueryResponseMessage {
+    return if (query.topic > 0 && query.alternative == 0) {
+        runBlocking {
+            if (serverState.topics.containsKey(query.topic)) {
+                with(serverState.topics[query.topic]!!) {
+                    when {
+                        this.isClosed -> {
+                            errorResponse(query, "A vote is already closed.")
+                        }
+                        !this.isOpen -> {
+                            errorResponse(query, "A vote hasn't started yet.")
+                        }
+                        else -> {
+                            this.isOpen = false
+                            this.isClosed = true
+                            QueryResponseMessage(query.method, QueryStatus.OK, query.topic, 0)
+                        }
+                    }
+                }
+            } else {
+                errorResponse(query, "A topic with id ${query.topic} is not found.")
+            }
+        }
+    } else {
+        errorResponse(query, "Invalid Close Query Format.")
+    }
+}
+
+fun handleVoteQuery(serverState: ServerState, query: QueryMessage): QueryResponseMessage {
+    return if (query.topic > 0 && query.alternative > 0) {
+        runBlocking {
+            if (serverState.topics.containsKey(query.topic)) {
+                with(serverState.topics[query.topic]!!) {
+                    when {
+                        this.isClosed -> {
+                            errorResponse(query, "A vote is closed.")
+                        }
+                        !this.isOpen -> {
+                            errorResponse(query, "A vote hasn't started yet.")
+                        }
+                        else -> {
+                            if (this.alternatives.containsKey(query.alternative)) {
+                                this.alternatives[query.alternative]!!.votes++
+                                QueryResponseMessage(query.method, QueryStatus.OK, query.topic, query.alternative)
+                            } else {
+                                errorResponse(query, "An alternative with id ${query.alternative} is not found.")
+                            }
+                        }
+                    }
+                }
+            } else {
+                errorResponse(query, "A topic with id ${query.topic} is not found.")
+            }
+        }
+    } else {
+        errorResponse(query, "Invalid Vote Query Format.")
     }
 }

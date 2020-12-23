@@ -7,8 +7,8 @@ data class TopicInternal(
     val name: String,
     var isOpen: Boolean,
     val maxAlternatives: Int,
-    val maxVotes: Short = 1,
-    val alternatives: ConcurrentMap<Int, AlternativeInternal> = ConcurrentMap()
+    val alternatives: ConcurrentMap<Int, AlternativeInternal> = ConcurrentMap(),
+    var isClosed: Boolean = false
 )
 
 data class AlternativeInternal(

@@ -21,6 +21,5 @@ class OptionsTest {
                 )
             ).id
         )
-        assertEquals(0x06, AllowMultipleVotesOption(123).id)
     }
 }

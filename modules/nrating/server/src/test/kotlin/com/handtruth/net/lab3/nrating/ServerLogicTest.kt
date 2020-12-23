@@ -20,13 +20,13 @@ class ServerLogicTest {
         serverState = ServerState(
             ConcurrentMap.wrap(
                 mutableMapOf(
-                    Pair(1, TopicInternal("To be or not to be?", true, 4, 5,
+                    Pair(1, TopicInternal("To be or not to be?", true, 4,
                         ConcurrentMap.wrap(mutableMapOf(
                             Pair (1, AlternativeInternal("To be", 10)),
                             Pair (2, AlternativeInternal("Not to be", 10)),
                             Pair (3, AlternativeInternal("That is the question", 80))
                         )))),
-                    Pair(2, TopicInternal("Who shot first?", false, 3, 1,
+                    Pair(2, TopicInternal("Who shot first?", false, 3,
                         ConcurrentMap.wrap(mutableMapOf(
                             Pair (4, AlternativeInternal("Solo")),
                             Pair (5, AlternativeInternal("Grido")),
@@ -153,7 +153,7 @@ class ServerLogicTest {
         assertEquals(1, response.topic)
 
         assertTrue(response.options.containsKey(OptionType.ERROR_MESSAGE.code))
-        assertEquals("Vote is on! Can't add new alternatives.", response.getOption<ErrorMessageOption>().name)
+        assertEquals("Vote is locked! Can't add new alternatives.", response.getOption<ErrorMessageOption>().name)
     }
 
     @Test
@@ -198,5 +198,96 @@ class ServerLogicTest {
 
         assertEquals(1, serverState.topics[2]!!.alternatives.size)
         assertFalse(serverState.topics[2]!!.alternatives.containsKey(4))
+    }
+
+    @Test
+    fun openVoteQueryTest() {
+        val message = QueryMessage(QueryMethod.OPEN, 2, 0)
+
+        assertFalse(serverState.topics[2]!!.isOpen)
+        val response = handleOpenQuery(serverState, message)
+
+        assertEquals(QueryMethod.OPEN, response.method)
+        assertEquals(QueryStatus.OK, response.status)
+        assertEquals(2, response.topic)
+        assertEquals(0, response.alternative)
+
+        assertTrue(serverState.topics[2]!!.isOpen)
+    }
+
+    @Test
+    fun openOpenedQueryTest() {
+        val message = QueryMessage(QueryMethod.OPEN, 1, 0)
+
+        assertTrue(serverState.topics[1]!!.isOpen)
+        val response = handleOpenQuery(serverState, message)
+
+        assertEquals(QueryMethod.OPEN, response.method)
+        assertEquals(QueryStatus.FAILED, response.status)
+        assertEquals(1, response.topic)
+        assertEquals(0, response.alternative)
+
+        assertTrue(response.options.containsKey(OptionType.ERROR_MESSAGE.code))
+        assertEquals("A vote is already on.", response.getOption<ErrorMessageOption>().name)
+    }
+
+    @Test
+    fun closeVoteQueryTest() {
+        val message = QueryMessage(QueryMethod.CLOSE, 1, 0)
+
+        assertTrue(serverState.topics[1]!!.isOpen)
+        val response = handleCloseQuery(serverState, message)
+
+        assertEquals(QueryMethod.CLOSE, response.method)
+        assertEquals(QueryStatus.OK, response.status)
+        assertEquals(1, response.topic)
+        assertEquals(0, response.alternative)
+
+        assertFalse(serverState.topics[1]!!.isOpen)
+        assertTrue(serverState.topics[1]!!.isClosed)
+    }
+
+    @Test
+    fun closeNotOpenedQueryTest() {
+        val message = QueryMessage(QueryMethod.CLOSE, 2, 0)
+
+        assertFalse(serverState.topics[2]!!.isOpen)
+        assertFalse(serverState.topics[2]!!.isClosed)
+        val response = handleCloseQuery(serverState, message)
+
+        assertEquals(QueryMethod.CLOSE, response.method)
+        assertEquals(QueryStatus.FAILED, response.status)
+        assertEquals(2, response.topic)
+        assertEquals(0, response.alternative)
+
+        assertTrue(response.options.containsKey(OptionType.ERROR_MESSAGE.code))
+        assertEquals("A vote hasn't started yet.", response.getOption<ErrorMessageOption>().name)
+    }
+
+    @Test
+    fun voteQueryTest() {
+        val message = QueryMessage(QueryMethod.VOTE, 1, 1)
+        val response = handleVoteQuery(serverState, message)
+
+        assertEquals(QueryMethod.VOTE, response.method)
+        assertEquals(QueryStatus.OK, response.status)
+        assertEquals(1, response.topic)
+        assertEquals(1, response.alternative)
+
+        assertEquals(11, serverState.topics[1]!!.alternatives[1]!!.votes)
+    }
+
+    @Test
+    fun voteNotOpenedQueryTest() {
+        val message = QueryMessage(QueryMethod.VOTE, 2, 3)
+        val response = handleVoteQuery(serverState, message)
+
+        assertEquals(QueryMethod.VOTE, response.method)
+        assertEquals(QueryStatus.FAILED, response.status)
+        assertEquals(2, response.topic)
+        assertEquals(3, response.alternative)
+
+        assertTrue(response.options.containsKey(OptionType.ERROR_MESSAGE.code))
+        assertEquals("A vote hasn't started yet.", response.getOption<ErrorMessageOption>().name)
     }
 }
