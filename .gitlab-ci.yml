@@ -17,7 +17,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: normal
   GRADLE: gradle -Pci --console=plain --no-daemon --max-workers=1 --stacktrace
   SEVENT_PORT: 5987
-  NRATING_PORT: 6969
+  NRATING_PORT: 3433
 
 assemble:
   stage: build
@@ -153,12 +153,22 @@ seventServer:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker stop $PROJECT_NAME-server || true
     - docker rm --force $PROJECT_NAME-server || true
-    - docker run -d --name $PROJECT_NAME-server -p $PORT:$PORT --workdir /data $IMAGE_TAG --host 0.0.0.0 --port $PORT
+    - docker run -d --name $PROJECT_NAME-server -p $PORT:$PORT --restart always --workdir /data $IMAGE_TAG -a 0.0.0.0 -p $PORT
   tags: [ deploy ]
   only: [ tags ]
   cache:
     paths: [ ]
   dependencies: [ ]
+
+nratingDeploy:
+  <<: *srvDeploy
+  variables:
+    PROJECT_NAME: nrating
+    CATEGORY: server
+    GIT_STRATEGY: none
+    PORT: ${NRATING_PORT}
+    <<: *imgVars
+  needs: [ nratingServer ]
 
 seventDeploy:
   <<: *srvDeploy
