@@ -1,10 +1,10 @@
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import java.io.*;
 import java.net.Socket;
-
 
 
 public class Client {
@@ -73,7 +73,7 @@ public class Client {
     }
 
     private void signin(String username, String password) {
-        JSONObject signupPacket = packets.getJSONObject("signinRequest");
+        JSONObject signupPacket = new JSONObject(packets.getJSONObject("signinRequest"));
         this.username = username;
         this.password = password;
         signupPacket.put("username", username);
@@ -82,7 +82,7 @@ public class Client {
     }
 
     public void signup(String username, String password) {
-        JSONObject signinPacket = packets.getJSONObject("signupRequest");
+        JSONObject signinPacket = new JSONObject(packets.getJSONObject("signupRequest"));
         this.username = username;
         this.password = password;
         signinPacket.put("username", username);
@@ -91,29 +91,29 @@ public class Client {
     }
 
     public void wallets() {
-        JSONObject clientMessage = packets.getJSONObject("walletListRequest");
+        JSONObject clientMessage = new JSONObject(packets.getJSONObject("walletListRequest"));
         sendPacket(clientMessage.toString());
     }
 
     public void send(int walletId, int sum) {
-        JSONObject clientMessage = packets.getJSONObject("send");
+        JSONObject clientMessage = new JSONObject(packets.getJSONObject("send"));
         clientMessage.put("walletId", walletId);
         clientMessage.put("sum", sum);
         sendPacket(clientMessage.toString());
     }
 
     private void checkWallet() {
-        JSONObject clientMessage = packets.getJSONObject("checkWallet");
+        JSONObject clientMessage = new JSONObject(packets.getJSONObject("checkWallet"));
         sendPacket(clientMessage.toString());
     }
 
     public void quit() {
-        JSONObject clientMessage = packets.getJSONObject("disconnectClient");
+        JSONObject clientMessage = new JSONObject(packets.getJSONObject("disconnectClient"));
         sendPacket(clientMessage.toString());
     }
 
     private void sendRequest(String recipientUsername, int sum, int yourWalletId) {
-        JSONObject clientMessage = packets.getJSONObject("sendRequest");
+        JSONObject clientMessage = new JSONObject(packets.getJSONObject("sendRequest"));
         clientMessage.put("sum", sum);
         clientMessage.put("sender", username);
         clientMessage.put("recipient", recipientUsername);
@@ -122,7 +122,7 @@ public class Client {
     }
 
     private void sendRequestResponse(int requestId, String answer) {
-        JSONObject requestResponse = packets.getJSONObject("requestResponse");
+        JSONObject requestResponse = new JSONObject(packets.getJSONObject("requestResponse"));
         requestResponse.put("requestId", requestId);
         if(answer.equals("accept")) requestResponse.put("answer", true);
         else if (answer.equals("dent")) requestResponse.put("answer", false);
@@ -131,6 +131,12 @@ public class Client {
             return;
         }
         sendPacket(requestResponse.toString());
+    }
+
+    private void sendError(String message) {
+        JSONObject error = new JSONObject(packets.getJSONObject("error"));
+        error.put("message", message);
+        sendPacket(error.toString());
     }
 
     public void startSendingThread() {
@@ -311,7 +317,12 @@ public class Client {
                 } catch (IOException e) {
                     if(!connected) {
                         System.out.println("Disconnected");
-                    } else e.printStackTrace();
+                    } else {
+                        sendError("Something's wrong with sent message");
+                        e.printStackTrace();
+                    }
+                } catch (JSONException e) {
+                    sendError("Something's wrong with sent message");
                 }
             }
         });
