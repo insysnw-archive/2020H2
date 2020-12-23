@@ -163,7 +163,7 @@ seventServer:
 seventDeploy:
   <<: *srvDeploy
   variables:
-    PROJECT_NAME: nrating
+    PROJECT_NAME: sevent
     CATEGORY: server
     GIT_STRATEGY: none
     PORT: ${SEVENT_PORT}
