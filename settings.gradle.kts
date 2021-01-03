@@ -1,11 +1,13 @@
 pluginManagement {
     repositories {
         gradlePluginPortal()
+        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     }
     val kotlinVersion: String by settings
     val dokkaVersion: String by settings
     val gitAndroidVersion: String by settings
     val atomicfuVersion: String by settings
+    val kotlinComposeVersion: String by settings
     resolutionStrategy {
         eachPlugin {
             when {
@@ -19,6 +21,7 @@ pluginManagement {
     plugins {
         id("org.jetbrains.dokka") version dokkaVersion
         id("com.gladed.androidgitversion") version gitAndroidVersion
+        id("org.jetbrains.compose") version kotlinComposeVersion
     }
 }
 
