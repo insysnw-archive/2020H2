@@ -1,6 +1,7 @@
 import java.io.Console;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -79,8 +80,13 @@ public class GroupChatClient {
                 try {
                     chatClient.Receive();
                     Thread.currentThread().sleep(3000);
-                } catch (IOException | InterruptedException e) {
+                } catch (SocketException e) {
+                    System.out.println(e.getMessage());
+                    break;
+                }
+                 catch (IOException | InterruptedException e) {
                     e.printStackTrace();
+                    break;
                 }
             }
         }).start();

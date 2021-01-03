@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.net.SocketException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -32,6 +33,9 @@ public class ReadThread extends Thread {
 //                if (chatClient.getUserName() != null) {
 //                    System.out.print(getMessageDescription(chatClient.getUserName()));
 //                }
+            } catch (SocketException e) {
+                System.out.println(e.getMessage());
+                break;
             } catch (IOException ex) {
                 System.out.println("Error reading from server: " + ex.getMessage());
                 ex.printStackTrace();
