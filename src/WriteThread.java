@@ -36,6 +36,7 @@ public class WriteThread extends Thread {
         do {
 //            text = console.readLine(getMessageDescription(userName));
             text = console.readLine();
+            if (!text.isEmpty())
             writer.println(text);
         } while (!text.equals("bye"));
 

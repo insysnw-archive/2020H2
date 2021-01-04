@@ -45,7 +45,9 @@ public class GroupChatClient {
                     //Read from the channel
                     channel.read(buffer);
 
-                    System.out.println((getMessageDescription()+new String(buffer.array())).trim());
+                    String newMsg = new String(buffer.array()).trim();
+                    if(!newMsg.isEmpty())
+                    System.out.println((getMessageDescription()+newMsg).trim());
                 }
                 iterator.remove();
             }
@@ -96,6 +98,7 @@ public class GroupChatClient {
         //Input line by line
         while (scanner.hasNext()){
             String msg=scanner.nextLine();
+            if(!msg.isEmpty())
             chatClient.Send("["+userName+"]: "+msg);
         }
 

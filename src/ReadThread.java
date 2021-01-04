@@ -29,6 +29,7 @@ public class ReadThread extends Thread {
         while (true) {
             try {
                 String response = reader.readLine();
+                if (response==null) break;
                 System.out.println(("\n" + getMessageDescription()+response).trim());
 //                if (chatClient.getUserName() != null) {
 //                    System.out.print(getMessageDescription(chatClient.getUserName()));

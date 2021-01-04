@@ -34,6 +34,7 @@ public class UserThread extends Thread{
 
             do {
                 clientMessages = reader.readLine();
+                if(clientMessages==null) break;
                 serverMessage = "["+userName+"]: " + clientMessages;
                 server.broadcast(serverMessage, this);
                 System.out.println(getMessageDescription(userName)+clientMessages);
