@@ -1,0 +1,181 @@
+image: gradle:6.7.1-jdk8
+
+stages:
+  - build
+  - test
+  - analysis
+  - package
+  - image
+  - deploy
+
+cache:
+  paths:
+    - .gradle
+
+variables:
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+  GIT_SUBMODULE_STRATEGY: normal
+  GRADLE: gradle -Pci --console=plain --no-daemon --max-workers=1 --stacktrace
+  SEVENT_PORT: 5987
+  NRATING_PORT: 3433
+
+assemble:
+  stage: build
+  script:
+    - $GRADLE assemble
+  artifacts: &artifacts
+    paths:
+      - build
+      - 'modules/*/build'
+      - 'modules/*/*/build'
+
+test:
+  stage: test
+  script:
+    - $GRADLE test
+  needs:
+    - assemble
+  artifacts:
+    <<: *artifacts
+    reports:
+      junit:
+        - 'modules/*/build/test-results/$CI_JOB_NAME/TEST-*.xml'
+        - 'modules/*/*/build/test-results/$CI_JOB_NAME/TEST-*.xml'
+  cache:
+    policy: pull
+
+coverage:
+  stage: analysis
+  script:
+    - $GRADLE rootTestCoverageReport
+    - cat build/reports/jacoco/rootTestCoverageReport/html/index.html || true
+  coverage: "/Total.*?([0-9]{1,3})%/"
+  artifacts: *artifacts
+  needs:
+    - test
+
+mavenSnapshot:
+  stage: package
+  script:
+    - $GRADLE publish
+  needs:
+    - assemble
+  cache:
+    policy: pull
+
+mavenRelease:
+  stage: package
+  script:
+    - $GRADLE publishToMavenLocal
+  tags: [ package ]
+  only: [ tags ]
+  needs:
+    - assemble
+  cache:
+    policy: pull
+
+pages:
+  stage: package
+  script:
+    - $GRADLE gitlabPagesCreate
+  only:
+    refs: [ master ]
+  needs:
+    - assemble
+  artifacts:
+    paths:
+      - public
+  cache:
+    policy: pull
+
+.variables: &imgVars
+  LATEST_TAG: $CI_REGISTRY_IMAGE/${PROJECT_NAME}:${CATEGORY}-latest
+  IMAGE_TAG: $CI_REGISTRY_IMAGE/${PROJECT_NAME}:${CATEGORY}-$CI_COMMIT_TAG
+
+.imageTemplate: &imageTemplate
+  stage: image
+  image: docker:stable
+  services:
+    - name: docker:dind
+      entrypoint: ["dockerd", "--host=tcp://0.0.0.0:2375"]
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker build -t $IMAGE_TAG --build-arg project=$PROJECT_NAME --build-arg category=$CATEGORY --build-arg port=$PORT .
+    - docker tag $IMAGE_TAG $LATEST_TAG
+    - docker push $IMAGE_TAG
+    - docker push $LATEST_TAG
+  tags: ["docker"]
+  only:
+    - tags
+  dependencies: []
+  needs: []
+  cache:
+    paths: []
+
+nratingClient:
+  <<: *imageTemplate
+  variables:
+    PROJECT_NAME: nrating
+    CATEGORY: client
+    PORT: ${NRATING_PORT}
+    <<: *imgVars
+
+nratingServer:
+  <<: *imageTemplate
+  variables:
+    PROJECT_NAME: nrating
+    CATEGORY: server
+    PORT: ${NRATING_PORT}
+    <<: *imgVars
+
+seventClient:
+  <<: *imageTemplate
+  variables:
+    PROJECT_NAME: sevent
+    CATEGORY: client
+    PORT: ${SEVENT_PORT}
+    <<: *imgVars
+
+seventServer:
+  <<: *imageTemplate
+  variables:
+    PROJECT_NAME: sevent
+    CATEGORY: server
+    PORT: ${SEVENT_PORT}
+    <<: *imgVars
+
+.serverDeploy: &srvDeploy
+  stage: deploy
+  image: docker:stable
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker stop $PROJECT_NAME-server || true
+    - docker rm --force $PROJECT_NAME-server || true
+    - docker run -d --name $PROJECT_NAME-server -p $PORT:$PORT --restart always --workdir /data $IMAGE_TAG -a 0.0.0.0 -p $PORT
+  tags: [ deploy ]
+  only: [ tags ]
+  cache:
+    paths: [ ]
+  dependencies: [ ]
+
+nratingDeploy:
+  <<: *srvDeploy
+  variables:
+    PROJECT_NAME: nrating
+    CATEGORY: server
+    GIT_STRATEGY: none
+    PORT: ${NRATING_PORT}
+    <<: *imgVars
+  needs: [ nratingServer ]
+
+seventDeploy:
+  <<: *srvDeploy
+  variables:
+    PROJECT_NAME: sevent
+    CATEGORY: server
+    GIT_STRATEGY: none
+    PORT: ${SEVENT_PORT}
+    <<: *imgVars
+  needs: [ seventServer ]
