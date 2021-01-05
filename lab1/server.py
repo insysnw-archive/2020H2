@@ -91,4 +91,10 @@ async def main():
     async with server:
         await server.serve_forever()
 
-asyncio.run(main())
+try:
+    asyncio.run(main())
+except KeyboardInterrupt:
+    pass
+finally:
+    server_socket.close()
+    logging.info("socket closed")

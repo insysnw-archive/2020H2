@@ -71,4 +71,10 @@ async def main():
     await write_messages(writer)
     await read_task
 
-asyncio.run(main())
+try:
+    asyncio.run(main())
+except KeyboardInterrupt:
+    pass
+finally:
+    client_socket.close()
+    print("socket closed")
