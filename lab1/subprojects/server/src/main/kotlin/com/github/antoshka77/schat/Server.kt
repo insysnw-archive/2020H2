@@ -22,11 +22,15 @@ suspend fun main(args: Array<String>) {
     val argParser = ArgParser("schat-server")
     val logLevel by argParser.option(
         ArgType.Choice(
-            listOf("all", "trace", "debug", "info", "warn", "error", "no"),
+            listOf("ALL", "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "NO"),
             { Level.toLevel(it.toUpperCase())!! }
-        )
+        ), fullName = "log"
     ).default(Level.INFO)
-    val address by argParser.argument(ArgType.String).optional().default("0.0.0.0:$DEFAULT_PORT")
+    val address by argParser.argument(
+        ArgType.String,
+        fullName = "hostname[:port]",
+        description = "server address"
+    ).optional().default("0.0.0.0:$DEFAULT_PORT")
     argParser.parse(args)
     setLogLevel(logLevel as Level)
     try {

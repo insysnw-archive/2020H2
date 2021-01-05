@@ -19,7 +19,11 @@ import kotlin.system.exitProcess
 
 suspend fun main(args: Array<String>) {
     val argParser = ArgParser("schat-server")
-    val address by argParser.argument(ArgType.String).optional().default("localhost:$DEFAULT_PORT")
+    val address by argParser.argument(
+        ArgType.String,
+        fullName = "[username@]hostname[:port]",
+        description = "server address and username"
+    ).optional().default("localhost:$DEFAULT_PORT")
     argParser.parse(args)
     try {
         coroutineScope {
