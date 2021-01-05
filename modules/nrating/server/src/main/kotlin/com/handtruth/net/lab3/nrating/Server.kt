@@ -64,6 +64,8 @@ suspend fun clientHandler(
                 output.writeMessage(response)
                 if (strictMode && response.status == QueryStatus.FAILED) {
                     output.writeMessage(DisconnectMessage("You were disconnected for sending bad queries."))
+                    // Больше мы не хотим иметь дело с этим клиентом! return!
+                    return
                 }
             }
             else -> println("Invalid message type!")
