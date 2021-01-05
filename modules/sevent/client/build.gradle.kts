@@ -8,4 +8,5 @@ application {
 
 dependencies {
     implementation(project(":sevent-common"))
+    implementation("org.jetbrains.kotlinx:kotlinx-cli")
 }
