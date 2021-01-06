@@ -54,7 +54,8 @@ fun write() {
     val reader = BufferedReader(InputStreamReader(System.`in`))
     while (true) {
         val msg = reader.readLine()
-        if (msg.isNotEmpty()) {
+
+        if (msg.isNotEmpty() && msg != "^C") {
             send(msg)
         }
     }

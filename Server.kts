@@ -29,6 +29,7 @@ fun broadcast(msg: ByteArray, fromClient: Socket?, name: String) {
     val resMsg =
         msg.filter { it != 0.toByte() }
             .toByteArray() + byteArrayOf(name.length.toByte()) + name.toByteArray()
+    println("res msg: $resMsg")
     sockets.forEach { client ->
         if (client != fromClient) {
             client.outputStream.write(resMsg)
