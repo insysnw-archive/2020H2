@@ -36,17 +36,17 @@ public class NIOClient {
         this.username = username;
         this.port = port;
         this.host = host;
+    }
+
+    public void connect() {
         try {
-            // создаём сокет общения на стороне клиента в конструкторе объекта
             InetSocketAddress address = new InetSocketAddress(host, port);
             socket = SocketChannel.open(address);
             Thread.sleep(2000);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Не удалось подключиться к серверу");
+            System.exit(1);
         }
-    }
-
-    public void connect() {
         MessageReader reader = new MessageReader();
         reader.setDaemon(true);
         reader.start();

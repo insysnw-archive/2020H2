@@ -6,11 +6,13 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import lab1.a.Server;
 import lab1.model.Protocol;
 import lab1.model.ProtocolHelper;
 
@@ -108,7 +110,7 @@ public class NIOServer {
 
     @SuppressWarnings("unused")
     public static void main(String[] args) throws IOException {
-        NIOServer server = new NIOServer();
+        NIOServer server = createServer(args);
         server.start();
     }
 
@@ -116,4 +118,23 @@ public class NIOServer {
         System.out.println(str);
     }
 
+    private static NIOServer createServer(String[] args) {
+        List<String> argsList = Arrays.asList(args);
+        Iterator<String> iterator = argsList.listIterator();
+        int port = 3345;
+        String hostname = "localhost";
+
+        while (iterator.hasNext()) {
+            String arg = iterator.next();
+            switch (arg) {
+                case "-p":
+                    port = Integer.parseInt(iterator.next());
+                    break;
+                case "-h":
+                    hostname = iterator.next();
+                    break;
+            }
+        }
+        return new NIOServer(hostname, port);
+    }
 }

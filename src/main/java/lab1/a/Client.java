@@ -1,5 +1,6 @@
 package lab1.a;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -41,7 +42,6 @@ public class Client {
         this.username = username;
         this.port = port;
         try {
-            // создаём сокет общения на стороне клиента в конструкторе объекта
             socket = new Socket(host, port);
             Thread.sleep(2000);
         } catch (Exception e) {
@@ -60,7 +60,8 @@ public class Client {
 
             System.out.println("Connection accepted.");
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Не удалось подключиться к серверу");
+            System.exit(1);
         }
     }
 
