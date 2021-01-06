@@ -5,6 +5,7 @@ import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.SocketException
 import java.nio.channels.SocketChannel
+import kotlin.jvm.Throws
 import kotlin.system.exitProcess
 
 class Client(addr: String, port: Int) {
@@ -75,12 +76,12 @@ class Client(addr: String, port: Int) {
         try {
             while (true) {
                 val userInput = readLine()
-                if (userInput == STOP_WORD) {
+                if (userInput == STOP_WORD || userInput == null) {
                     socketChannel.writeMessage(DisconnectionRequest(username!!))
                     shutdown(Status.OK)
                     break
                 } else {
-                    socketChannel.writeMessage(UserMessage(username!!, userInput!!))
+                    socketChannel.writeMessage(UserMessage(username!!, userInput))
                 }
             }
         } catch (e: SocketException) {

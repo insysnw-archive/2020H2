@@ -89,12 +89,12 @@ class Client(addr: String, port: Int) {
         try {
             while (!socket.isClosed) {
                 val userInput = readLine()
-                if (userInput == STOP_WORD) {
+                if (userInput == STOP_WORD || userInput == null) {
                     socketOutput.writeAndFlush(DisconnectionRequest(username!!))
                     shutdown(Status.OK)
                     break
                 } else {
-                    socketOutput.writeAndFlush(UserMessage(username!!, userInput!!))
+                    socketOutput.writeAndFlush(UserMessage(username!!, userInput))
                 }
             }
         } catch (e: SocketException) {

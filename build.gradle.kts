@@ -15,12 +15,12 @@ repositories {
 
 sourceSets["main"].java { srcDir("src") }
 
-tasks.withType(Jar::class) {
+tasks.withType<Jar> {
     destinationDirectory.set(rootDir)
 }
 
 for (taskMainClass in jarTasks) {
-    tasks.register(taskMainClass.key, Jar::class) {
+    tasks.register<Jar>(taskMainClass.key) {
         from(sourceSets["main"].output) {
             manifest {
                 attributes["Main-Class"] = taskMainClass.value
@@ -33,6 +33,6 @@ for (taskMainClass in jarTasks) {
     }
 }
 
-tasks.register("all", Jar::class) {
+tasks.register<Jar>("all") {
     dependsOn(jarTasks.keys)
 }
