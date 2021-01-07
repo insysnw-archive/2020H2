@@ -1,0 +1,21 @@
+server-hostname = 'dhcp-host'
+
+range.start = '10.23.0.100' # начало промежутка выделяемых адресов
+range.stop = '10.23.0.150'  # конец промежутка выделяемых адресов
+
+# Некоторые опции, которые стоит указать
+[options]
+router = [ '10.23.0.2' ]
+broadcast = '10.23.1.255'
+mask = '255.255.254.0'
+domain-name = 'example.com'
+domain-nameserver = [ '8.8.8.8', '8.8.4.4' ]
+
+# Список хостов со статическими адресами
+[[host]]
+hardware-ethernet = '52:54:00:c2:89:1e'
+address = '10.23.0.51'
+
+# Опции только для этого хоста
+[host.options]
+hostname = 'dummy-host'
