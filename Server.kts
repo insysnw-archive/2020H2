@@ -29,7 +29,6 @@ fun broadcast(msg: ByteArray, fromClient: Socket?, name: String) {
     val resMsg =
         msg.filter { it != 0.toByte() }
             .toByteArray() + byteArrayOf(name.length.toByte()) + name.toByteArray()
-    println("res msg: $resMsg")
     sockets.forEach { client ->
         if (client != fromClient) {
             client.outputStream.write(resMsg)
@@ -42,10 +41,17 @@ fun handle(clientSocket: Socket, username: String) {
         while (true) {
             val buf = ByteArray(maxSize)
             clientSocket.getInputStream().read(buf)
-            broadcast(buf, clientSocket, username)
+            if (!buf.all { it == 0.toByte() }) {
+                broadcast(buf, clientSocket, username)
+            }
+            else {
+                println("$username exited")
+                clientSocket.close()
+                names.remove(username)
+                sockets.remove(clientSocket)
+            }
         }
     } catch (e: java.net.SocketException) {
-        println("$username exited")
         clientSocket.close()
         names.remove(username)
         sockets.remove(clientSocket)

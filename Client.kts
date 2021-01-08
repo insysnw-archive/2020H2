@@ -36,13 +36,20 @@ fun receive() {
         while (true) {
             val buf = ByteArray(maxSize)
             socket.getInputStream().read(buf)
-            val msgLength = buf.first()
-            val msg = String(buf.slice(startMsgIndex until startMsgIndex + msgLength).toByteArray())
-            val time = String(buf.slice(1 until startMsgIndex).toByteArray())
-            val nameLength = buf[startMsgIndex + msgLength]
-            val name =
-                String(buf.slice(startMsgIndex + msgLength + 1..startMsgIndex + msgLength + nameLength).toByteArray())
-            println("$time [$name]: $msg")
+            if (!buf.all { it == 0.toByte() }) {
+                val msgLength = buf.first()
+                val msg = String(buf.slice(startMsgIndex until startMsgIndex + msgLength).toByteArray())
+                val time = String(buf.slice(1 until startMsgIndex).toByteArray())
+                val nameLength = buf[startMsgIndex + msgLength]
+                val name =
+                    String(
+                        buf.slice(startMsgIndex + msgLength + 1..startMsgIndex + msgLength + nameLength).toByteArray()
+                    )
+                println("$time [$name]: $msg")
+            }else {
+                println("Server shutdown")
+                exitProcess(0)
+            }
         }
     } catch (e: java.net.SocketException) {
         println("Server shutdown")
@@ -54,7 +61,6 @@ fun write() {
     val reader = BufferedReader(InputStreamReader(System.`in`))
     while (true) {
         val msg = reader.readLine()
-
         if (msg.isNotEmpty() && msg != "^C") {
             send(msg)
         }
