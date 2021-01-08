@@ -3,6 +3,7 @@ import socket
 import sys
 import threading
 import time
+import os
 
 if len(sys.argv) != 3:
     print("Select IP and server port!")
@@ -20,6 +21,12 @@ client_socket.send(nickname_header + nickname)
 
 def get_package(sock):
     header = sock.recv(5)
+
+    if not len(header):
+        print('Connection was closed by server')
+        client_socket.close()
+        os._exit(0)
+
     length = int.from_bytes(header, byteorder='big', signed=False)
 
     return sock.recv(length).decode('ascii')
@@ -42,14 +49,20 @@ def receiving():
 
 def sending():
     while True:
-        message = input()
+        try:
+            message = input()
 
-        if message:
-            enc_message = message.encode('ascii')
-            message_header = len(enc_message).to_bytes(5, byteorder='big')
-            client_socket.send(message_header + enc_message)
-            # print('<{}> [{}] {}'.format(time.strftime('%H:%M', time.localtime()), my_nick, message))
+            if message:
+                enc_message = message.encode('ascii')
+                message_header = len(enc_message).to_bytes(5, byteorder='big')
+                client_socket.send(message_header + enc_message)
+                # print('<{}> [{}] {}'.format(time.strftime('%H:%M', time.localtime()), my_nick, message))
+        except KeyboardInterrupt:
+            os._exit(0)
 
 
-receive_thread = threading.Thread(target=receiving).start()
+receive_thread = threading.Thread(target=receiving)
+receive_thread.daemon = True
+receive_thread.start()
+
 sending()
