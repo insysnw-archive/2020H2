@@ -3,9 +3,7 @@ package non_blocking
 import common.*
 import java.io.IOException
 import java.net.InetSocketAddress
-import java.net.SocketException
 import java.nio.channels.SocketChannel
-import kotlin.jvm.Throws
 import kotlin.system.exitProcess
 
 class Client(addr: String, port: Int) {
@@ -49,16 +47,19 @@ class Client(addr: String, port: Int) {
                         System.err.print(Strings.TAKEN_USERNAME)
                     }
                 }
-            } catch (e: SocketException) {
+            } catch (e: IOException) {
                 shutdown(Status.EXCEPTION)
             }
         }
     }
 
-    @Throws(IOException::class)
     private fun shutdown(status: Status) {
+        try {
+            socketChannel.close()
+        }
+        catch (e: IOException) {
+        }
         println(status.message)
-        socketChannel.close()
         exitProcess(status.code)
     }
 
@@ -67,7 +68,7 @@ class Client(addr: String, port: Int) {
             while (true) {
                 println(socketChannel.readMessage())
             }
-        } catch (e: SocketException) {
+        } catch (e: IOException) {
             shutdown(Status.EXCEPTION)
         }
     }
@@ -84,7 +85,7 @@ class Client(addr: String, port: Int) {
                     socketChannel.writeMessage(UserMessage(username!!, userInput))
                 }
             }
-        } catch (e: SocketException) {
+        } catch (e: IOException) {
             shutdown(Status.EXCEPTION)
         }
     }

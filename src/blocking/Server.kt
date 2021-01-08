@@ -7,7 +7,6 @@ import java.io.ObjectOutputStream
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
-import java.net.SocketException
 import kotlin.system.exitProcess
 
 class Server(addr: String, port: Int) {
@@ -51,7 +50,7 @@ class Server(addr: String, port: Int) {
                 listener@ while (!socket.isClosed) {
                     when (val received = try {
                         input.readObject()
-                    } catch (e: SocketException) {
+                    } catch (e: IOException) {
                         DisconnectionRequest(connections[this] ?: return)
                     }) {
                         is ConnectionRequest -> {
@@ -84,7 +83,7 @@ class Server(addr: String, port: Int) {
                     }
 
                 }
-            } catch (e: SocketException) {
+            } catch (e: IOException) {
                 connections.remove(this)
                 shutdown()
             }

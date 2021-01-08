@@ -3,7 +3,6 @@ package non_blocking
 import common.*
 import java.io.IOException
 import java.net.InetSocketAddress
-import java.net.SocketException
 import java.nio.channels.SelectionKey
 import java.nio.channels.Selector
 import java.nio.channels.ServerSocketChannel
@@ -51,7 +50,7 @@ class Server(addr: String, port: Int) {
 
         when (val received = try {
             socket.readMessage()
-        } catch (e: SocketException) {
+        } catch (e: IOException) {
             DisconnectionRequest(sockets[socket] ?: return)
         }) {
             is ConnectionRequest -> {

@@ -5,7 +5,6 @@ import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.Socket
-import java.net.SocketException
 import kotlin.system.exitProcess
 
 class Client(addr: String, port: Int) {
@@ -59,17 +58,20 @@ class Client(addr: String, port: Int) {
                         System.err.print(Strings.TAKEN_USERNAME)
                     }
                 }
-            } catch (e: SocketException) {
+            } catch (e: IOException) {
                 shutdown(Status.EXCEPTION)
             }
         }
     }
 
     private fun shutdown(status: Status) {
-        if (!socket.isClosed) {
-            socketInput.close()
-            socketOutput.close()
-            socket.close()
+        try {
+            if (!socket.isClosed) {
+                socketInput.close()
+                socketOutput.close()
+                socket.close()
+            }
+        } catch (e: IOException) {
         }
         println(status.message)
         exitProcess(status.code)
@@ -80,7 +82,7 @@ class Client(addr: String, port: Int) {
             while (!socket.isClosed) {
                 println(socketInput.readObject())
             }
-        } catch (e: SocketException) {
+        } catch (e: IOException) {
             shutdown(Status.EXCEPTION)
         }
     }
@@ -97,7 +99,7 @@ class Client(addr: String, port: Int) {
                     socketOutput.writeAndFlush(UserMessage(username!!, userInput))
                 }
             }
-        } catch (e: SocketException) {
+        } catch (e: IOException) {
             shutdown(Status.EXCEPTION)
         }
     }
