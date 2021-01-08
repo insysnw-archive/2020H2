@@ -15,17 +15,17 @@
 
 Запуск
 --------------------------------------
-
-**ВАРИАНТ 1**   
-
-1. Зайти в папку с проектом
-2. В командную строчку ввести команду:  
-`java -jar out/artifacts/DHCP_jar/2020H2.jar [-address ADDRESS] [-listen LISTEN] [-port PORT] [-broadcast BROADCAST] <-config CONFIG>`
-
-**ВАРИАНТ 2**   
+  
 Запустить сервер можно тут же на месте, запустив после сборки команду:
 
     ./mvnw exec:java -Dexec.args='[-address ADDRESS] [-listen LISTEN] [-port PORT] [-broadcast BROADCAST] <-config CONFIG>'
+
+Либо: 
+    ```
+    java -jar target/dhcp-server-1.0-SNAPSHOT.jar [-address ADDRESS] [-listen LISTEN] [-port PORT] [-broadcast BROADCAST] <-config CONFIG>
+    ```
+
+    
 
 Описание опций:
  - *address* -- идентификатор сервера в виде IP адреса (по смыслу должен быть адрес хоста)
@@ -383,5 +383,5 @@ ping: bad address 'google.ru'
 А в логе сервера появилась запись:
 
 ```
-01:11:12.457 [lab2.dhcp.Server.main()] INFO lab2.dhcp.Server - request Release from 52:54:00:C2:89:1E
+01:11:12.457 [com.github.lexcorp3439.net.lab2.dhcp.Server.main()] INFO Server - request Release from 52:54:00:C2:89:1E
 ```
