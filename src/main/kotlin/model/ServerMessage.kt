@@ -10,12 +10,18 @@ class ServerMessage(
 
 fun welcomeMsg() = ServerMessage("Welcome to EgMail")
 
-fun getIncorrectEmailMsg() = ServerMessage("Incorrect Email")
+fun incorrectEmailMsg() = ServerMessage("Incorrect Email.")
 
 fun getSuccessAuthMsg() = ServerMessage("Success!")
 
-fun getQuitMsg(email: String) = ServerMessage("Goodbye, $email")
+fun quitMsg(email: String) = ServerMessage("Goodbye, $email")
 
-fun getSuccessSendMailMsg() = ServerMessage("Email sended with Success.")
+fun deletingMailSuccessMsg(id: Int) = ServerMessage("Email with id $id deleted!")
+
+fun successSendMailMsg() = ServerMessage("Success!")
+
+fun invalidRequest() = ServerMessage("Invalid Request")
 
 fun getUserNotFoundMsg() = ServerMessage("User not found.")
+
+fun loginFirstMsg() = ServerMessage("You need to login firstly!")

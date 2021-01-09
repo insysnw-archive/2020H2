@@ -8,51 +8,61 @@ import model.IndexData
 import model.MailData
 import model.SUCCESS_CODE
 import model.UserNameData
-import model.getIncorrectEmailMsg
-import model.getQuitMsg
-import model.getSuccessSendMailMsg
-import model.getUserNotFoundMsg
+import model.deletingMailSuccessMsg
+import model.incorrectEmailMsg
+import model.invalidRequest
+import model.quitMsg
+import model.successSendMailMsg
 import model.welcomeMsg
+import java.lang.Exception
 import java.net.Socket
 import kotlin.concurrent.thread
 
 fun login(buf: ByteArray, clientSocket: Socket) {
-    println("login")
-    val mbEmail = buf.getMsg()
-    println(mbEmail)
+    val emailStr = buf.getMsg()
+    var emailData: UserNameData? = null
     try {
-        val email = Json.decodeFromString<UserNameData>(mbEmail)
-        if (EMAIL_RFC_REG.toRegex().matches(email.name)) {
-            clientSocket.getOutputStream().write(byteArrayOf(0))
-            clientsStorage[email.name] = clientSocket
-            if (!emailStorage.containsKey(email.name)) {
-                emailStorage[email.name] = mutableListOf()
-            }
-            clientSocket.getOutputStream().write(SUCCESS_CODE.toServerResponse(welcomeMsg()))
-            thread {
-                handle(clientSocket, email.name)
-            }
-        } else {
-            clientSocket.getOutputStream().write(ERROR_CODE.toServerResponse(getIncorrectEmailMsg()))
-        }
-        println(email)
+        emailData = Json.decodeFromString<UserNameData>(emailStr)
     } catch (e: Exception) {
         println(e.message)
+    }
+    if (emailData != null) {
+        if (EMAIL_RFC_REG.toRegex().matches(emailData.name)) {
+            clientsStorage[emailData.name] = clientSocket
+            emailStorage.getOrPut(emailData.name) { mutableListOf() }
+            clientSocket.getOutputStream().write(SUCCESS_CODE.toServerResponse(welcomeMsg()))
+            thread {
+                listenClient(clientSocket, emailData.name)
+            }
+        } else {
+            clientSocket.getOutputStream().write(ERROR_CODE.toServerResponse(incorrectEmailMsg()))
+        }
+    } else {
+        clientSocket.getOutputStream().write(ERROR_CODE.toServerResponse(invalidRequest()))
     }
 }
 
 fun sendMail(buf: ByteArray, clientSocket: Socket, username: String) {
     println("sendMail")
     val emailMsgStr = buf.getMsg()
-    val mailData = Json.decodeFromString<MailData>(emailMsgStr)
-    if (clientsStorage.containsKey(mailData.to)) {
+    var mailData: MailData? = null
+    try {
+        mailData = Json.decodeFromString<MailData>(emailMsgStr)
+    } catch (e: Exception) {
+        println(e.message)
+    }
+    if (mailData != null) {
+        // if (clientsStorage.containsKey(mailData.to)) {
         mailData.from = username
-        clientSocket.getOutputStream().write(SUCCESS_CODE.toServerResponse(getSuccessSendMailMsg()))
+        clientSocket.getOutputStream().write(SUCCESS_CODE.toServerResponse(successSendMailMsg()))
         emailStorage[username]?.add(mailData)
-        emailStorage[mailData.to]?.add(mailData)
+        emailStorage.getOrPut(mailData.to) { mutableListOf() }.add(mailData)
+        // } else {
+        //     clientSocket.getOutputStream()
+        //         .write(ERROR_CODE.toServerResponse(getUserNotFoundMsg()))
+        // }
     } else {
-        clientSocket.getOutputStream()
-            .write(ERROR_CODE.toServerResponse(getUserNotFoundMsg()))
+        clientSocket.getOutputStream().write(ERROR_CODE.toServerResponse(invalidRequest()))
     }
 }
 
@@ -70,14 +80,25 @@ fun readMails(clientSocket: Socket, username: String) {
 
 fun quit(clientSocket: Socket, username: String) {
     println("quit")
-    clientSocket.getOutputStream().write(SUCCESS_CODE.toServerResponse(getQuitMsg(username)))
+    clientSocket.getOutputStream().write(SUCCESS_CODE.toServerResponse(quitMsg(username)))
     clientSocket.close()
+    clientsStorage.remove(username)
 }
 
-fun deleteMail(buf: ByteArray, username: String) {
-    val mailIndexStr = buf.getMsg()
-    val mailIndex = Json.decodeFromString<IndexData>(mailIndexStr).index
-    emailStorage[username]?.removeAt(mailIndex)
+fun deleteMail(clientSocket: Socket, buf: ByteArray, username: String) {
+    val mailIdStr = buf.getMsg()
+    var mailId: Int? = null
+    try {
+        mailId = Json.decodeFromString<IndexData>(mailIdStr).index
+    } catch (e: Exception) {
+        println(e.message)
+    }
+    if (mailId != null) {
+        emailStorage[username]?.removeAt(mailId)
+        clientSocket.getOutputStream().write(SUCCESS_CODE.toServerResponse(deletingMailSuccessMsg(mailId)))
+    } else {
+        clientSocket.getOutputStream().write(ERROR_CODE.toServerResponse(invalidRequest()))
+    }
 }
 
 
