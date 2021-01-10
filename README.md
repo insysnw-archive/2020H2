@@ -7,7 +7,7 @@ $ javac * .java
 2. Для запуска сервера и клиента ввести команду:
 - Dns Client:
 ```sh
-$ java [-mx|-ns] [-p port] @server DNSClient
+$ java DNSClient [-mx|-ns] [-p port] @server name
 ```
 
 - TFTP Server:
