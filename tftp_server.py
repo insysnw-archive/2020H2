@@ -1,3 +1,4 @@
+import argparse
 import sys
 import struct
 import os
@@ -161,15 +162,26 @@ class Server:
 
 
 if __name__ == '__main__':
-    args = sys.argv
-    if not (len(args) == 3 and args[1].isdigit() and args[2].isdigit()):
-        print('Usage: server.py <port> <timeout>')
-    else:
-        port = int(args[1])
-        sock = socket(AF_INET, SOCK_DGRAM)
-        sock.bind(('', port))
-        print("___Server is ready!___")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-ip', default='0.0.0.0', type=str)
+    parser.add_argument('-p', type=int)
+    parser.add_argument('-t', type=int)
 
-        timeout = int(args[2]) / 1000
-        server = Server(sock, timeout)
+    arguments = parser.parse_args(sys.argv[1:])
+
+    if arguments.p is None or arguments.t is None:
+        print('Usage: python3 tftp_server.py -ip <ip> -p <port> -t <timeout> OR -p <port> -t <timeout>')
+    else:
+        port = int(arguments.p)
+        timeout = int(arguments.t)
+        ip = arguments.ip
+        if ip is None:
+            ip = ''
+
+        sock = socket(AF_INET, SOCK_DGRAM)
+        sock.bind((ip, port))
+        print(f"___Server is ready!___")
+
+        to = timeout / 1000
+        server = Server(sock, to)
         server.run_server()
