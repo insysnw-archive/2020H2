@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 public class ProtocolHelper {
@@ -98,6 +99,16 @@ public class ProtocolHelper {
 
     public static String toLine(List<Protocol> msgs) {
         return msgs.stream().map(Protocol::getMessage).collect(Collectors.joining());
+    }
+
+    static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    public static String generateUsername(int usernameLength) {
+        Random rnd = new Random();
+        StringBuilder sb = new StringBuilder(usernameLength);
+        for (int i = 0; i < usernameLength; i++) {
+            sb.append(AB.charAt(rnd.nextInt(AB.length())));
+        }
+        return sb.toString();
     }
 
 

@@ -12,8 +12,6 @@ import java.util.Scanner;
 import com.github.lexcorp3439.net.lab1.protocol.Protocol;
 import com.github.lexcorp3439.net.lab1.protocol.ProtocolHelper;
 
-import static com.github.lexcorp3439.net.lab1.protocol.Utils.randomString;
-
 public class NIOClient {
     static SocketChannel socket;
     private final String username;
@@ -106,7 +104,7 @@ public class NIOClient {
         Iterator<String> iterator = argsList.listIterator();
         int port = 3345;
         String host = "localhost";
-        String username = randomString(10);
+        String username = ProtocolHelper.generateUsername(10);
 
         while (iterator.hasNext()) {
             String arg = iterator.next();
