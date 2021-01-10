@@ -2,7 +2,9 @@
 
 ### Инструкция по запуску
 Запускается из командной строки:  
-`python3 tftp_server.py [port] [timeout]`
+`python3 tftp_server.py -ip <ip> -p <port> -t <timeout>`  
+или   
+`python3 tftp_server.py -p <port> -t <timeout>` – в этом случае по дефолту будет выбран ip = 0.0.0.0
 
 ### Тестирование работы
 Работа сервера была протестирована с помощью клиента [tftp](https://linux.die.net/man/1/tftp). Примеры работы:  
