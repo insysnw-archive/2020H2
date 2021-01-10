@@ -27,6 +27,7 @@ fun login(buf: ByteArray, clientSocket: Socket) {
         println(e.message)
     }
     if (emailData != null) {
+        println("login new client: ${emailData.name}")
         if (EMAIL_RFC_REG.toRegex().matches(emailData.name)) {
             clientsStorage[emailData.name] = clientSocket
             emailStorage.getOrPut(emailData.name) { mutableListOf() }
@@ -43,7 +44,7 @@ fun login(buf: ByteArray, clientSocket: Socket) {
 }
 
 fun sendMail(buf: ByteArray, clientSocket: Socket, username: String) {
-    println("sendMail")
+    // println("sendMail")
     val emailMsgStr = buf.getMsg()
     var mailData: MailData? = null
     try {
@@ -67,7 +68,7 @@ fun sendMail(buf: ByteArray, clientSocket: Socket, username: String) {
 }
 
 fun readMails(clientSocket: Socket, username: String) {
-    println("readMails")
+    // println("readMails")
     println(emailStorage[username])
     clientSocket.getOutputStream()
         .write(
@@ -79,7 +80,7 @@ fun readMails(clientSocket: Socket, username: String) {
 }
 
 fun quit(clientSocket: Socket, username: String) {
-    println("quit")
+    println("quit user: $username")
     clientSocket.getOutputStream().write(SUCCESS_CODE.toServerResponse(quitMsg(username)))
     clientSocket.close()
     clientsStorage.remove(username)

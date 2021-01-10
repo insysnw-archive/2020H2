@@ -30,11 +30,10 @@ fun runServer() {
 fun handleClient() {
     while (true) {
         val clientSocket = server.accept()
-        println("client accepted")
+        println("new client accepted")
         val buf = ByteArray(maxSize)
         clientSocket.inputStream.read(buf)
         val typeReq = buf.first()
-        println("smthrecived")
         if (typeReq == 0.toByte()) {
             login(buf, clientSocket)
         } else {
@@ -50,7 +49,7 @@ fun listenClient(clientSocket: Socket, username: String) {
             clientSocket.getInputStream().read(buf)
             if (!buf.all { it == 0.toByte() }) {
                 val option = buf.first().toInt()
-                println("new option $option")
+                // println("new option $option")
                 when (option) {
                     1 -> sendMail(buf, clientSocket, username)
                     2 -> readMails(clientSocket, username)
