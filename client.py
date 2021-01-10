@@ -19,6 +19,8 @@ nickname_header = len(nickname).to_bytes(5, byteorder='big')
 client_socket.send(nickname_header + nickname)
 
 
+
+
 def get_package(sock):
     header = sock.recv(5)
 
@@ -37,6 +39,13 @@ def receiving():
         try:
             nick = get_package(client_socket)
             message = get_package(client_socket)
+
+            if message == f'Nickname {nick} is already in use!':
+                print(message)
+                print('Please log in to the chat again with a new nickname')
+                client_socket.close()
+                os._exit(0)
+
             print('<{}> [{}] {}'.format(time.strftime('%H:%M', time.localtime()), nick, message))
 
         # for blocking sockets

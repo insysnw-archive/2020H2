@@ -63,6 +63,12 @@ while True:
             if nickname is False:
                 continue
 
+            if nickname in clients.values():
+                ms = f"Nickname {nickname['data'].decode('ascii')} is already in use!".encode('ascii')
+                header = len(ms).to_bytes(5, byteorder='big')
+                client_socket.send(nickname['header'] + nickname['data'] + header + ms)
+                continue
+
             sockets_list.append(client_socket)
             clients[client_socket] = nickname
 
