@@ -23,7 +23,7 @@ Offset: 149 ms
 
 Превышено время запроса:
 ```
-$ python3 ntp_client.py
+$ python3 ntp_client.py -s ntp.nict.jp
 Server: ntp.nict.jp
 --------------------------------------
 Timeout! Try to connect to the server again
