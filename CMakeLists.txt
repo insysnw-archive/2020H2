@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.0)
+project(messenger)
+add_executable(client src/client.cpp)
+add_executable(server src/server.cpp)
+find_library(PH pthread)
+target_link_libraries(server ${PH})
+target_link_libraries(client ${PH})
