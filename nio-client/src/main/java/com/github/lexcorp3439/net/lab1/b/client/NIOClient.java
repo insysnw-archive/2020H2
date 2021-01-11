@@ -34,6 +34,9 @@ public class NIOClient {
         this.username = username;
         this.port = port;
         this.host = host;
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            ProtocolHelper.write(ProtocolHelper.build(username, "quit"), socket);
+        }));
     }
 
     public void connect() {

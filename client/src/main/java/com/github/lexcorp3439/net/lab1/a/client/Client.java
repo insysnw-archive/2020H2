@@ -21,6 +21,7 @@ public class Client {
     private final int port;
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
+    private MessageReader reader;
 
     public Client() {
         this("localhost", 3345, "lexcorp");
@@ -43,6 +44,14 @@ public class Client {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            ProtocolHelper.write(ProtocolHelper.build(username, "quit"), oos);
+            try {
+                oos.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }));
     }
 
     public void connect() {
@@ -50,7 +59,7 @@ public class Client {
             oos = new ObjectOutputStream(socket.getOutputStream());
             ois = new ObjectInputStream(socket.getInputStream());
 
-            MessageReader reader = new MessageReader();
+            reader = new MessageReader();
             reader.setDaemon(true);
             reader.start();
 

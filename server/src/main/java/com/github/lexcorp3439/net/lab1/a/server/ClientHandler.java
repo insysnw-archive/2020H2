@@ -29,7 +29,7 @@ public class ClientHandler implements Runnable {
             out = new ObjectOutputStream(clientDialog.getOutputStream());
             in = new ObjectInputStream(clientDialog.getInputStream());
 
-            while (!clientDialog.isClosed()) {
+            while (clientDialog.isConnected()) {
                 List<Protocol> msgs = ProtocolHelper.read(in);
 
                 if (username == null) {
@@ -49,9 +49,10 @@ public class ClientHandler implements Runnable {
                 }
 
                 String message = ProtocolHelper.toLine(msgs);
+                System.out.println("[" + username + "] " + message);
 
-                if ("quit".equals(message)) {
-                    System.out.println("Client initialize connections suicide ...");
+                if ("quit".equals(message) || message.isEmpty()) {
+                    System.out.println("Client[" + username + "] initialize connections suicide ...");
                     break;
                 }
 
@@ -62,15 +63,13 @@ public class ClientHandler implements Runnable {
                 }
             }
 
-            System.out.println("Client disconnected");
-            System.out.println("Closing connections & channels.");
-
             in.close();
             out.close();
 
             clientDialog.close();
+            listHandlers.removeIf(it -> it.username.equals(this.username));
 
-            System.out.println("Closing connections & channels - DONE.");
+            System.out.println("Client[" + username + "] disconnected");
         } catch (IOException e) {
             e.printStackTrace();
         }

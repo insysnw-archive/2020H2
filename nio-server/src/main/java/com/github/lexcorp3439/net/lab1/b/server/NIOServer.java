@@ -94,14 +94,15 @@ public class NIOServer {
         String message = ProtocolHelper.toLine(messages);
         log("[" + messages.get(0).getName() + "] " + message);
 
-        if ("quit".equals(message)) {
-            System.out.println("Client initialize connections suicide ...");
+        if ("quit".equals(message) || message.isEmpty()) {
+            System.out.println("Client [" + username + "] initialize connections suicide ...");
             try {
                 map.remove(currKey);
                 currKey.channel().close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            System.out.println("Client[" + username + "] disconnected");
         }
 
         for (SelectionKey key : selector.keys()) {
