@@ -4,7 +4,7 @@ import struct
 import sys
 import threading
 
-serv = (int(sys.argv[1]), int(sys.argv[2]))
+serv = (sys.argv[1], int(sys.argv[2]))
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(serv)
