@@ -2,17 +2,27 @@ import socket
 import struct
 import sys
 
-server = (int(sys.argv[1]), int(sys.argv[2]))
+
+def safe_input(message: str) -> str:
+    try:
+        input_str = input(message)
+    except KeyboardInterrupt:
+        print("\nClient was closed! Goodbye :)")
+        sys.exit(0)
+    return input_str
+
+
+server = (sys.argv[1], int(sys.argv[2]))
 
 # connect to server
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(server)
 
-action = input('Register of authorize (reg / auth): ')
+action = safe_input('Register of authorize (reg / auth): ')
 
 while action != 'reg' and action != 'auth':
     print('You can only choose reg or auth')
-    action = input('Register of authorize (reg / auth): ')
+    action = safe_input('Register of authorize (reg / auth): ')
 
 
 def isint(s):
@@ -24,17 +34,17 @@ def isint(s):
 
 
 if action == 'reg':
-    user = input('Your user_id (unsigned int): ')
+    user = safe_input('Your user_id (unsigned int): ')
 
     while not isint(user):
         print('You can only choose unsigned integer user id!')
-        user = input('Your user_id (unsigned int): ')
+        user = safe_input('Your user_id (unsigned int): ')
 
-    role = input('Your role (dev / test): ')
+    role = safe_input('Your role (dev / test): ')
 
     while role != 'dev' and role != 'test':
         print('You can only choose dev or test')
-        role = input('Your role (dev / test): ')
+        role = safe_input('Your role (dev / test): ')
 
     if role == 'dev':
         role_id = 0
@@ -64,11 +74,11 @@ if action == 'reg':
 
 
 elif action == 'auth':
-    user = input('Your user_id: ')
+    user = safe_input('Your user_id: ')
 
     while not isint(user):
         print('You can only choose unsigned integer user id!')
-        user = input('Your user_id: ')
+        user = safe_input('Your user_id: ')
 
     packet = struct.pack('!2I', 200, int(user))
     client.send(packet)
@@ -93,16 +103,15 @@ elif action == 'auth':
         print('Connection was closed by server')
         exit()
 
-
 while True:
-    action = input('Command (get bugs / add bug / fix bug / close bug / quit): ')
+    action = safe_input('Command (get bugs / add bug / fix bug / close bug / quit): ')
 
     while action != 'get bugs' and action != 'add bug' and action != 'fix bug' and action != 'close bug' and action != 'quit':
         print('You can only choose listed commands')
-        action = input('Command (get bugs / add bug / fix bug / close bug / quit): ')
+        action = safe_input('Command (get bugs / add bug / fix bug / close bug / quit): ')
 
     if action == 'get bugs':
-        status_id = input('Status of bugs (0-opens, 1-resolved): ')
+        status_id = safe_input('Status of bugs (0-opens, 1-resolved): ')
         client.send(struct.pack('!2I', 300, int(status_id)))
 
         receive = client.recv(4)
@@ -127,10 +136,10 @@ while True:
             exit()
 
     elif action == 'add bug':
-        bug_id = input('Bug id: ')
-        project_id = input('Project id: ')
-        dev_id = input('Developer id: ')
-        s = bytes(input('Description: '), 'ascii')
+        bug_id = safe_input('Bug id: ')
+        project_id = safe_input('Project id: ')
+        dev_id = safe_input('Developer id: ')
+        s = bytes(safe_input('Description: '), 'ascii')
 
         packet = struct.pack(f'!5I{len(s)}s', 400, int(bug_id), int(project_id), int(dev_id), len(s), s)
         client.send(packet)
@@ -150,7 +159,7 @@ while True:
             exit()
 
     elif action == 'fix bug':
-        bug_id = input('Bug id: ')
+        bug_id = safe_input('Bug id: ')
         packet = struct.pack('!2I', 500, int(bug_id))
         client.send(packet)
 
@@ -170,8 +179,8 @@ while True:
             exit()
 
     elif action == 'close bug':
-        bug_id = input('Bug id: ')
-        resolution = input('Resolution (0-open, 1-closed): ')
+        bug_id = safe_input('Bug id: ')
+        resolution = safe_input('Resolution (0-open, 1-closed): ')
         packet = struct.pack('!3I', 600, int(bug_id), int(resolution))
         client.send(packet)
 
