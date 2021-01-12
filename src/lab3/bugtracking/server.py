@@ -4,7 +4,16 @@ import struct
 import sys
 import threading
 
-serv = (sys.argv[1], int(sys.argv[2]))
+host = ''
+port = ''
+try:
+    host = sys.argv[1]
+    port = sys.argv[2]
+except IndexError:
+    print('Usage: python3 server.py [ip] [port]')
+    exit()
+
+serv = (host, int(port))
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(serv)
@@ -210,7 +219,7 @@ def verify_bug_by_tester(sock):
                 elif bug.status == 0:
                     sock.send(struct.pack('!I', 604))
                 else:
-                    if resolution != 0 or resolution != 1:
+                    if resolution != 0 and resolution != 1:
                         sock.send(struct.pack('!I', 605))
                     else:
                         bug.status = resolution
