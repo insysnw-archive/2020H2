@@ -139,52 +139,54 @@ def add_bug(sock):
     user = clients[sock][0]
     role = clients[sock][1]
 
-    if role == 0:
-        sock.send(struct.pack('!I', 3))
-        print('Only testers can add bug')
-    else:
-        if unpacked:
-            bug_info = struct.unpack('!4I', unpacked)
+    if unpacked:
+        bug_info = struct.unpack('!4I', unpacked)
 
-            bug_id = bug_info[0]
-            dev_id = bug_info[1]
-            project_id = bug_info[2]
-            desc_length = bug_info[3]
+        bug_id = bug_info[0]
+        dev_id = bug_info[1]
+        project_id = bug_info[2]
+        desc_length = bug_info[3]
 
-            description = sock.recv(struct.calcsize(f'!{desc_length}s'))
-            bug_text = struct.unpack(f'!{desc_length}s', description)[0].decode('ascii')
+        description = sock.recv(struct.calcsize(f'!{desc_length}s'))
+        bug_text = struct.unpack(f'!{desc_length}s', description)[0].decode('ascii')
 
-            if in_bugs(bug_id):
-                sock.send(struct.pack('!2I', 402, bug_id))
-                return
+        if role == 0:
+            sock.send(struct.pack('!I', 3))
+            print('Only testers can add bug')
+            return
 
-            bugs.append(Bug(bug_id, project_id, 0, user, dev_id, bug_text))
-            print(f'New open bug was added:\nbug_id={bug_id}, dev_id={dev_id}, test_id={user}, project_id={project_id}')
+        if in_bugs(bug_id):
+            sock.send(struct.pack('!2I', 402, bug_id))
+            return
 
-            sock.send(struct.pack('!I', 401))
+        bugs.append(Bug(bug_id, project_id, 0, user, dev_id, bug_text))
+        print(f'New open bug was added:\nbug_id={bug_id}, dev_id={dev_id}, test_id={user}, project_id={project_id}')
+
+        sock.send(struct.pack('!I', 401))
 
 
 def fix_bug_by_dev(sock):
     unpacked = sock.recv(4)
     role = clients[sock][1]
 
-    if role != 0:
-        sock.send(struct.pack('!I', 3))
-    else:
-        if unpacked:
-            bug_id = struct.unpack('!I', unpacked)[0]
+    if unpacked:
+        bug_id = struct.unpack('!I', unpacked)[0]
 
-            if not in_bugs(bug_id):
-                sock.send(struct.pack('!I', 503))
+        if role != 0:
+            sock.send(struct.pack('!I', 3))
+            return
+
+        if not in_bugs(bug_id):
+            sock.send(struct.pack('!I', 503))
+        else:
+            bug = find_bug(bug_id)
+
+            if bug.status != 0:
+                sock.send(struct.pack('!I', 502))
             else:
-                bug = find_bug(bug_id)
-
-                if bug.status != 0:
-                    sock.send(struct.pack('!I', 502))
-                else:
-                    bug.status = 2
-                    sock.send(struct.pack('!I', 501))
-                    print(f'Bug with id {bug_id} was fixed')
+                bug.status = 2
+                sock.send(struct.pack('!I', 501))
+                print(f'Bug with id {bug_id} was fixed')
 
 
 def verify_bug_by_tester(sock):
