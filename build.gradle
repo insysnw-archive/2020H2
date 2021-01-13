@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.10'
+    id 'application'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+application {
+    mainClassName = "MainKt"
+}
+
+repositories {
+    mavenCentral()
+}
+
+compileKotlin {
+    kotlinOptions.freeCompilerArgs = ["-Xallow-result-return-type"]
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.11.+"
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
