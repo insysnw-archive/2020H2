@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.10'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+application {
+    mainClassName = "MainKt"
+}
+
+shadowJar{}
+
+repositories {
+    mavenCentral()
+}
+
+compileKotlin {
+    kotlinOptions.freeCompilerArgs = ["-Xallow-result-return-type"]
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    //cli library
+    implementation "com.github.ajalt.clikt:clikt:3.1.0"
+    //json
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.11.+"
+    //mokito
+    implementation "org.mockito:mockito-core:2.+"
+
+}
