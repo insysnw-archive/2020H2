@@ -84,7 +84,8 @@ public class ClientWindow extends JFrame {
                @Override
                public void actionPerformed(ActionEvent e) {
                    // если имя клиента, и сообщение непустые, то отправляем сообщение
-                   if (!jtfMessage.getText().trim().isEmpty() && !jtfName.getText().trim().isEmpty() && !jtfMessage.getText().equals("Введите ваше сообщение: ")) {
+                   if (!jtfMessage.getText().trim().isEmpty() && !jtfName.getText().trim().isEmpty() && !jtfMessage.getText().equals("Введите ваше сообщение: ")
+                           && jtfMessage.getText().length() <=3000) {
                        clientName = jtfName.getText();
                        sendMsg();
                        // фокус на текстовое поле с сообщением
@@ -149,7 +150,9 @@ public class ClientWindow extends JFrame {
                    super.windowClosing(e);
                    try {
                        // здесь проверяем, что имя клиента непустое и не равно значению по умолчанию
-                       if (!clientName.isEmpty() && clientName != "Введите ваше имя: ") {
+                       if (!clientName.isEmpty() && clientName != "Введите ваше имя: " &&
+                               !clientName.matches("[@]|[{]|[}]|[\\[]|[\\]]|[!]")
+                               && clientName.toString().length() <=25  && clientName.toString().length() > 1) {
                            outMessage.println(clientName + " вышел из чата!");
                        } else {
                            outMessage.println("Участник вышел из чата, так и не представившись!");

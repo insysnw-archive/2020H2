@@ -2,42 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="482b27bc-62cc-40ba-954f-8a7b17061693" name="Default Changelist" comment="init">
-      <change afterPath="$PROJECT_DIR$/.idea/2020H2.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/.idea/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/.idea/artifacts/Client_jar.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/out/artifacts/Client_jar/Client.jar" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/out/production/Client/META-INF/MANIFEST.MF" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow$1.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow$2.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow$3.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow$4.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow$5.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/Main.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/src/META-INF/MANIFEST.MF" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/src/com/alexandr/lyalin/lab1/ClientWindow.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Client/src/com/alexandr/lyalin/lab1/Main.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Server/.idea/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Server/.idea/artifacts/Server_jar.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Server/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Server/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Server/out/artifacts/Server_jar/Server.jar" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Server/out/production/Server/META-INF/MANIFEST.MF" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/lyalin/ClientHandler.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/lyalin/Main.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/lyalin/Server$1.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/lyalin/Server$2.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/lyalin/Server.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Server/src/META-INF/MANIFEST.MF" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Server/src/com/alexandr/lyalin/lab1/ClientHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Server/src/com/alexandr/lyalin/lab1/Main.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Server/src/com/alexandr/lyalin/lab1/Server.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.github/pull_request_template.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/src/com/alexandr/lyalin/ClientWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/Client/src/com/alexandr/lyalin/ClientWindow.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Server/src/com/alexandr/lyalin/ClientHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/Server/src/com/alexandr/lyalin/ClientHandler.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,6 +38,14 @@
       <option name="presentableId" value="Default" />
       <updated>1610630912953</updated>
     </task>
+    <task id="LOCAL-00001" summary="init">
+      <created>1610631540511</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1610631540511</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

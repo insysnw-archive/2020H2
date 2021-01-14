@@ -33,7 +33,6 @@ public class ClientHandler implements Runnable {
         }
     }
 		// Переопределяем метод run(), который вызывается когда
-		// мы вызываем new Thread(client).start();
     @Override
     public void run() {
         try {
