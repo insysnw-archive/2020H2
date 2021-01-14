@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.0)
+project(email_server)
+add_executable(server src/server.cpp)
+find_library(PH pthread)
+target_link_libraries(server ${PH})
