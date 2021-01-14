@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="482b27bc-62cc-40ba-954f-8a7b17061693" name="Default Changelist" comment="init">
+      <change afterPath="$PROJECT_DIR$/.idea/2020H2.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Client/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Client/.idea/artifacts/Client_jar.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Client/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Client/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Client/out/artifacts/Client_jar/Client.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Client/out/production/Client/META-INF/MANIFEST.MF" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow$1.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow$2.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow$3.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow$4.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow$5.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/Main.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Client/src/META-INF/MANIFEST.MF" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Client/src/com/alexandr/lyalin/lab1/ClientWindow.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Client/src/com/alexandr/lyalin/lab1/Main.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/.idea/artifacts/Server_jar.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/out/artifacts/Server_jar/Server.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/out/production/Server/META-INF/MANIFEST.MF" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/lyalin/ClientHandler.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/lyalin/Main.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/lyalin/Server$1.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/lyalin/Server$2.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/lyalin/Server.class" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/src/META-INF/MANIFEST.MF" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/src/com/alexandr/lyalin/lab1/ClientHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/src/com/alexandr/lyalin/lab1/Main.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/src/com/alexandr/lyalin/lab1/Server.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/pull_request_template.md" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectId" id="1n3u5a0UdL1W76IJWAgjKvYMoEU" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="jdk.selected.JAVA_MODULE" value="1.8" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/Server" />
+    <property name="project.structure.last.edited" value="Modules" />
+    <property name="project.structure.proportion" value="0.15" />
+    <property name="project.structure.side.proportion" value="0.6138855" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="482b27bc-62cc-40ba-954f-8a7b17061693" name="Default Changelist" comment="" />
+      <created>1610630912953</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1610630912953</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="init" />
+    <option name="LAST_COMMIT_MESSAGE" value="init" />
+  </component>
+</project>
