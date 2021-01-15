@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.0)
+project(bug_client)
+add_executable(client src/client.cpp)
+find_library(PH pthread)
+target_link_libraries(client ${PH})
