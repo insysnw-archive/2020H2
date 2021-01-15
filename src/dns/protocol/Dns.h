@@ -71,4 +71,12 @@ struct Query {
     QClass qClass;
 };
 
+struct ResourceRecord {
+    std::string name;
+    QType type;
+    QClass qClass;
+    uint32_t ttl;
+    std::string recordData;
+};
+
 #endif //NETLAB2_DNS_H

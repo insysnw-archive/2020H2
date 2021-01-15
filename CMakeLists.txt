@@ -7,6 +7,8 @@ set(DNS_SERVER_SRC
         src/dns/main.cpp
         src/dns/protocol/Dns.h
         src/dns/protocol/Message.cpp src/dns/protocol/Message.h
+        src/dns/protocol/QueryMessage.cpp src/dns/protocol/QueryMessage.h
+        src/dns/protocol/ResponseMessage.cpp src/dns/protocol/ResponseMessage.h
         )
 
 set(DHCP_CLIENT_SRC
