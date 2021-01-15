@@ -1,242 +1,365 @@
-import java.io.*;
+import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-
+import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class Main {
 
-    public static final int PORT = 8000;
-    public static final String IP = "25.103.130.225";
-    public static String EMAIL;
+    public static int PORT = 8000;
+    public static LinkedList<ServerListener> serverListeners = new LinkedList<ServerListener>();
+    public static volatile ArrayList<Error> errors = new ArrayList<>();
+    public static volatile int errorId = 0;
 
-
-    public static void main(String[] args) {
-        argsParser(args);
-        new ClientListener(IP, PORT, EMAIL);
-
-    }
-
-    private static void argsParser(String[] args){
-        if(args.length == 0){
-            System.out.println("No email given. Please enter correct email");
-            EMAIL = "guest";
-        } else {
-            EMAIL = args[0];
+    public static void main(String[] args) throws IOException {
+        try(ServerSocket serverSocket = new ServerSocket(PORT)){
+            System.out.println("Server starts successfully");
+            while (serverSocket.isBound()) {
+                Socket socket = serverSocket.accept();
+                try {
+                    serverListeners.add(new ServerListener(socket));
+                    System.out.println("Socket was added");
+                } catch (IOException e){
+                    System.out.println("Socket was not created");
+                    socket.close();
+                }
+            }
         }
     }
-
 }
 
+class ServerListener extends Thread {
 
-class ClientListener{
-    private Socket socket;
-    private InputStream in;
-    private OutputStream out;
-    private BufferedReader userInp;
-    private String email;
+    private final Socket socket;
+    private final InputStream in;
+    private final OutputStream out;
+    private final B b = new B();
+    private byte[] name = {(byte)0xff, (byte)0xee, (byte)0xdd, (byte)0xcc, (byte)0xbb, (byte)0xaa};
+    private final byte[] profession = {0x03};
 
-    public ClientListener(String ip, int port, String email){
-        try {
-            Socket socket = new Socket(ip, port);
-            in = socket.getInputStream();
-            out = socket.getOutputStream();
-            userInp = new BufferedReader(new InputStreamReader(System.in));
-            this.email = email;
-            new Write().start();
+    public ServerListener(Socket socket) throws IOException{
+        this.socket = socket;
+        in = socket.getInputStream();
+        out = socket.getOutputStream();
+        start();
+    }
+
+    @Override
+    public void run(){
+        try{
+            byte[] auth = new byte[1];
+            in.read(auth);
+            if(auth[0] == 0x01) authorisation();
+            else{
+                byte authError = (byte)0xc1;
+                out.write(authError);
+                System.out.println("Bad authorization");
+                socket.close();
+                Main.serverListeners.remove(this);
+                this.stop();
+            }
+            byte[] code = new byte[1];
+            while(socket.isConnected()){
+                in.read(code);
+                switch(code[0]){
+                    case 0x77: break;
+                    case 0x02: receivingError(); break;
+                    case 0x03: receptionError(); break;
+                    case 0x04: confirmFix(); break;
+                    case 0x05: issueErrors(); break;
+                    case 0x06: fixRequest(); break;
+                }
+                code[0] = 0x77;
+
+            }
+            if (profession[0] == 0x01) System.out.println("Tester " + b.bToS(name) + " is disconnected");
+            else System.out.println("Developer " + b.bToS(name) + " is disconnected");
 
         } catch (IOException e) {
-            System.out.println("Can`t reach the server. Check your internet connection or restart when server becomes online");
-            closer();
-        }
-
-    }
-
-    private void closer(){
-        try {
-            System.out.println("disconnected by server");
-            in.close();
-            out.close();
-            userInp.close();
-            socket.close();
-        } catch (IOException e){
-            System.out.println("Critical error with closing resources. Please, restart");
-        }
-    }
-
-    private class Write extends Thread {
-        B b = new B();
-        @Override
-        public void run(){
-            byte[] answerBuffer = new byte[1];
-            String userWord;
+            System.out.println(b.bToS(name) + " disconnected");
             try{
-                byte[] auth = authorization();
-                //System.out.println(b.arrToStr(auth));
-                out.write(auth);
-                System.out.println("wait for authorization");
-                in.read(answerBuffer);
-                if (answerBuffer[0] == (byte)0x81){
-                    System.out.println("correct authorization");
-                }else if(answerBuffer[0] == (byte)0xc1){
-                    System.out.println("failed authorization. Restart with correct email");
-                }else{
-                    System.out.println("Strange situation. Unexpected answer: " + answerBuffer[0]);
-                }
-            }catch (IOException e){
-                System.out.println("exception in authorization");
-                e.printStackTrace();
+                System.out.println("trying to close socket");
+                socket.close();
+
+            } catch (IOException ioException) {
+                System.out.println("socket already closed");
             }
-            while (true){
-                try{
-                    userWord = userInp.readLine();
-                    out.write(commandLineParser(userWord));
-                    in.read(answerBuffer);
-                    if(answerBuffer[0] == (byte)0x81){
-                        System.out.println("Correct");
-                    }else if(answerBuffer[0] == (byte)0xc2){
-                        System.out.println("error with sending message");
-                    }else if(answerBuffer[0] == (byte)0xc3){
-                        System.out.println("error with deleting message");
-                    }else if(answerBuffer[0] == (byte)0xc4){
-                        System.out.println("message don`t exist");
-                    } else if(answerBuffer[0] == (byte)0x82){
-                        System.out.println("checking box state");
-                        boxState();
-                    }else if(answerBuffer[0] == (byte)0x83){
-                        System.out.println("reading message");
-                        readingMessage();
+            Main.serverListeners.remove(this);
+            this.stop();
+
+
+            e.printStackTrace();
+        }
+    }
+
+    private void authorisation() throws IOException{
+        System.out.println("Request for authorisation");
+        byte[] prof = new byte[1];
+        in.read(prof);
+        profession[0] = prof[0];
+        byte[] nameBlockLength = new byte[2];
+        in.read(nameBlockLength);
+        int nameLength = b.bToI2(nameBlockLength);
+        byte[] nameBytes = new byte[nameLength];
+        in.read(nameBytes);
+        name = nameBytes;
+        if(profession[0] == 0x01){
+            System.out.println("Tester " + b.bToS(name) + " connected");
+            out.write(0x81);
+        }
+        else if(profession[0] == 0x02) {
+            System.out.println("Developer " + b.bToS(name) + " connected");
+            out.write(0x81);
+        }
+        else{
+            System.out.println("Unexpected input profession byte. See - " + profession[0]);
+            out.write(0xc1);
+        }
+
+    }
+
+    private void receivingError() throws IOException{
+        byte[] hasFixed = new byte[1];
+        in.read(hasFixed);
+        if(hasFixed[0] == 0x01){
+            if(profession[0] == 0x02){
+                System.out.println("Developer can not receive fixed errors");
+                out.write(0xc2);
+            }else if(profession[0] == 0x01){
+                answerReceiving(true);
+            } else{
+                System.out.println("Incorrect profession");
+                out.write(0xc1);
+            }
+        }else if(hasFixed[0] == 0x00){
+            answerReceiving(false);
+        }else{
+            System.out.println("Error with receiving message");
+            out.write(0xc2);
+        }
+    }
+
+    private void receptionError() throws IOException{
+        if(profession[0] == 0x02){
+            System.out.println("Developer can not receipt the error");
+            out.write(0xc2);
+            byte[] buff = new byte[1000];
+            in.read(buff);
+        }else{
+            byte[] idenBlockLength = new byte[2];
+            in.read(idenBlockLength);
+            int idenLength = b.bToI2(idenBlockLength);
+            byte[] iden = new byte[idenLength];
+            in.read(iden);
+            byte[] projBlockLength = new byte[2];
+            in.read(projBlockLength);
+            int projLength = b.bToI2(projBlockLength);
+            byte[] proj = new byte[projLength];
+            in.read(proj);
+            byte[] textBlockLength = new byte[2];
+            in.read(textBlockLength);
+            int textLength = b.bToI2(textBlockLength);
+            byte[] text = new byte[textLength];
+            in.read(text);
+            byte[] devrBlockLength = new byte[2];
+            in.read(devrBlockLength);
+            int devrLength = b.bToI2(devrBlockLength);
+            byte[] devr = new byte[devrLength];
+            in.read(devr);
+            out.write(0x81);
+            Error error = new Error(iden, proj, text, devr);
+            Main.errors.add(error);
+            System.out.println("error was added");
+            System.out.println(b.bToS(error.iden) + " " + b.bToS(error.proj)  + " " + b.bToS(error.text)  + " " + b.bToS(error.devr));
+        }
+    }
+
+    private void confirmFix() throws IOException{
+        if(profession[0] == 0x02){
+            System.out.println("Developer can not accept the fix");
+            out.write(0xc4);
+            byte[] buff = new byte[1000];
+            in.read(buff);
+        }else{
+            byte[] id = new byte[4];
+            in.read(id);
+            int idd = b.bToI4(id);
+            byte[] fixed = new byte[1];
+            in.read(fixed);
+            if (fixed[0] == 0x01){
+                Error err = getById(idd);
+                if (err!= null){
+                    if (err.fixed){
+                        removeById(idd);
+                        out.write(0x81);
                     }else{
-                        System.out.println("unexpected output: " + answerBuffer[0]);
+                        out.write(0xc4);
+                    }
+                }else{
+                    out.write(0xc4);
+                }
+
+//                Error err = getById(idd);
+//                if(err != null) {
+//                    err.fixed = true;
+//                    out.write(0x81);
+//                } else{
+//                    out.write(0xc4);
+//                }
+            }else{
+                Error err = getById(idd);
+                if(err != null) {
+                    err.fixed = false;
+                    out.write(0x81);
+                } else{
+                    out.write(0xc4);
+                }
+            }
+        }
+    }
+
+    private void issueErrors() throws IOException{
+        if(profession[0] == 0x01){
+            System.out.println("Testers can not get their errors");
+            try{
+                out.write(0xc2);
+            } catch (SocketException e){
+                socket.close();
+                Main.serverListeners.remove(this);
+                this.stop();
+            }
+
+        }else{
+            ArrayList<Error> arr = new ArrayList<>();
+            for (Error err: Main.errors){
+                if (b.compare(err.devr, name)){
+                    if(!err.fixed){
+                        arr.add(err);
+                    }
+                }
+            }
+            byte[] res = {(byte)0x82};
+            res = b.sum(res, b.iToB2(arr.size()));
+            for (Error err : arr){
+                res = b.sum(res, err.id);
+                res = b.sum(res, err.getBlockError());
+            }
+            out.write(res);
+        }
+
+
+    }
+
+    private void fixRequest() throws IOException{
+        byte[] id = new byte[4];
+        in.read(id);
+        if(!Main.errors.isEmpty()){
+            for(Error err : Main.errors){
+                if(b.compare(id, err.id)){
+                    if (b.compare(err.devr, name)){
+                        if(err.fixed){
+                            System.out.println("Error was already fixed");
+                            out.write(0xc4);
+                            break;
+                        }else{
+                            err.fixed = true;
+                            out.write(0x81);
+                            break;
+                        }
+                    }else{
+                        System.out.println("не принадлежит");
+                        out.write(0xc4);
+                        break;
                     }
 
-                }catch (IOException e){
-                    e.printStackTrace();
-                    closer();
                 }
             }
-
-
+        }else{
+            out.write(0xc4);
         }
 
-        private void readingMessage() throws IOException{
-            byte[] senderBlockLength = new byte[2];
-            in.read(senderBlockLength);
-            int senderLength = b.bToI(senderBlockLength);
-            byte[] sender = new byte[senderLength];
-            in.read(sender);
-            byte[] themeBlockLength = new byte[2];
-            in.read(themeBlockLength);
-            int themeLength = b.bToI(themeBlockLength);
-            byte[] theme = new byte[themeLength];
-            in.read(theme);
-            byte[] messageBlockLength = new byte[2];
-            in.read(messageBlockLength);
-            int messageLength = b.bToI(messageBlockLength);
-            byte[] message = new byte[messageLength];
-            in.read(message);
-            System.out.println(b.bToS(sender) + "\n");
-            System.out.println(b.bToS(theme) + "\n");
-            System.out.println(b.bToS(message) + "\n");
-        }
-
-        private void boxState() throws IOException{
-            byte[] buf = new byte[2];
-            in.read(buf);
-            //System.out.println("байты сообщения " + b.arrToStr(buf));
-            int messagesCount = b.bToI(buf);
-            //System.out.println("количество сообщений "+ messagesCount);
-            if (messagesCount == 0) System.out.println("0 messages");
-            for (int i = 0; i < messagesCount; i++){
-                //System.out.println("вошел в цикл");
-                byte[] id = new byte[4];
-                in.read(id);
-                byte[] senderBlockLength = new byte[2];
-                in.read(senderBlockLength);
-                int senderLength = b.bToI(senderBlockLength);
-                byte[] sender = new byte[senderLength];
-                in.read(sender);
-                byte[] themeBlockLength = new byte[2];
-                in.read(themeBlockLength);
-                int themeLength = b.bToI(themeBlockLength);
-                byte[] theme = new byte[themeLength];
-                in.read(theme);
-                int vid = b.bToI4(id);
-                //System.out.println("вывожу ID " + vid);
-                String senderString = b.bToS(sender);
-                //System.out.println("вывожу отправителя " + senderString);
-                String themeString = b.bToS(theme);
-                //System.out.println("вывожу тему " + themeString);
-                System.out.println(vid + " " + senderString + " " + themeString + "\n");
-            }
-
-
-        }
-
-        private byte[] commandLineParser(String command){
-            String[] words = command.split(":");
-            switch (words[0].trim()){
-                case "send": return sendMessage(words);
-                case "delete": return deleteMessage(words);
-                case "get": return getMessage(words);
-                case "ls":
-                default: return getMessages();
-            }
-        }
-
-        private byte[] authorization(){
-            byte[] authorisationCode = {0x01};
-            byte[] emailBytes = b.sToB(email);
-            byte[] emailBlock = getBlock(emailBytes);
-            return b.sum(authorisationCode, emailBlock);
-        }
-
-        private byte[] getMessages(){
-            return new byte[]{0x02};
-        }
-
-        private byte[] deleteMessage(String[] words){
-            int id = Integer.parseInt(words[1].trim());
-            byte[] delCode = {0x04};
-            return b.sum(delCode, b.iToB(id));
-        }
-
-        private byte[] sendMessage(String[] words){
-            byte[] sendCode = {0x03};
-            byte[] address = getBlock(b.sToB(words[1].trim()));
-            byte[] theme = getBlock(b.sToB(words[2].trim()));
-            byte[] message = getBlock(b.sToB(getTextMessage(words)));
-            byte[] result = b.sum(sendCode, address);
-            result = b.sum(result, theme);
-            System.out.println("sending message "+ b.arrToStr(b.sum(result, message)));
-            return b.sum(result, message);
-        }
-
-        private byte[] getMessage(String[] words){
-            int id = Integer.parseInt(words[1].trim());
-            byte[] getCode = {0x05};
-            return b.sum(getCode, b.iToB(id));
-        }
-
-        private byte[] getBlock(byte[] message){
-            //System.out.println(message.length + " + " + b.arrToStr(message));
-            //System.out.println(b.arrToStr(b.iToB2(message.length)));
-
-            return b.sum(b.iToB2(message.length), message);
-        }
-
-        private String getTextMessage(String[] words){
-            StringBuilder res = new StringBuilder();
-            for (int i = 3; i < words.length; i++){
-                res.append(words[i]);
-            }
-            return res.toString();
-        }
 
     }
 
+    private void answerReceiving(boolean hasFixed) throws IOException{
+        byte[] result = {(byte)0x82};
+        ArrayList<byte[]> arr = new ArrayList<>();
+        int count = 0;
+        if (hasFixed){
+            for(Error err : Main.errors){
+                if (err.fixed){
+                    count++;
+                    arr.add(err.id);
+                    arr.add(err.getBlockError());
+                }
+            }
+        }else{
+            for(Error err : Main.errors){
+                if (!err.fixed){
+                    count++;
+                    arr.add(err.id);
+                    arr.add(err.getBlockError());
+                }
+            }
+        }
+        result = b.sum(result, b.iToB2(count));
+        for (byte[] a: arr){
+            result = b.sum(result, a);
+        }
+        out.write(result);
+    }
+
+    private Error getById(int id){
+        for(Error err : Main.errors){
+            if(b.bToI4(err.id) == id) return err;
+        }
+        return null;
+    }
+
+    private Error removeById(int id){
+        Main.errors.removeIf(err -> b.bToI4(err.id) == id);
+        return null;
+    }
 
 }
+
+
+class Error{
+    B b = new B();
+    public byte[] iden;
+    public byte[] proj;
+    public byte[] text;
+    public byte[] devr;
+    public boolean fixed = false;
+    public byte[] id;
+
+    public Error(byte[] iden, byte[] proj, byte[] text, byte[] devr){
+        this.iden = iden;
+        this.proj = proj;
+        this.text = text;
+        this.devr = devr;
+        Main.errorId++;
+        id = b.iToB4(Main.errorId);
+    }
+
+    public byte[] getBlockError(){
+        byte[] idenBlock = b.sum(b.iToB2(iden.length), iden);
+        byte[] projBlock = b.sum(b.iToB2(proj.length), proj);
+        byte[] textBlock = b.sum(b.iToB2(text.length), text);
+        byte[] devrBlock = b.sum(b.iToB2(devr.length), devr);
+        byte[] result = b.sum(idenBlock, projBlock);
+        result = b.sum(result, textBlock);
+        return b.sum(result, devrBlock);
+    }
+}
+
 
 class B {
 
@@ -255,18 +378,15 @@ class B {
         return res;
     }
 
-    public int bToI4(byte[] b) {
-        return ByteBuffer.wrap(b).getInt();
-    }
-
-    public int bToI(byte[] b) {
-        if(b[0] == 0 && b[1] == 0){
-            return 0;
-        }
+    public int bToI2(byte[] b) {
         return (int)ByteBuffer.wrap(b).getShort();
     }
 
-    public byte[] iToB(int i) {
+    public int bToI4(byte[] b){
+        return ByteBuffer.wrap(b).getInt();
+    }
+
+    public byte[] iToB4(int i) {
         return ByteBuffer.allocate(4).putInt(i).array();
     }
 
@@ -274,18 +394,25 @@ class B {
         return ByteBuffer.allocate(2).putShort((short) i).array();
     }
 
+    public boolean compare(byte[] a, byte[] b){
+        if(a.length != b.length) return false;
+        else {
+            for (int i = 0; i < a.length; i++){
+                if (a[i] != b[i]) return false;
+            }
+            return true;
+        }
+    }
+
     public String arrToStr(byte[] b) {
-        String res = "";
+        StringBuilder res = new StringBuilder();
         for (int i = 0; i < b.length; i++) {
-            res += b[i];
+            res.append(b[i]);
             if (i != b.length - 1) {
-                res += ", ";
+                res.append(", ");
             }
         }
-        return res;
+        return res.toString();
     }
 
 }
-
-
-
