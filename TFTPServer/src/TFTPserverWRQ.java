@@ -50,6 +50,7 @@ class TFTPserverWRQ extends Thread {
 	}
 
 	public void run() {
+		/*int bytesRead = TFTPpacket.maxTftpPakLen;*/
 		// handle write request
 		if (req instanceof TFTPwrite) {
 			try {
@@ -63,14 +64,18 @@ class TFTPserverWRQ extends Thread {
 								throw new TftpException(p.message());
 							} else if (inPak instanceof TFTPdata) {
 								TFTPdata p = (TFTPdata) inPak;
+								/*System.out.println("incoming data " + p.blockNumber());*/
 								// check blk num
-								if (p.blockNumber() != blkNum) { //expect to be the same
+								if (/*testloss==20||*/p.blockNumber() != blkNum) { //expect to be the same
+									//System.out.println("loss. testloss="+testloss+"timeoutLimit="+timeoutLimit);
+									//testloss++;
 									throw new SocketTimeoutException();
 								}
 								//write to the file and send ack
 								bytesOut = p.write(outFile);
 								TFTPack a = new TFTPack(blkNum);
 								a.send(host, port, sock);
+								//testloss++;
 								break;
 							}
 						} catch (SocketTimeoutException t2) {
@@ -83,7 +88,7 @@ class TFTPserverWRQ extends Thread {
 					if(timeoutLimit==0){throw new Exception("Connection failed");}
 				}
 				System.out.println("Transfer completed.(Client " +host +")" );
-				System.out.println("Filename: "+fileName + "\n");
+				System.out.println("Filename: "+fileName + "\nSHA1 checksum: "+CheckSum.getChecksum("../"+fileName)+"\n");
 				
 			} catch (Exception e) {
 				TFTPerror ePak = new TFTPerror(1, e.getMessage());

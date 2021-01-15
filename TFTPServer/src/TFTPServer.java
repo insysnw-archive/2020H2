@@ -21,7 +21,7 @@ public class TFTPServer {
 				sock = new DatagramSocket(Integer.parseInt(argv[1]), InetAddress.getByAddress(server));
 			} else if (argv.length == 1) {
 				sock = new DatagramSocket(Integer.parseInt(argv[0]));
-			}
+			} else
 			sock = new DatagramSocket(6973);
 			System.out.println("Server Ready.  Port:  " + sock.getLocalPort());
 

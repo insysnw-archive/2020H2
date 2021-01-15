@@ -28,6 +28,7 @@ class TFTPserverRRQ extends Thread {
 			
 			//create file object in parent folder
 			File srcFile = new File("../"+fileName);
+			/*System.out.println("procce checking");*/
 			//check file
 			if (srcFile.exists() && srcFile.isFile() && srcFile.canRead()) {
 				source = new FileInputStream(srcFile);
@@ -53,9 +54,12 @@ class TFTPserverRRQ extends Thread {
 			try {
 				for (int blkNum = 1; bytesRead == TFTPpacket.maxTftpPakLen; blkNum++) {
 					TFTPdata outPak = new TFTPdata(blkNum, source);
+					/*System.out.println("send block no. " + outPak.blockNumber()); */
 					bytesRead = outPak.getLength();
+					/*System.out.println("bytes sent:  " + bytesRead);*/
 					outPak.send(host, port, sock);
-
+					/*System.out.println("current op code  " + outPak.get(0)); */
+					
 					//wait for the correct ack. if incorrect, retry up to 5 times
 					while (timeoutLimit!=0) { 
 						try {
@@ -65,6 +69,7 @@ class TFTPserverRRQ extends Thread {
 							
 							if(a.blockNumber()!=blkNum){ //check ack
 								throw new SocketTimeoutException("last packet lost, resend packet");}
+							/*System.out.println("confirm blk num " + a.blockNumber()+" from "+a.getPort());*/
 							break;
 						} 
 						catch (SocketTimeoutException t) {//resend last packet
@@ -76,7 +81,7 @@ class TFTPserverRRQ extends Thread {
 					if(timeoutLimit==0){throw new Exception("connection failed");}
 				}
 				System.out.println("Transfer completed.(Client " +host +")" );
-				System.out.println("Filename: "+fileName + "\n");
+				System.out.println("Filename: "+fileName + "\nSHA1 checksum: "+CheckSum.getChecksum("../"+fileName)+"\n");
 			} catch (Exception e) {
 				TFTPerror ePak = new TFTPerror(1, e.getMessage());
 
