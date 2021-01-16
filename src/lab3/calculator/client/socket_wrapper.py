@@ -15,7 +15,7 @@ class SocketWrapper:
     def recv(self, timeout=None) -> Response:
         self.skt.settimeout(timeout)
         try:
-            byte_arr = self.skt.recv(48)
+            byte_arr = self.skt.recv(52)
         except ConnectionResetError:
             return None
         except socket.timeout:

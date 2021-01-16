@@ -20,5 +20,5 @@ class SocketWrapper:
         return Operation.unpack(byte_arr)
 
     def send(self, response: Response):
-        print(f'Result: {response.__dict__}')
+        print(f"<{self.skt.__hash__()}> [{response.operation_id}]: code={response.code} result={response.result}")
         self.skt.send(Response.pack(response))

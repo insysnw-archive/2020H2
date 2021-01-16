@@ -74,19 +74,23 @@ class Server:
     def __handle_accept(self, server_socket: SocketWrapper):
         client_socket, client_address = server_socket.accept()
         self.sockets.append(client_socket)
-        print('Accepted new connection from {}:{}'.format(*client_address))
+        print('<{}>: Accepted new connection from {}:{}'.format(client_socket.__hash__(), *client_address))
 
     # Обработка запросов от СУЩЕСТВУЮЩИХ сокетов
     def __handle_read(self, socket_w: SocketWrapper):
         operation = socket_w.recv()
 
         if operation is None:
-            print(f'Closed connection from: {socket_w.skt}')
+            print(f'<{socket_w.skt.__hash__()}>: Closed connection')
 
             # Удаляем сокет из списка
             self.sockets.remove(socket_w.skt)
             del socket_w
             return None
+
+        print(
+            f"<{socket_w.skt.__hash__()}> [{operation.id}]: operation={operation.type} operand1={operation.operand1} operand2={operation.operand2}"
+        )
 
         if operation.type < 4:
             try:

@@ -1,6 +1,6 @@
 import struct
 
-FORMAT = "!2H f 40s"
+FORMAT = "!2H d 40s"
 
 
 class Response:
