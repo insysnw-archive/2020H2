@@ -138,3 +138,4 @@ class Client:
         print(colored(msg, color))
         if end:
             print(f"{end}", end='')
+            sys.stdout.flush()
