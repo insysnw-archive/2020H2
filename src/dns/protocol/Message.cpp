@@ -21,6 +21,7 @@ Opcode Message::getOpcode() const {
 }
 
 void Message::setOpcode(Opcode opcode) {
+    header.flags &= ~0b0111100000000000u;
     header.flags |= (uint16_t) (static_cast<std::uint16_t>(opcode) << 11u);
 }
 
@@ -77,6 +78,7 @@ Rcode Message::getResponseCode() const {
 }
 
 void Message::setResponseCode(Rcode code) {
+    header.flags &= ~0b0000000000001111u;
     header.flags |= static_cast<std::uint16_t>(code);
 }
 

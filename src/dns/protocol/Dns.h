@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 static constexpr uint8_t DNS_PORT = 53;
 
@@ -76,7 +77,7 @@ struct ResourceRecord {
     QType type;
     QClass qClass;
     uint32_t ttl;
-    std::string recordData;
+    std::vector<uint8_t> recordData;
 };
 
 #endif //NETLAB2_DNS_H

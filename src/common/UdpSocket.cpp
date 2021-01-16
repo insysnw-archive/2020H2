@@ -24,8 +24,9 @@ UdpSocket::~UdpSocket() {
 #endif
 }
 
-Packet UdpSocket::recv() {
-    auto l = recvfrom(sock, buffer, 512, 0, nullptr, nullptr);
+Packet UdpSocket::recv(sockaddr_in &clientAddress) {
+    socklen_t addrLen = sizeof(struct sockaddr_in);
+    auto l = recvfrom(sock, buffer, 512, 0, (struct sockaddr *) &clientAddress, &addrLen);
     if (l > 0) {
         return Packet{buffer, l};
     } else {
@@ -40,7 +41,7 @@ void UdpSocket::bind(uint16_t port) {
 #ifdef _WIN32
     address.sin_addr.S_un.S_addr = INADDR_ANY;
 #else
-    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_addr.s_addr = inet_addr("127.0.0.53");
 #endif
     address.sin_port = htons(port);
     auto status = ::bind(sock, (struct sockaddr *) &address, sizeof(address));

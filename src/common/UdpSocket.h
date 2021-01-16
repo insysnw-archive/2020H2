@@ -43,13 +43,13 @@ public:
     void bind(uint16_t port);
 
     template<typename Packet>
-    void sendPacket(Packet packet, const std::string &ip, uint16_t port) {
+    void sendPacket(Packet packet, in_addr_t ip, uint16_t port) {
         sockaddr_in address{};
         address.sin_family = AF_INET;
 #ifdef _WIN32
         address.sin_addr.S_un.S_addr = inet_addr(ip.c_str());
 #else
-        address.sin_addr.s_addr = inet_addr(ip.c_str());
+        address.sin_addr.s_addr = ip;
 #endif
         address.sin_port = htons(port);
 
@@ -58,7 +58,12 @@ public:
         free(d);
     }
 
-    Packet recv();
+    template<typename Packet>
+    void sendPacket(Packet packet, const std::string &ip, uint16_t port) {
+        sendPacket(packet, inet_addr(ip.c_str()), port);
+    }
+
+    Packet recv(sockaddr_in &clientAddress);
 
 private:
     socket_t sock;

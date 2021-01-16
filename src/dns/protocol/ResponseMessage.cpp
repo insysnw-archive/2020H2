@@ -58,17 +58,21 @@ int ResponseMessage::encodeResourceRecord(const ResourceRecord &record, char *bu
         *buffer++ = record.name[i]; // last label
         totalLength += 1;
     }
-    *buffer++ = 0;
+
+    uint16_t type = bswap_16((uint16_t)record.type);
+    uint16_t qClass = bswap_16((uint16_t)record.qClass);
+    uint32_t ttl = bswap_32(record.ttl);
+    *buffer = 0;
     totalLength += 1;
-    std::memcpy(buffer, &record.type, sizeof(record.type));
-    std::memcpy(buffer + sizeof(record.type), &record.qClass, sizeof(record.qClass));
-    std::memcpy(buffer + sizeof(record.type) + sizeof(record.qClass), &record.ttl, sizeof(record.ttl));
-    uint16_t dataLength = record.recordData.length();
-    std::memcpy(buffer + sizeof(record.type) + sizeof(record.qClass) + sizeof(record.ttl),
-                &dataLength, sizeof(dataLength));
-    std::memcpy(buffer + sizeof(record.type) + sizeof(record.qClass) + sizeof(record.ttl) + sizeof(dataLength),
-                record.recordData.c_str(), dataLength);
-    return totalLength + sizeof(record.type) + sizeof(record.qClass) + sizeof(record.ttl) + sizeof(dataLength) + dataLength;
+    std::memcpy(buffer, &type, sizeof(type));
+    std::memcpy(buffer + sizeof(type), &qClass, sizeof(qClass));
+    std::memcpy(buffer + sizeof(type) + sizeof(qClass), &ttl, sizeof(ttl));
+    uint16_t dataLength = record.recordData.size();
+    uint16_t swappedLength = bswap_16(dataLength);
+    std::memcpy(buffer + sizeof(type) + sizeof(qClass) + sizeof(ttl), &swappedLength, sizeof(dataLength));
+    std::memcpy(buffer + sizeof(type) + sizeof(qClass) + sizeof(ttl) + sizeof(dataLength),
+                record.recordData.data(), dataLength);
+    return totalLength + sizeof(type) + sizeof(qClass) + sizeof(ttl) + sizeof(dataLength) + dataLength;
 }
 
 void ResponseMessage::addResourceRecord(const ResourceRecord &record) {
