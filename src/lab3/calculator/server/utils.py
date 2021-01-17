@@ -5,6 +5,7 @@ TIMEOUT = 1
 ERROR = 2
 
 
+max_result = 2 ** (64 - 1) - 1
 # факториал с проверкой на timeout
 def factorial(n, timeout) -> (int, float, str):
     float_n = n
@@ -17,6 +18,8 @@ def factorial(n, timeout) -> (int, float, str):
         for i in range(2, n + 1):
             if time.time() >= timeout:
                 return TIMEOUT, result, ""
+            elif result > max_result:
+                return ERROR, result, f"Result of {n}! is too large!"
             else:
                 result = result * i
         return OK, result, ""
