@@ -166,6 +166,12 @@ public class Server {
                     }
                     case "9" -> {
                         System.out.println("Message(type = AddRateRequest)");
+                        if (!jsonClient.getString(Strings.RATE).matches("\\d+(\\.\\d+)?")) {
+                            JSONObject jsonResponse = new JSONObject();
+                            jsonResponse.put(Strings.TYPE, "-3");
+                            send(jsonResponse.toString(), channel);
+                            break;
+                        }
                         String currency = jsonClient.getString(Strings.CODE);
                         FileInputStream inputStream = new FileInputStream("data.txt");
                         InputStreamReader isr = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
@@ -174,23 +180,27 @@ public class Server {
                         JSONObject jsonResponse = new JSONObject();
                         jsonResponse.put(Strings.TYPE, "-1");
                         List<String> data = new ArrayList<>();
-                        while ((line = reader.readLine()) != null) {
-                            JSONObject json = new JSONObject(line);
-                            if (json.getString(Strings.CODE).equalsIgnoreCase(currency)) {
-                                jsonResponse.put(Strings.TYPE, "10");
-                                if (json.getString(Strings.HISTORY).equals("-")) {
-                                    json.put(Strings.HISTORY, jsonClient.getString("rate"));
+                        try {
+                            while ((line = reader.readLine()) != null) {
+                                JSONObject json = new JSONObject(line);
+                                if (json.getString(Strings.CODE).equalsIgnoreCase(currency)) {
+                                    jsonResponse.put(Strings.TYPE, "10");
+                                    if (json.getString(Strings.HISTORY).equals("-")) {
+                                        json.put(Strings.HISTORY, jsonClient.getString("rate"));
+                                    } else {
+                                        json.put(Strings.HISTORY, json.getString(Strings.HISTORY)+" "
+                                                + jsonClient.getString("rate"));
+                                        json.put(Strings.INCREMENT, getIncrement(Double.parseDouble(json.getString(Strings.RATE))
+                                                , Double.parseDouble(jsonClient.getString(Strings.RATE))));
+                                    }
+                                    json.put(Strings.RATE, jsonClient.getString(Strings.RATE));
+                                    data.add(json.toString());
                                 } else {
-                                    json.put(Strings.HISTORY, json.getString(Strings.HISTORY)+" "
-                                            + jsonClient.getString("rate"));
-                                    json.put(Strings.INCREMENT, getIncrement(Double.parseDouble(json.getString(Strings.RATE))
-                                            , Double.parseDouble(jsonClient.getString(Strings.RATE))));
+                                    data.add(line);
                                 }
-                                json.put(Strings.RATE, jsonClient.getString(Strings.RATE));
-                                data.add(json.toString());
-                            } else {
-                                data.add(line);
                             }
+                        } catch (NumberFormatException e) {
+                            e.printStackTrace();
                         }
                         send(jsonResponse.toString(), channel);
 
