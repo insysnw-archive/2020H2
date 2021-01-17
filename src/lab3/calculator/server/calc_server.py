@@ -37,38 +37,40 @@ class Server:
         except KeyboardInterrupt:
             for skt in self.sockets:
                 skt.close()
+            time.sleep(2)
             print("\nServer stopped!")
 
     def __start(self):
-        try:
-            server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server_socket.setblocking(False)
-            server_socket.bind((self.address, self.port))
-        except OSError as e:
-            print(f"Server close with error {str(e)}")
-            sys.exit(1)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+            try:
+                server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                server_socket.setblocking(False)
+                server_socket.bind((self.address, self.port))
+            except OSError as e:
+                print(f"Server close with error {str(e)}")
+                sys.exit(1)
 
-        # Listen to new connections
-        server_socket.listen()
-        # List of sockets for select.select()
-        self.sockets.append(server_socket)
+            # Listen to new connections
+            server_socket.listen()
+            # List of sockets for select.select()
+            self.sockets.append(server_socket)
 
-        print(f'Listening for connections on {self.address}:{self.port}...')
+            print(f'Listening for connections on {self.address}:{self.port}...')
 
-        while True:
-            # Получаем живые сокеты
-            read_sockets, _, exception_sockets = select.select(self.sockets, [], self.sockets)
+            while True:
+                # Получаем живые сокеты
+                read_sockets, _, exception_sockets = select.select(self.sockets, [], self.sockets)
 
-            for skt in read_sockets:
-                socket_w = SocketWrapper(skt)
-                if skt == server_socket:
-                    self.__handle_accept(socket_w)
-                else:
-                    self.__handle_read(socket_w)
+                for skt in read_sockets:
+                    socket_w = SocketWrapper(skt)
+                    if skt == server_socket:
+                        self.__handle_accept(socket_w)
+                    else:
+                        self.__handle_read(socket_w)
 
-            # Отмываемся от мертвых сокетов
-            for skt in exception_sockets:
-                self.sockets.remove(skt)
+                # Отмываемся от мертвых сокетов
+                for skt in exception_sockets:
+                    self.sockets.remove(skt)
 
     # Обработка НОВОГО соединения
     def __handle_accept(self, server_socket: SocketWrapper):
