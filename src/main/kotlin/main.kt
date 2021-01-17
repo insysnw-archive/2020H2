@@ -1,9 +1,8 @@
 import data.clientsStorage
-import model.ERROR_CODE
-import model.loginFirstMsg
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
+import kotlin.concurrent.thread
 
 var port = 9999
 var host = "127.0.0.1"
@@ -31,30 +30,26 @@ fun handleClient() {
     while (true) {
         val clientSocket = server.accept()
         println("new client accepted")
-        val buf = ByteArray(maxSize)
-        clientSocket.inputStream.read(buf)
-        val typeReq = buf.first()
-        if (typeReq == 0.toByte()) {
-            login(buf, clientSocket)
-        } else {
-            clientSocket.getOutputStream().write(ERROR_CODE.toServerResponse(loginFirstMsg()))
+        thread {
+            val buf = ByteArray(maxSize)
+            clientSocket.inputStream.read(buf)
+            login(clientSocket,buf)
         }
     }
 }
 
-fun listenClient(clientSocket: Socket, username: String) {
+fun listenClient(clientSocket: Socket, username: String?) {
     try {
         while (true) {
             val buf = ByteArray(maxSize)
             clientSocket.getInputStream().read(buf)
             if (!buf.all { it == 0.toByte() }) {
-                val option = buf.first().toInt()
-                // println("new option $option")
-                when (option) {
-                    1 -> sendMail(buf, clientSocket, username)
-                    2 -> readMails(clientSocket, username)
-                    3 -> deleteMail(clientSocket, buf, username)
-                    4 -> quit(clientSocket, username)
+                when (buf.first().toInt()) {
+                    0 -> login(clientSocket, buf)
+                    1 -> sendMail(buf, clientSocket, username?:"")
+                    2 -> readMails(clientSocket, username?:"")
+                    3 -> deleteMail(clientSocket, buf, username?:"")
+                    4 -> quit(clientSocket, username?:"")
                 }
             } else {
                 println("$username exited")
