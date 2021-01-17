@@ -20,12 +20,10 @@ public class Client {
 
     public static void main(String[] args) {
         Client client = new Client();
-        if (args.length==0) {
-            client.execute(Config.DEFAULT_ADDRESS, Config.DEFAULT_PORT);
-        } else if (args.length==1) {
-            client.execute(args[0], Config.DEFAULT_PORT);
-        } else if (args.length==2) {
+        if (args.length == 1) {
+            client.execute(args[0], Strings.DEFAULT_PORT);
+        } else if (args.length > 1) {
             client.execute(args[0], Integer.parseInt(args[1]));
-        }
+        } else client.execute(Strings.DEFAULT_ADDRESS, Strings.DEFAULT_PORT);
     }
 }
