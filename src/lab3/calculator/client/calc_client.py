@@ -1,6 +1,9 @@
+import os
 import socket
 import sys
 import threading
+import signal
+import time
 from time import sleep
 
 from termcolor import colored
@@ -9,25 +12,30 @@ from src.lab3.calculator.client import utils
 from src.lab3.calculator.client.socket_wrapper import SocketWrapper
 from src.lab3.calculator.protocol import Operation, Response
 
+
 class Client:
     def __init__(self, address: str, port: int):
         self.address = address
         self.port = port
-        self.operation_count = 1
+        self.operation_count = 0
         self.client_socket = None
         self.socket_w: SocketWrapper = None
         self.last_input_msg = ''
-        self.need_close = False
+        self.result_recv = False
+        self.recv_count = 0
+        self.operations = {}
 
     def start(self):
         try:
             self.__start()
         except KeyboardInterrupt:
+            self.client_socket.close()
             print(colored("\nКлиент успешно остановлен!", 'green', attrs=['bold']))
 
     def __start(self):
         try:
             self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.client_socket.connect((self.address, self.port))
             self.client_socket.setblocking(True)
             self.socket_w = SocketWrapper(self.client_socket)
@@ -47,14 +55,14 @@ class Client:
 4. 5! t=6
         
 Примечание: 
-Медленные операции выполняются только над ПОЛОЖИТЕЛЬНЫМИ числами
+Медленные операции выполняются только над ПОЛОЖИТЕЛЬНЫМИ числами и результат приходит с ЗАДЕРЖКОЙ
 Для медленных операций через атрибут 't=' можно указать таймаут операции. Если он не указан, t=0.1
         ''')
         this = self
-        self.pooling_thread = threading.Thread(target=Client.polling, args=(this,), daemon=True)
-        self.pooling_thread.start()
+        self.listen_thread = threading.Thread(target=Client.input_listener, args=(this,), daemon=True)
+        self.listen_thread.start()
         while True:
-            client_input = self.input(f"[{self.operation_count}] Введите выражение: ")
+            client_input = self.input(f"[{self.operation_count + 1}] Введите выражение: ")
             arg1, arg2, op_code = utils.parse(client_input)
 
             if self.__check_err(op_code):
@@ -68,67 +76,73 @@ class Client:
                 operation = Operation(self.operation_count, op_code, arg1, arg2)
 
             self.socket_w.send(operation)
-
+            self.operations[operation.id] = operation
             print(f"[{self.operation_count}] Запрос успешно отправлен на сервер!")
-            self.operation_count += 1
 
             if is_slow_operation:
                 continue
 
-            response = self.socket_w.recv()
-            if response is None:
-                self.__server_closed()
-
-            self._check_rcode(response)
+            while not self.result_recv:
+                sleep(0.1)
+            self.result_recv = False
 
     def input(self, msg):
         self.last_input_msg = msg
         try:
             inp = input(msg)
+            self.operation_count += 1
         except:
             raise KeyboardInterrupt()
         return inp
 
     def __server_closed(self):
-        if threading.main_thread() == threading.current_thread():
-            print(colored('\nСоединение с сервером прервано!', 'red', attrs=['bold']))
-            self.socket_w.close()
-        else:
-            print(
-                colored('\nСоединение с сервером прервано! Введите любой символ чтобы выйти: ', 'red', attrs=['bold']),
-                end='')
-            self.need_close = True
-        exit(1)
+        self.client_socket.close()
+        time.sleep(2)
+        print(colored('\nСоединение с сервером прервано!', 'red', attrs=['bold']))
+        os.kill(os.getpid(), signal.SIGINT)
+        sys.exit(1)
 
-    # Кратковременный опрос на наличие пакетов
-    def polling(self):
+    def input_listener(self):
         while True:
             response = self.socket_w.recv(0.1)
             result = True
             if response is None:
-                result = self.__server_closed()
+                self.__server_closed()
             if result and response.operation_id > 0:
-                msg = self.last_input_msg.replace(f'[{self.operation_count}]',
-                                                  colored(f'[{self.operation_count}*]', None, attrs=['bold']))
-                Client._check_rcode(response, start='\n', end=msg, color='red')
+                self.recv_count += 1
+                if response.operation_id == self.operation_count and self.operations[response.operation_id].type < 4:
+                    self._check_rcode(response)
+                    self.result_recv = True
+                else:
+                    all_oper_recv = self.recv_count == self.operation_count
+                    msg = "" if not all_oper_recv else f"[{self.operation_count + 1}] Введите выражение: "
+                    start = "" if not all_oper_recv else '\n'
+                    self._check_rcode(response, start=start, end=msg, color='red')
+                del self.operations[response.operation_id]
+            sleep(0.05)
 
-            sleep(0.2)
+    # # Кратковременный опрос на наличие пакетов
+    # def polling(self):
 
     def __check_err(self, answer):
-        if not self.need_close:
-            if answer is None:
-                print("Переданно неверное выражение!")
-                print("Попробуйте снова!")
-                return True
-            else:
-                return False
+        if answer is None:
+            print("Переданно неверное выражение!")
+            print("Попробуйте снова!")
+            self.operation_count -= 1
+            return True
         else:
-            raise KeyboardInterrupt
+            return False
 
-    @staticmethod
-    def _check_rcode(response: Response, start='', end='', color=None):
-        if response.code == 0:
+    def _check_rcode(self, response: Response, start='', end='', color=None):
+        operation = self.operations[response.operation_id]
+        if response.code == 0 and operation.type < 4:
             msg = f"{start}[{response.operation_id}] Ответ: {response.result}"
+        elif response.code == 0 and operation.type >= 4:
+            answ_part0 = f"{start}[{response.operation_id}] "
+            answ_part1 = f'{int(operation.operand1)}!' if operation.type == 5 else f'sqrt({operation.operand1})'
+            answ_end = f' (t={operation.timeout})' if operation.timeout != 0 else ""
+            answ_res = str(int(response.result)) if operation.type == 5 else str(response.result)
+            msg = answ_part0 + answ_part1 + " = " + answ_res + answ_end
         elif response.code == 1:
             msg = f"{start}[{response.operation_id}] Время выполнения операции превысило заданный таймаут! \nПопробуйте повторить операцию, увеличив таймаут."
         elif response.code == 2:
