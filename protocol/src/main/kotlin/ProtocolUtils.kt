@@ -1,18 +1,6 @@
 import java.nio.ByteBuffer
 import java.time.Instant
 
-// FROM CLIENT
-// TIME | TEXT_L    | TEXT
-// 16   |   2       |   280
-
-// FROM SERVER
-// TIME | NAME_L | NAME | TEXT_L    | TEXT
-// 16   |   1    |  30  |   2       |   280
-
-// REQUEST
-// NAME_L | NAME
-//    1   |  30
-
 enum class ServerMessageType {
     CHAT,
     SERVICE;
