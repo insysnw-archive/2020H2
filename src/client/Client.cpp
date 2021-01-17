@@ -2,6 +2,7 @@
 // Created by Roman Svechnikov on 10.09.2020.
 //
 
+#include <fcntl.h>
 #include "Client.h"
 
 Client::Client(const std::string &username) : username(username) {
@@ -42,6 +43,12 @@ void Client::connectTo(const std::string &address, uint16_t port) {
         std::fprintf(stderr, "ERROR! Where: socket connect\n");
         exit(1);
     }
+#ifdef _WIN32
+    u_long mode = 1;
+            ioctlsocket(listenSocket, FIONBIO, &mode);
+#else
+    fcntl(connectionSocket, F_SETFL, O_NONBLOCK);
+#endif
     handshake();
     loop();
 
@@ -57,8 +64,9 @@ void Client::handshake() {
     send(connectionSocket, data, len, 0);
     free(data);
 
-    while (buffer[0] != headers::CONNECTION_RESPONSE) {
-        recv(connectionSocket, buffer, bufferSize, 0);
+    int bytesRead = 0;
+    while (bytesRead == 0) {
+        bytesRead = recv(connectionSocket, buffer, bufferSize, 0);
     }
     ConnectionStatus status = ConnectionResponse(buffer).getStatus();
     if (status == ConnectionStatus::BAD_USERNAME) {
@@ -71,13 +79,38 @@ void Client::handshake() {
 }
 
 void Client::loop() {
+    std::vector<char> msg {};
     while (true) {
         if (shouldExit) break;
-        recv(connectionSocket, buffer, bufferSize, 0);
 
-        switch (buffer[0]) {
+        int bytesRead = recv(connectionSocket, buffer, bufferSize, 0);
+        if (bytesRead <= 0) {
+            continue;
+        }
+
+        packetlen_t dataLength;
+        memcpy(&dataLength, buffer + sizeof(headers::header_t), sizeof(packetlen_t));
+
+        if (dataLength < bytesRead) {
+            msg.assign(buffer, buffer + dataLength);
+        } else {
+            msg.assign(buffer, buffer + bytesRead);
+            int bytesToRead = dataLength - bytesRead;
+            while (bytesToRead > 0) {
+                memset(&buffer, 0, bufferSize);
+                recv(connectionSocket, buffer, bufferSize, 0);
+                if (bytesToRead < bytesRead) {
+                    msg.insert(msg.end(), buffer, buffer + bytesToRead);
+                } else {
+                    msg.insert(msg.end(), buffer, buffer + bytesRead);
+                }
+                bytesToRead -= bufferSize;
+            }
+        }
+
+        switch (msg[0]) {
             case headers::CHAT_MESSAGE: {
-                auto message = ChatMessage(buffer);
+                auto message = ChatMessage(msg.data());
                 onMessageReceived(message);
                 break;
             }
@@ -85,7 +118,7 @@ void Client::loop() {
                 break;
         }
         memset(&buffer, 0, bufferSize);
-
+        msg.clear();
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
 }

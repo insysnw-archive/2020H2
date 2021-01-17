@@ -77,6 +77,12 @@ void Server::loop() {
         socket_t clientSocket = accept(listenSocket, (sockaddr *) &client_addr, (socklen_t *) &addrLength);
         if (clientSocket != -1) {
             printf("[INFO] New connection\n");
+#ifdef _WIN32
+            u_long mode = 1;
+            ioctlsocket(listenSocket, FIONBIO, &mode);
+#else
+            fcntl(listenSocket, F_SETFL, O_NONBLOCK);
+#endif
             handlerThreads[clientSocket] = std::thread([=] {
                 handleClient(clientSocket);
                 clientsToFree.push(clientSocket);
@@ -126,27 +132,27 @@ void Server::handleClient(socket_t clientSocket) {
     std::string username;
 
     while (true) {
-        recv(clientSocket, buffer, bufferSize, 0);
+        int bytesRead = recv(clientSocket, buffer, bufferSize, 0);
 
-        if (buffer[0] == 0) {
+        if (bytesRead <= 0) {
             continue;
         }
 
         packetlen_t dataLength;
         memcpy(&dataLength, buffer + sizeof(headers::header_t), sizeof(packetlen_t));
 
-        if (dataLength < bufferSize) {
+        if (dataLength < bytesRead) {
             msg.assign(buffer, buffer + dataLength);
         } else {
-            msg.assign(buffer, buffer + bufferSize);
-            int bytesToRead = dataLength - bufferSize;
+            msg.assign(buffer, buffer + bytesRead);
+            int bytesToRead = dataLength - bytesRead;
             while (bytesToRead > 0) {
                 memset(&buffer, 0, bufferSize);
                 recv(clientSocket, buffer, bufferSize, 0);
-                if (bytesToRead < bufferSize) {
+                if (bytesToRead < bytesRead) {
                     msg.insert(msg.end(), buffer, buffer + bytesToRead);
                 } else {
-                    msg.insert(msg.end(), buffer, buffer + bufferSize);
+                    msg.insert(msg.end(), buffer, buffer + bytesRead);
                 }
                 bytesToRead -= bufferSize;
             }
