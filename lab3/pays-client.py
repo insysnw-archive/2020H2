@@ -21,7 +21,7 @@ def showerror(function):
             function(*args, **kwargs)
         except Exception as e:
             root.show_message_popup('Error!', str(e))
-            if not isinstance(e, shared.ClientError):
+            if not isinstance(e, shared.ClientError) and not isinstance(e, ValueError):
                 exit_error = e
                 root.stop()
     return decorated
@@ -104,6 +104,8 @@ def get_sellected_wallet():
 def on_transaction(form):
     dest = get_sellected_wallet()
     money = int(form['Money'])
+    if money < 0:
+        raise shared.ClientError('you cannot transfer negative amount of money')
     client.request(pays.TransactionRequest(dest, money))
     wallet.money -= money
     update_wallet()
