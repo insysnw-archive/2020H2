@@ -50,6 +50,7 @@ class Client(addr: String, port: Int) {
                 }
 
                 println(when (received.type) {
+                    IncorrectRateValue -> Strings.INCORRECT_RATE_VALUE
                     CurrencyAlreadyExist -> Strings.CURRENCY_ALREADY_EXIST
                     CurrencyNotExist -> Strings.CURRENCY_NOT_EXIST
 
@@ -112,7 +113,7 @@ class Client(addr: String, port: Int) {
                             if (rate != null && rate >= 0)
                                 socketChannel.writeMessage(CurrencyData(AddRateRequest, words[1], rate.toString()))
                             else
-                                println("Курс валюты должен быть неотрицательным числом")
+                                println(Strings.INCORRECT_RATE_VALUE)
                         }
                     }
                     Functions.History -> {

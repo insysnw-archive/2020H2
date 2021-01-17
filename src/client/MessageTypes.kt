@@ -11,6 +11,7 @@ enum class MessageTypes(
         override val code: Int,
         override val kClass: KClass<out Message> = Message::class
 ) : MessageTypesInterface {
+    IncorrectRateValue(-3),
     CurrencyAlreadyExist(-2),
     CurrencyNotExist(-1),
 

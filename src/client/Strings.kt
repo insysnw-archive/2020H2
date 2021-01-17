@@ -20,5 +20,6 @@ object Strings {
     const val CURRENCY_NOT_EXIST = "Валюты с таким кодом не существует"
     const val STATUS_OK = "Ok"
     const val STATUS_EXCEPTION = "Соединение разорвано"
+    const val INCORRECT_RATE_VALUE = "Курс валюты должен быть неотрицательным числом"
     val TOO_FEW_PARAMS = { count: Int -> "Данной команде нужно $count параметров" }
 }
