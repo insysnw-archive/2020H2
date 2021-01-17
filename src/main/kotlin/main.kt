@@ -27,13 +27,18 @@ fun runServer() {
 }
 
 fun handleClient() {
+
     while (true) {
         val clientSocket = server.accept()
-        println("new client accepted")
-        thread {
-            val buf = ByteArray(maxSize)
-            clientSocket.inputStream.read(buf)
-            login(clientSocket,buf)
+        try {
+            println("new client accepted")
+            thread {
+                val buf = ByteArray(maxSize)
+                clientSocket.inputStream.read(buf)
+                login(clientSocket, buf)
+            }
+        } catch (e: java.net.SocketException) {
+            clientSocket.close()
         }
     }
 }
@@ -46,10 +51,10 @@ fun listenClient(clientSocket: Socket, username: String?) {
             if (!buf.all { it == 0.toByte() }) {
                 when (buf.first().toInt()) {
                     0 -> login(clientSocket, buf)
-                    1 -> sendMail(buf, clientSocket, username?:"")
-                    2 -> readMails(clientSocket, username?:"")
-                    3 -> deleteMail(clientSocket, buf, username?:"")
-                    4 -> quit(clientSocket, username?:"")
+                    1 -> sendMail(buf, clientSocket, username ?: "")
+                    2 -> readMails(clientSocket, username ?: "")
+                    3 -> deleteMail(clientSocket, buf, username ?: "")
+                    4 -> quit(clientSocket, username ?: "")
                 }
             } else {
                 println("$username exited")
