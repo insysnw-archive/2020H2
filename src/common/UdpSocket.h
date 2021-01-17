@@ -65,6 +65,8 @@ public:
 
     Packet recv(sockaddr_in &clientAddress);
 
+    void enableBroadcast();
+
 private:
     socket_t sock;
     char buffer[512];

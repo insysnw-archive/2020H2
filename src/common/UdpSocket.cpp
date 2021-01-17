@@ -39,7 +39,7 @@ void UdpSocket::bind(in_addr_t ip, uint16_t port) {
     sockaddr_in address{};
     address.sin_family = AF_INET;
 #ifdef _WIN32
-    address.sin_addr.S_un.S_addr = INADDR_ANY;
+    address.sin_addr.S_un.S_addr = ip;
 #else
     address.sin_addr.s_addr = ip;
 #endif
@@ -49,5 +49,10 @@ void UdpSocket::bind(in_addr_t ip, uint16_t port) {
         perror("bind");
         exit(1);
     }
+}
+
+void UdpSocket::enableBroadcast() {
+    int trueFlag = 1;
+    setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &trueFlag, sizeof(trueFlag));
 }
 

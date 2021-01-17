@@ -15,7 +15,7 @@ set(DHCP_CLIENT_SRC
         src/dhcp/main.cpp
         src/dhcp/protocol/Dhcp.h src/dhcp/protocol/Dhcp.cpp
         src/dhcp/util.cpp src/dhcp/util.h
-        )
+        src/dhcp/protocol/DhcpPackets.cpp src/dhcp/protocol/DhcpPackets.h)
 
 set(COMMON_SRC src/common/UdpSocket.cpp src/common/UdpSocket.h)
 

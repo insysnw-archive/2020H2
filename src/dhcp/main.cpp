@@ -3,88 +3,72 @@
 //
 
 #include <cstring>
-#include "protocol/Dhcp.h"
+#include "protocol/DhcpPackets.h"
 #include "../common/UdpSocket.h"
 #include "util.h"
-
-Dhcp buildDhcpRequestPacket(
-        uint32_t xid, std::array<uint8_t, 6> mac,
-        std::array<uint8_t, 4> selectedIp, std::array<uint8_t, 4> selectedServer
-) {
-    Dhcp packet{};
-
-    packet->op = DHCP_BOOTREQUEST;
-    packet->htype = HARDWARE_TYPE_ETHERNET_10;
-    packet->hlen = mac.size();
-    packet->hops = 0;
-    packet->xid = xid;
-    packet->secs = 0;
-    packet->flags = 0;
-    packet->ciaddr = 0;
-    packet->yiaddr = 0;
-    packet->siaddr = 0;
-    packet->giaddr = 0;
-    memcpy(packet->chaddr, mac.data(), mac.size());
-    uint8_t options[]{
-            OPTION_MESSAGE_TYPE, 1, MESSAGE_TYPE_REQUEST,
-            OPTION_REQUESTED_IP, 4, selectedIp[3], selectedIp[2], selectedIp[1], selectedIp[0],
-            OPTION_SERVER_IDENTIFIER, 4, selectedServer[3], selectedServer[2], selectedServer[1], selectedServer[0],
-            OPTION_END
-    };
-
-    packet.options = options;
-    packet.optionsSize = sizeof(options);
-
-    return packet;
-}
-
-Dhcp buildDhcpDiscoveryPacket(uint32_t xid, std::array<uint8_t, 6> mac) {
-    Dhcp packet{};
-
-    packet->op = DHCP_BOOTREQUEST;
-    packet->htype = HARDWARE_TYPE_ETHERNET_10;
-    packet->hlen = mac.size();
-    packet->hops = 0;
-    packet->xid = xid;
-    packet->secs = 0;
-    packet->flags = 0;
-    packet->ciaddr = 0;
-    packet->yiaddr = 0;
-    packet->siaddr = 0;
-    packet->giaddr = 0;
-    memcpy(packet->chaddr, mac.data(), mac.size());
-
-    uint8_t options[]{
-            OPTION_MESSAGE_TYPE, 1, MESSAGE_TYPE_DISCOVER,
-            OPTION_END
-    };
-    packet.options = options;
-    packet.optionsSize = sizeof(options);
-
-    return packet;
-}
 
 int main(int argc, char *argv[]) {
 
     if (argc < 2 || (std::strcmp(argv[1], "-h") == 0)) {
-        std::printf("Usage: %s <mac>", argv[0]);
+        std::printf("Usage: %s <mac>\n", argv[0]);
         return 0;
     }
     auto macArg = std::string(argv[1]);
     auto mac = util::parseMac(macArg);
 
     UdpSocket udpSocket{};
-    udpSocket.bind(DHCP_CLIENT_PORT);
+    udpSocket.enableBroadcast();
+    udpSocket.bind(INADDR_ANY, DHCP_CLIENT_PORT);
+
+    // Session ID
+    uint32_t xid = std::rand() % UINT32_MAX;
 
     // DHCP DISCOVERY
-    uint32_t xid = std::rand() % UINT32_MAX;
     auto discoveryPacket = buildDhcpDiscoveryPacket(xid, mac);
-    std::string subnet = "192.168.255.255";  // 255.255.255.255 ??
-    udpSocket.sendPacket(discoveryPacket, subnet, DHCP_SERVER_PORT);
+    udpSocket.sendPacket(discoveryPacket, INADDR_BROADCAST, DHCP_SERVER_PORT);
+    std::printf("Sending DHCP Discovery packet...\n\n");
 
-    // Loop waiting for DHCP OFFER
-//    udpSocket.recv();
+    // Wait for DHCP OFFER
+    struct sockaddr_in otherAddress{};
+    auto[d, l] = udpSocket.recv(otherAddress);
+    Dhcp offer = readDhcpPacket(d, l);
 
+    if (!offer.options.empty()) {
+        uint8_t packetType = offer.options.at(OPTION_MESSAGE_TYPE)[0];
+        if (packetType == MESSAGE_TYPE_OFFER) {
+            std::vector<uint8_t> serverId = offer.options.at(OPTION_SERVER_IDENTIFIER);
+            std::vector<uint8_t> leaseTimeVec = offer.options.at(OPTION_IP_LEASE_TIME);
+            uint32_t leaseTime = ((uint32_t)leaseTimeVec[0] << 24u) + ((uint32_t)leaseTimeVec[1] << 16u) + ((uint32_t)leaseTimeVec[2] << 8u) + (uint32_t)leaseTimeVec[3];
+            std::printf("An offer was received from %d.%d.%d.%d.\n", serverId[0], serverId[1], serverId[2], serverId[3]);
+            std::printf("Offered address: %s. Lease time is: %d s\n\n", inet_ntoa({offer->yiaddr}), leaseTime);
+
+            // DHCP REQUEST
+            std::printf("Requesting offered address...\n\n");
+            std::array<uint8_t, 4> requestedIp {
+                    (uint8_t)((offer->yiaddr & 0xff000000u) >> 24u),
+                    (uint8_t)((offer->yiaddr & 0x00ff0000u) >> 16u),
+                    (uint8_t)((offer->yiaddr & 0x0000ff00u) >> 8u),
+                    (uint8_t)((offer->yiaddr & 0x000000ffu))
+            };
+            std::array<uint8_t, 4> serverIdent {
+                serverId[3], serverId[2], serverId[1], serverId[0]
+            };
+            auto requestPacket = buildDhcpRequestPacket(xid, mac, requestedIp, serverIdent);
+            udpSocket.sendPacket(requestPacket, INADDR_BROADCAST, DHCP_SERVER_PORT);
+
+            // Wait for DHCP Acknowledgement
+            auto[d, l] = udpSocket.recv(otherAddress);
+            Dhcp acknowledgement = readDhcpPacket(d, l);
+            packetType = acknowledgement.options.at(OPTION_MESSAGE_TYPE)[0];
+            if (packetType == MESSAGE_TYPE_ACK) {
+                std::printf("A request was approved.\n");
+            }
+        } else {
+            std::printf("That's not an offer! :(\n");
+        }
+    } else {
+        std::printf("Options are empty! That's not an offer! :(\n");
+    }
 
     return 0;
 }
