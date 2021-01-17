@@ -35,13 +35,13 @@ Packet UdpSocket::recv(sockaddr_in &clientAddress) {
     }
 }
 
-void UdpSocket::bind(uint16_t port) {
+void UdpSocket::bind(in_addr_t ip, uint16_t port) {
     sockaddr_in address{};
     address.sin_family = AF_INET;
 #ifdef _WIN32
     address.sin_addr.S_un.S_addr = INADDR_ANY;
 #else
-    address.sin_addr.s_addr = inet_addr("127.0.0.53");
+    address.sin_addr.s_addr = ip;
 #endif
     address.sin_port = htons(port);
     auto status = ::bind(sock, (struct sockaddr *) &address, sizeof(address));

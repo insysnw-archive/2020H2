@@ -40,7 +40,7 @@ public:
 
     virtual ~UdpSocket();
 
-    void bind(uint16_t port);
+    void bind(in_addr_t ip, uint16_t port);
 
     template<typename Packet>
     void sendPacket(Packet packet, in_addr_t ip, uint16_t port) {

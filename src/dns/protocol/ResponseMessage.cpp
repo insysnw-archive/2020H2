@@ -63,7 +63,7 @@ int ResponseMessage::encodeResourceRecord(const ResourceRecord &record, char *bu
     uint16_t qClass = bswap_16((uint16_t)record.qClass);
     uint32_t ttl = bswap_32(record.ttl);
     *buffer = 0;
-    totalLength += 1;
+
     std::memcpy(buffer, &type, sizeof(type));
     std::memcpy(buffer + sizeof(type), &qClass, sizeof(qClass));
     std::memcpy(buffer + sizeof(type) + sizeof(qClass), &ttl, sizeof(ttl));
