@@ -20,12 +20,6 @@
 
     ./mvnw exec:java -Dexec.args='[-address ADDRESS] [-listen LISTEN] [-port PORT] [-broadcast BROADCAST] <-config CONFIG>'
 
-Либо: 
-    ```
-    java -jar target/dhcp-server-1.0-SNAPSHOT.jar [-address ADDRESS] [-listen LISTEN] [-port PORT] [-broadcast BROADCAST] <-config CONFIG>
-    ```
-
-    
 
 Описание опций:
  - *address* -- идентификатор сервера в виде IP адреса (по смыслу должен быть адрес хоста)
