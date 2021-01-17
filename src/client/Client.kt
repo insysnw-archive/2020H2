@@ -108,7 +108,11 @@ class Client(addr: String, port: Int) {
                     }
                     Functions.SetRate -> {
                         checkParamsNumber(3) {
-                            socketChannel.writeMessage(CurrencyData(AddRateRequest, words[1], words[2]))
+                            val rate = words[2].toIntOrNull()
+                            if (rate != null && rate >= 0)
+                                socketChannel.writeMessage(CurrencyData(AddRateRequest, words[1], rate.toString()))
+                            else
+                                println("Курс валюты должен быть неотрицательным числом")
                         }
                     }
                     Functions.History -> {
