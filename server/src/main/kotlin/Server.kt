@@ -13,7 +13,7 @@ fun main(args: Array<String>) {
         host = args[0]
         port = args[1].toInt()
     }
-
+    println("Starting server on $host:$port")
     Server(host, port).listenForConnections()
 
 }
@@ -28,7 +28,7 @@ class Server(
     }
 
     private val main = ServerSocket(port, maxConnections, InetAddress.getByName(host))
-    private val clients = mutableListOf<Socket>()
+    private val clients = mutableMapOf<String, Socket>()
 
     fun listenForConnections() {
         while (true) {
@@ -38,14 +38,28 @@ class Server(
                 clientSocket.inputStream.read(buffer)
                 val message = UsernameMessage.fromBytes(buffer)
                 println("RECIEVED: $message")
-                broadcast(ServerMessageType.SERVICE.encode() + TextOnlyMessage("${message.text} just connected").toBytes())
-                clients.add(clientSocket)
-                thread {
-                    handle(clientSocket, message.text)
+                if (message.username in clients) {
+                    handleSameUsername(message.username, clientSocket)
+                } else {
+                    handleNewUsername(message.username, clientSocket)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+    }
+
+    private fun handleSameUsername(username: String, socket: Socket) {
+        broadcast(ServerMessageType.SERVICE.encode() + TextOnlyMessage("Impostor just tried to connect under $username's name").toBytes())
+        socket.getOutputStream().write(ServerMessageType.SERVICE.encode() + TextOnlyMessage("name $username is already in use, srry").toBytes())
+        socket.close()
+    }
+
+    private fun handleNewUsername(username: String, socket: Socket){
+        broadcast(ServerMessageType.SERVICE.encode() + TextOnlyMessage("$username just connected").toBytes())
+        clients[username] = socket
+        thread {
+            handle(socket, username)
         }
     }
 
@@ -72,7 +86,7 @@ class Server(
 
     private fun removeClient(client: Socket, name: String) {
         client.close()
-        clients.remove(client)
+        clients.remove(name)
         broadcastService(TextOnlyMessage("user $name disconnected"))
     }
 
@@ -86,7 +100,7 @@ class Server(
 
     private fun broadcast(bytes: ByteArray, except: Socket? = null) {
         clients.forEach {
-            if (it != except) it.getOutputStream().write(bytes)
+            if (it.value != except) it.value.getOutputStream().write(bytes)
         }
     }
 

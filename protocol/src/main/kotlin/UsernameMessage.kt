@@ -1,5 +1,5 @@
 data class UsernameMessage(
-        val text: String
+        val username: String
 ) {
 
     companion object {
@@ -10,7 +10,7 @@ data class UsernameMessage(
     }
 
     fun toBytes(): ByteArray {
-        val (header, data) = text.encode(NAME_MAX_LENGTH, NAME_HEADER_BYTES)
+        val (header, data) = username.encode(NAME_MAX_LENGTH, NAME_HEADER_BYTES)
         return header + data
     }
 

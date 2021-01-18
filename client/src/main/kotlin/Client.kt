@@ -16,7 +16,7 @@ fun main(args: Array<String>) {
         port = args[1].toInt()
         userName = args[2]
     }
-
+    println("Starting client... $host:$port username: $userName")
     with(Client(host, port, userName)) {
         thread { receive() }
         thread { type() }
@@ -82,7 +82,7 @@ class Client(
     }
 
     private fun printServerMessage(message: TextOnlyMessage) {
-        println("FROM SERVER : ${message.text}")
+        println("FROM SERVER : ${message.username}")
     }
 
     private fun printChatMessage(message: ChatMessage) {
