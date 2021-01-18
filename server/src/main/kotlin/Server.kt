@@ -7,7 +7,7 @@ fun main(args: Array<String>) {
     var host = "127.0.0.1"
     var port = 8888
 
-    if (args.size != 3) {
+    if (args.size != 2) {
         println("HOST and PORT are not provided, using default")
     } else {
         host = args[0]
