@@ -1,0 +1,1 @@
+data class Token(val token: ByteArray)
