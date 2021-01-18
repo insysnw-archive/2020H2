@@ -2,6 +2,7 @@ package com.dekinci.uni.net.first.io
 
 import com.dekinci.uni.net.first.*
 import java.io.EOFException
+import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.SocketException
 import java.time.Instant
@@ -10,9 +11,9 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
-class BlockingServer(val port: Int) {
+class BlockingServer(val port: Int, val address: InetAddress) {
     private val clients = ConcurrentHashMap<String, IoFacade>()
-    private val server = ServerSocket(port)
+    private val server = ServerSocket(port, 50, address)
     private val massMailer = Executors.newSingleThreadExecutor()
     private val pinguin = Executors.newSingleThreadScheduledExecutor()
 

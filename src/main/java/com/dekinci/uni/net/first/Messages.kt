@@ -15,8 +15,8 @@ class Announcement(val ts: Instant, val text: String) {
 }
 
 class Kick(val ts: Instant, val text: String) {
-    companion object : Parser<Announcement> {
-        override fun parse(map: Map<String, String>) = Announcement(Instant.parse(map["ts"]!!), map["text"]!!)
+    companion object : Parser<Kick> {
+        override fun parse(map: Map<String, String>) = Kick(Instant.parse(map["ts"]!!), map["text"]!!)
     }
 
     override fun toString(): String {

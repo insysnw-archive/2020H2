@@ -75,6 +75,7 @@ class NonBlockingServer(val addr: InetSocketAddress) {
         when {
             e is SocketException && e.message in okExceptionMessages -> Unit
             e is EOFException -> Unit
+            e is IllegalStateException && e.message in okExceptionMessages -> Unit
             else -> e.printStackTrace()
         }
 
@@ -86,7 +87,8 @@ class NonBlockingServer(val addr: InetSocketAddress) {
     companion object {
         private val okExceptionMessages = listOf(
                 "Connection reset",
-                "An established connection was aborted by the software in your host machine"
+                "An established connection was aborted by the software in your host machine",
+                "Same name"
         )
     }
 }

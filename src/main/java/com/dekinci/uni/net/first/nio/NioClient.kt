@@ -26,7 +26,7 @@ fun main(args: Array<String>) {
     val keepConnection = AtomicBoolean(true)
     val currentConnection = AtomicReference<ByteWriter>()
 
-    val pinguin = Executors.newSingleThreadScheduledExecutor()
+    val pinguin = Executors.newSingleThreadScheduledExecutor { Thread(it).apply { isDaemon = true } }
     pinguin.scheduleAtFixedRate({
         val connection = currentConnection.get()
         if (keepConnection.get() && connection != null) {
@@ -50,7 +50,7 @@ fun main(args: Array<String>) {
                 println("Connecting to $serverString")
                 writer.writeMessage(encodeBytes(Handshake(adds[0])))
 
-                thread {
+                thread(isDaemon = true) {
                     while (keepConnection.get()) {
                         if (keepConnection.get() && System.`in`.available() > 0) {
                             var text = readLine()
@@ -78,13 +78,15 @@ fun main(args: Array<String>) {
                                 run.set(false)
                                 keepConnection.set(false)
                                 println(message)
+                                break
                             }
                         }
                         mapMessage = receiver.findMessage()
                     }
                     inBuffer.clear()
 
-                    writer.send(channel)
+                    if (keepConnection.get())
+                        writer.send(channel)
                 }
                 currentConnection.set(null)
             }

@@ -30,26 +30,26 @@ class ServerClientConnection(val writer: DumpingWriter, val receiver: Accumulati
         while (mapMessage != null) {
             when (status) {
                 Status.AWAIT_HANDSHAKE -> {
-                    name = decode<Handshake>(mapMessage).name
-                    logName = "${channel.socket().inetAddress.hostAddress}:${channel.socket().port} aka $name"
-                    if (clients.putIfAbsent(name!!, this) != null) {
-                        println("$logName kicked for duplicating name")
+                    val receivedName = decode<Handshake>(mapMessage).name
+                    val tempLogName = "${channel.socket().inetAddress.hostAddress}:${channel.socket().port} aka $receivedName"
+                    if (clients.putIfAbsent(receivedName, this) != null) {
+                        println("$tempLogName kicked for duplicating name")
                         writer.writeMessage(MessageEncoder.encode(encode(Kick(Instant.now(), "Get lost, U R not special"))))
-                        channel.close()
+                        writer.disconnect("Same name")
                         status = Status.DEAD
-                        return
+                    } else {
+                        name = receivedName
+                        logName = tempLogName
+                        writer.writeMessage(encodeBytes(Announcement(Instant.now(), "Welcome! Online: ${clients.keys}")))
+                        println("$logName connected")
+
+                        val encodedMessage = encodeBytes(Announcement(Instant.now(), "$name connected"))
+                        clients.asSequence()
+                                .filter { it.key != name!! }
+                                .forEach { it.value.writer.writeMessage(encodedMessage) }
+
+                        status = Status.ONLINE
                     }
-
-                    writer.writeMessage(encodeBytes(Announcement(Instant.now(), "Welcome! Online: ${clients.keys}")))
-
-                    println("$logName connected")
-
-                    val encodedMessage = encodeBytes(Announcement(Instant.now(), "$name connected"))
-                    clients.asSequence()
-                            .filter { it.key != name!! }
-                            .forEach { it.value.writer.writeMessage(encodedMessage) }
-
-                    status = Status.ONLINE
                 }
                 Status.ONLINE -> {
                     val receivedMessage = decode<Message>(mapMessage)
@@ -60,7 +60,7 @@ class ServerClientConnection(val writer: DumpingWriter, val receiver: Accumulati
                             .filter { it.key != name }
                             .forEach { it.value.writer.writeMessage(encodedMessage) }
                 }
-                Status.DEAD -> return
+                Status.DEAD -> Unit
             }
 
             mapMessage = receiver.findMessage()

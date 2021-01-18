@@ -21,7 +21,7 @@ fun main(args: Array<String>) {
     val keepConnection = AtomicBoolean(true)
     val currentConnection = AtomicReference<IoFacade>()
 
-    val pinguin = Executors.newSingleThreadScheduledExecutor()
+    val pinguin = Executors.newSingleThreadScheduledExecutor { Thread(it).apply { isDaemon = true } }
     pinguin.scheduleAtFixedRate({
         val connection = currentConnection.get()
         if (keepConnection.get() && connection != null) {

@@ -7,13 +7,14 @@ import java.nio.channels.SocketChannel
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class DumpingWriter() : ByteWriter {
+class DumpingWriter : ByteWriter {
     private val ackQueue = ConcurrentLinkedQueue<Boolean>()
     private val writeQueue = ConcurrentLinkedQueue<Queue<ByteArray>>()
 
     private var currentMessage: Queue<ByteArray> = LinkedList()
     private var currentChunk = ByteBuffer.allocate(0)
     private var ackRequired = false
+    private var disconnectReason: String? = null
 
     override fun receiveAck() {
         ackQueue.add(true)
@@ -28,10 +29,15 @@ class DumpingWriter() : ByteWriter {
     }
 
     override fun writeMessage(data: List<ByteArray>) {
+        if (disconnectReason != null)
+            error("This connection is about to shut down")
         val q = LinkedList(data)
         writeQueue.add(q)
     }
 
+    fun disconnect(reason: String = "") {
+        disconnectReason = reason
+    }
 
     fun send(client: SocketChannel) {
         var hasMoreToWrite = true
@@ -46,8 +52,12 @@ class DumpingWriter() : ByteWriter {
 
             if (!currentChunk.hasRemaining()) {
                 if (currentMessage.isEmpty()) {
-                    if (writeQueue.isEmpty())
-                        return
+                    if (writeQueue.isEmpty()) {
+                        if (disconnectReason == null)
+                            return
+                        else
+                            throw IllegalStateException(disconnectReason)
+                    }
 
                     currentMessage = writeQueue.poll()
                 }
