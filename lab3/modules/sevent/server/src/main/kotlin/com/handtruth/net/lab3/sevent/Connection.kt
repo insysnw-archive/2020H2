@@ -17,6 +17,7 @@ import com.handtruth.net.lab3.util.MessageFormatException
 import io.ktor.utils.io.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.collect
@@ -109,6 +110,9 @@ suspend fun connection(recvChannel: ByteReadChannel, sendChannel: ByteWriteChann
         // К сожалению операция отмены это всё тот же Exception и его приходится
         // обрабатывать отдельно, несмотря на то, что это не ошибка
         throw e
+    } catch (e: ClosedReceiveChannelException) {
+        // Нормальная ситуация при отключении клиента
+        log.info { "disconnecting" }
     } catch (e: Exception) {
         // Ошибка, не позволяющая дальнейшую работу
         log.error(e) { "client error, disconnecting..." }

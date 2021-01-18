@@ -14,6 +14,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import java.io.IOException
 import java.net.InetSocketAddress
 
 fun main(args: Array<String>) {
@@ -58,17 +60,22 @@ suspend fun clientHandler(
     strictMode: Boolean
 ) {
     while (true) {
-        when (val message = input.readMessage()) {
-            is QueryMessage -> {
-                val response = handleQueryMessage(serverState, message)
-                output.writeMessage(response)
-                if (strictMode && response.status == QueryStatus.FAILED) {
-                    output.writeMessage(DisconnectMessage("You were disconnected for sending bad queries."))
-                    // Больше мы не хотим иметь дело с этим клиентом! return!
-                    return
+        try {
+            when (val message = input.readMessage()) {
+                is QueryMessage -> {
+                    val response = handleQueryMessage(serverState, message)
+                    output.writeMessage(response)
+                    if (strictMode && response.status == QueryStatus.FAILED) {
+                        output.writeMessage(DisconnectMessage("You were disconnected for sending bad queries."))
+                        // Больше мы не хотим иметь дело с этим клиентом! return!
+                        return
+                    }
                 }
+                else -> println("Invalid message type!")
             }
-            else -> println("Invalid message type!")
+        } catch (e: IOException) {
+            println("Client disconnected.")
+            return
         }
     }
 }

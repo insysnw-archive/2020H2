@@ -111,19 +111,24 @@ suspend fun handleServerMessages(input: ByteReadChannel, output: ByteWriteChanne
  * Чтение команд из stdin, их интерпретация и передача серверу
  */
 fun handleUserInput(output: ByteWriteChannel): Boolean {
-    val command = readLine()!!
-    if (command.length < 4 && command != "ext") {
-        println("Invalid command!")
+    val command = readLine()
+    if (command != null) {
+        if (command.length < 4 && command != "ext") {
+            println("Invalid command!")
+            return false
+        }
+        when (val type = command.slice(0..2)) {
+            "get" -> handleGetCommand(command.substring(4), output)
+            "add" -> handleAddCommand(command.substring(4), output)
+            "del" -> handleDeleteCommand(command.substring(4), output)
+            "ext" -> return true
+            else -> println("An unknown command type '${type}'")
+        }
         return false
+    } else {
+        println("ERROR: Stdin closed.\n")
+        return true
     }
-    when (val type = command.slice(0..2)) {
-        "get" -> handleGetCommand(command.substring(4), output)
-        "add" -> handleAddCommand(command.substring(4), output)
-        "del" -> handleDeleteCommand(command.substring(4), output)
-        "ext" -> return true
-        else -> println("An unknown command type '${type}'")
-    }
-    return false
 }
 
 fun handleGetCommand(commandBody: String, output: ByteWriteChannel) = runBlocking {
