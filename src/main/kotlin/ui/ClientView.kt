@@ -4,6 +4,8 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.collections.ListChangeListener
 import javafx.scene.Parent
 import network.Client
+import network.Header
+import network.Message
 import tornadofx.*
 
 class ClientView : View("Client") {
@@ -19,7 +21,8 @@ class ClientView : View("Client") {
             button("Change") {
                 setOnAction {
                     client.nickname = nicknameProperty.value
-                    client.sendMessage("renameNickname:${client.nickname}")
+                    client.sendMessage(Message(Header(mapOf("renameNickname" to client.nickname))))
+                    nicknameProperty.value = ""
                 }
             }
         }
@@ -36,7 +39,7 @@ class ClientView : View("Client") {
             textfield() { prefWidth = 500.0 }.bind(client.newMessage)
             button("Send") {
                 setOnAction {
-                    client.sendMessage()
+                    client.sendMessage(Message(Header(time = client.getCurrentTime(), nickname = client.nickname), client.newMessage.value))
                     client.newMessage.value = ""
                 }
                 shortcut("Enter")

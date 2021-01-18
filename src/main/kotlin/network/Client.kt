@@ -33,7 +33,7 @@ class Client(var nickname: String) {
                 clientSocket = Socket(address, port)
                 serverReader = DataInputStream(clientSocket.getInputStream())
                 serverWriter = DataOutputStream(clientSocket.getOutputStream())
-                sendMessage("nickname:$nickname")
+                sendMessage(Message(Header(mapOf("nickname" to nickname))))
                 listenForNewMessagesFromServer()
             } catch (e: Exception) {
                 println(e.toString())
@@ -56,21 +56,16 @@ class Client(var nickname: String) {
         }
     }
 
-    fun sendMessage(message: String = "") {
+    fun sendMessage(message: Message) {
         try {
-            val messageForSent = if (message.isEmpty()) getFormattedMessage(newMessage.value) else message
-            serverWriter.writeUTF(messageForSent)
+            serverWriter.writeUTF(message.toString())
+            println("sended message: $message")
             serverWriter.flush()
         } catch (e: Exception) {
         }
     }
 
-    private fun getFormattedMessage(message: String): String {
-        val currentDate = getCurrentTime()
-        return "($currentDate) $nickname: $message"
-    }
-
-    private fun getCurrentTime() = SimpleDateFormat("HH:mm", Locale("ru")).format(Date())
+    fun getCurrentTime(): String = SimpleDateFormat("HH:mm", Locale("ru")).format(Date())
 
     fun onDestroy() {
         try {
