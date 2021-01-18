@@ -58,7 +58,7 @@ fun Vote(
             ) { item ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "${item.altName}: ${item.votesAbs}, ${item.votesRel * 100}%",
+                        "${item.altName}: ${item.votesAbs}, %.2f%%".format(item.votesRel * 100),
                         style = MaterialTheme.typography.body2
                     )
                     Spacer(padding)

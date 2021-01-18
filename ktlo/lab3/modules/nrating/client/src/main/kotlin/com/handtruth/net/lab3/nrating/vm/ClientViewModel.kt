@@ -7,6 +7,7 @@ import com.handtruth.net.lab3.nrating.types.Topic
 import com.handtruth.net.lab3.nrating.types.TopicStatus
 import io.ktor.network.sockets.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class ClientViewModel {
@@ -38,6 +39,18 @@ class ClientViewModel {
         error.emit(null)
     }
 
+    init {
+        scope.coroutineContext[Job]!!.invokeOnCompletion {
+            if (it is ClosedReceiveChannelException) {
+                fatal.tryEmit("Отключён сервером!")
+            } else {
+                fatal.tryEmit(it?.message ?: "Неизвестная ошибка")
+            }
+            state.tryEmit(ClientState.Fail)
+            log.warning { "disconnected" }
+        }
+    }
+
     private fun perform(action: suspend () -> Unit) {
         scope.launch {
             try {
@@ -53,7 +66,7 @@ class ClientViewModel {
 
     private val connection = scope.async(start = CoroutineStart.LAZY) {
         val socket = aSocket(selector).tcp().connect(hostname.value, port.value)
-        ClientAPI(socket.openReadChannel(), socket.openWriteChannel())
+        ClientAPI(socket.openReadChannel(), socket.openWriteChannel(), scope.coroutineContext)
     }
 
     fun connect() = perform {
