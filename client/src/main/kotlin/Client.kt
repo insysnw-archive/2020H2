@@ -38,7 +38,7 @@ class Client(
     init {
         try {
             socket = Socket(host, port)
-            socket.getOutputStream().write(UsernameMessage(userName).toBytes())
+            socket.getOutputStream().write(ClientMessageType.CONNECT.encode() + UsernameMessage(userName).toBytes())
         } catch (e: Exception) {
             println("Can't connect. Shutting down")
             exitProcess(0)
@@ -78,11 +78,11 @@ class Client(
     }
 
     private fun sendMessage(text: String) {
-        socket.getOutputStream().write(ClientMessage(Instant.now(), text).toBytes())
+        socket.getOutputStream().write(ClientMessageType.CHAT.encode() + ClientMessage(Instant.now(), text).toBytes())
     }
 
     private fun printServerMessage(message: TextOnlyMessage) {
-        println("FROM SERVER : ${message.username}")
+        println("FROM SERVER : ${message.text}")
     }
 
     private fun printChatMessage(message: ChatMessage) {

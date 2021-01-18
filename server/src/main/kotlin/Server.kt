@@ -1,7 +1,10 @@
-import java.net.InetAddress
-import java.net.ServerSocket
-import java.net.Socket
-import kotlin.concurrent.thread
+import java.io.IOException
+import java.net.InetSocketAddress
+import java.nio.ByteBuffer
+import java.nio.channels.SelectionKey
+import java.nio.channels.Selector
+import java.nio.channels.ServerSocketChannel
+import java.nio.channels.SocketChannel
 
 fun main(args: Array<String>) {
     var host = "127.0.0.1"
@@ -14,7 +17,7 @@ fun main(args: Array<String>) {
         port = args[1].toInt()
     }
     println("Starting server on $host:$port")
-    Server(host, port).listenForConnections()
+    Server(host, port).listen()
 
 }
 
@@ -23,85 +26,124 @@ class Server(
         port: Int,
 ) {
     companion object {
-        private const val maxConnections = 1024
         private const val buffSize = 1024
     }
 
-    private val main = ServerSocket(port, maxConnections, InetAddress.getByName(host))
-    private val clients = mutableMapOf<String, Socket>()
+    private val users = mutableMapOf<SocketChannel, String>()
+    private val selector = Selector.open()
+    private val mainChannel = ServerSocketChannel.open().apply {
+        configureBlocking(false)
+        bind(InetSocketAddress(host, port))
+        register(selector, SelectionKey.OP_ACCEPT)
+    }
+    private val keys = selector.selectedKeys()
 
-    fun listenForConnections() {
+    fun listen() {
         while (true) {
+            if (selector.select() <= 0) {
+                continue
+            }
+            with(keys.iterator()) {
+                while (hasNext()) {
+                    val key = iterator().next()
+                    remove()
+                    if (key.isAcceptable) handleConnect(selector)
+                    if (key.isReadable) handleRead(key)
+                }
+            }
+        }
+    }
+
+    private fun handleConnect(selector: Selector) {
+        with(mainChannel.accept()) {
+            configureBlocking(false)
+            register(selector, SelectionKey.OP_READ)
+        }
+    }
+
+    private fun handleRead(key: SelectionKey) {
+        with(key.channel() as SocketChannel) {
+            val buffer = ByteBuffer.allocate(buffSize)
             try {
-                val clientSocket = main.accept()
-                val buffer = ByteArray(buffSize)
-                clientSocket.inputStream.read(buffer)
-                val message = UsernameMessage.fromBytes(buffer)
-                println("RECIEVED: $message")
-                if (message.username in clients) {
-                    handleSameUsername(message.username, clientSocket)
+                read(buffer)
+                val bytes = buffer.array()
+                if (bytes.nonEmptyBytes()) {
+                    when (ClientMessageType.fromByte(bytes.first())) {
+                        ClientMessageType.CONNECT -> readConnectMessage(bytes.sliceArray(1 until bytes.size), this)
+                        ClientMessageType.CHAT -> readChatMessage(bytes.sliceArray(1 until bytes.size), this)
+                    }
                 } else {
-                    handleNewUsername(message.username, clientSocket)
+                    removeClient(this)
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
+            } catch (e: IOException){
+                removeClient(this)
             }
         }
+
     }
 
-    private fun handleSameUsername(username: String, socket: Socket) {
-        broadcast(ServerMessageType.SERVICE.encode() + TextOnlyMessage("Impostor just tried to connect under $username's name").toBytes())
-        socket.getOutputStream().write(ServerMessageType.SERVICE.encode() + TextOnlyMessage("name $username is already in use, srry").toBytes())
-        socket.close()
-    }
-
-    private fun handleNewUsername(username: String, socket: Socket){
-        broadcast(ServerMessageType.SERVICE.encode() + TextOnlyMessage("$username just connected").toBytes())
-        clients[username] = socket
-        thread {
-            handle(socket, username)
+    private fun readConnectMessage(bytes: ByteArray, client: SocketChannel) {
+        val username = UsernameMessage.fromBytes(bytes).also { println("RECEIVED: $it CONNECT") }.text
+        if (username in users.values) {
+            handleSameUsername(username, client)
+        } else {
+            handleNewUsername(username, client)
         }
     }
 
-    private fun handle(client: Socket, name: String) {
-        try {
-            while (true) {
-                val buffer = ByteArray(buffSize)
-                client.getInputStream().read(buffer)
-                if (buffer.nonEmptyBytes()) {
-                    val clientMessage = ClientMessage.fromBytes(buffer)
-                    println("RECIEVED: $clientMessage")
-                    broadcastChat(
-                            message = ChatMessage(clientMessage.time, name, clientMessage.text),
-                            except = client
-                    )
-                } else {
-                    removeClient(client, name)
-                }
-            }
-        } catch (e: Exception) {
-            removeClient(client, name)
-        }
-    }
-
-    private fun removeClient(client: Socket, name: String) {
+    private fun handleSameUsername(username: String, client: SocketChannel) {
+        sendToClient("name $username is already in use, srry", client)
         client.close()
-        clients.remove(name)
-        broadcastService(TextOnlyMessage("user $name disconnected"))
+        broadcastService(TextOnlyMessage("Impostor just tried to connect under $username's name"))
     }
 
-    private fun broadcastChat(message: ChatMessage, except: Socket) {
+    private fun handleNewUsername(username: String, client: SocketChannel) {
+        broadcastService(TextOnlyMessage("$username just connected"), except = client)
+        users[client] = username
+    }
+
+
+    private fun readChatMessage(bytes: ByteArray, client: SocketChannel) {
+        println("RECEIVED CHAT")
+        if (client in users) {
+            val message = ClientMessage.fromBytes(bytes).also { println("MESSAGE: $it") }
+            broadcastChat(ChatMessage(message.time, users[client]!!, message.text), client)
+        } else {
+            println("NOT CONNECTED")
+            removeClient(client)
+        }
+    }
+
+    private fun sendToClient(message: String, client: SocketChannel) {
+        val buffer = ByteBuffer.wrap(ServerMessageType.SERVICE.encode() + TextOnlyMessage(message).toBytes())
+        client.write(buffer)
+        buffer.rewind()
+    }
+
+    private fun removeClient(client: SocketChannel) {
+        client.close()
+        val name = users.remove(client)
+        broadcastService(TextOnlyMessage("$name disconnected"))
+    }
+
+    private fun broadcastChat(message: ChatMessage, except: SocketChannel) {
         broadcast(ServerMessageType.CHAT.encode() + message.toBytes(), except = except)
     }
 
-    private fun broadcastService(message: TextOnlyMessage) {
-        broadcast(ServerMessageType.SERVICE.encode() + message.toBytes())
+    private fun broadcastService(message: TextOnlyMessage, except: SocketChannel? = null) {
+        broadcast(ServerMessageType.SERVICE.encode() + message.toBytes(), except)
     }
 
-    private fun broadcast(bytes: ByteArray, except: Socket? = null) {
-        clients.forEach {
-            if (it.value != except) it.value.getOutputStream().write(bytes)
+    private fun broadcast(bytes: ByteArray, except: SocketChannel? = null) {
+        val buffer = ByteBuffer.wrap(bytes)
+        selector.keys().forEach {
+            val channel = it.channel()
+            if (it.isValid && channel is SocketChannel) {
+                if (channel != except) {
+                    channel.write(buffer)
+                    buffer.rewind()
+                }
+            }
         }
     }
-
 }

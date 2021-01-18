@@ -1,5 +1,5 @@
 data class TextOnlyMessage(
-        val username: String
+        val text: String
 ) {
 
     companion object {
@@ -10,7 +10,7 @@ data class TextOnlyMessage(
     }
 
     fun toBytes(): ByteArray {
-        val (header, data) = username.encode(TEXT_MAX_LENGTH, TEXT_HEADER_BYTES)
+        val (header, data) = text.encode(TEXT_MAX_LENGTH, TEXT_HEADER_BYTES)
         return header + data
     }
 

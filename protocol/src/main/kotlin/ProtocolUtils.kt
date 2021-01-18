@@ -12,6 +12,17 @@ enum class ServerMessageType {
     }
 }
 
+enum class ClientMessageType {
+    CONNECT,
+    CHAT;
+
+    fun encode() = byteArrayOf(this.ordinal.toByte())
+
+    companion object {
+        fun fromByte(byte: Byte) = values()[byte.toInt()]
+    }
+}
+
 const val TIME_BYTES = 4 // UTC size before 2038
 
 const val NAME_MAX_LENGTH = 50
