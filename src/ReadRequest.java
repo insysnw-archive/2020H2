@@ -15,7 +15,7 @@ class ReadRequest extends Thread {
     public ReadRequest(ReadPacket request) {
         try {
             req = request;
-            socket = new DatagramSocket(69);
+            socket = new DatagramSocket();
             socket.setSoTimeout(1000);
             fileName = request.fileName();
 
