@@ -35,7 +35,7 @@ class Client(addr: String, private val port: Int) {
 
             val command = InputCommands.values().find { it.command == userInput[0] }
             if (command == null) {
-                println("Допустимые команды: ${InputCommands.values().map { it.command }}")
+                println("Допустимые команды: $commandsList")
                 continue
             }
             val fileName = userInput[1]
