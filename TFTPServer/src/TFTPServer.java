@@ -53,7 +53,7 @@ public class TFTPServer {
         }
         socket.bind(localBindPoint);
 
-        System.out.printf("Listening at port %d for new requests\n", TFTPPORT);
+        System.out.printf("Listening at port %d for new requests\n", port);
 
         while(true) {        /* Loop to handle various requests */
             final InetSocketAddress clientAddress =
