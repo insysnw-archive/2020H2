@@ -81,7 +81,6 @@ class WriteRequest extends Thread {
                 }
                 System.out.println("Transfer completed.(Client " + host + ")");
                 System.out.println("Filename: " + fileName + "\nSHA1 checksum: " + SumHelper.getChecksum("../storage/" + fileName) + "\n");
-
             } catch (Exception e) {
                 ErrorPacket errorPacket = new ErrorPacket(1, e.getMessage());
                 try {

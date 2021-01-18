@@ -34,6 +34,8 @@ public class tftp {
         }
     }
 
+    static boolean isRun = false;
+
     private static void startServer() {
         try {
             DatagramSocket socket = new DatagramSocket(port, InetAddress.getByName(address));
@@ -43,11 +45,17 @@ public class tftp {
                 TftpPacket in = TftpPacket.receive(socket);
                 if (in instanceof ReadPacket) {
                     System.out.println("Read Request from " + in.getAddress());
-                    new ReadRequest((ReadPacket) in);
-                }
-                else if (in instanceof WritePacket) {
+                    if (!isRun) {
+                        new ReadRequest((ReadPacket) in);
+                        isRun = true;
+                    }
+
+                } else if (in instanceof WritePacket) {
                     System.out.println("Write Request from " + in.getAddress());
-                    new WriteRequest((WritePacket) in);
+                    if (!isRun) {
+                        new WriteRequest((WritePacket) in);
+                        isRun = true;
+                    }
                 }
             }
         } catch (SocketException e) {
