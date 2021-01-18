@@ -1,0 +1,9 @@
+
+Please make sure this machine has java environment by typing “java -version” in the terminal. (otherwise please install JDK).
+
+0. Extract this file into some writable path.
+
+*************************
+**How to use the Client**
+*************************
+
