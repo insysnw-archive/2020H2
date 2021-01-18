@@ -8,20 +8,20 @@
 #include <map>
 #include <mutex>
 #include <set>
-using std::set;
-using std::map;
-using std::mutex;
+#include <vector>
+#include <string>
+
+using namespace std;
 
 typedef unsigned char uchar;
-#define maxClients 10
-#define port 8000
-typedef struct{
+#define port 53
+typedef struct {
     char *head; // Тема
     char *message; // Текст сообщения
     char *sender; // Отправитель
     char *dest; // Получатель
 } mail;
-map<int,mail> mails;
+map<int, mail> mails;
 //Стартовый id
 int nextId = 1;
 //Определение мьютекса
@@ -31,9 +31,67 @@ int sockfd;
 
 //Массив клиентов
 set<int> clients;
+uint8_t DNS_PORT = 53;
+
+enum class MessageType : uint8_t {
+    QUERY = 0,
+    RESPONSE = 1
+};
+
+enum class Opcode : uint8_t {
+    QUERY = 0,
+    IQUERY = 1,
+    STATUS = 2
+};
+
+enum class Rcode : uint8_t {
+    NO_ERROR = 0,
+    FORMAT_ERROR = 1,
+    SERVER_FAILURE = 2,
+    NAME_ERROR = 3,
+    NOT_IMPLEMENTED = 4,
+    REFUSED = 5
+};
+
+enum class QType : uint16_t {
+    A = 1,
+    MX = 15,
+    TXT = 16,
+    AAAA = 28
+};
+
+enum class QClass : uint16_t {
+    IN = 1,
+    CS = 2,
+    CH = 3,
+    HS = 4
+};
+
+struct DnsHeader {
+    uint16_t id;
+    uint16_t flags; // QR, Opcode, AA, TC, RD, RA, RCODE
+    uint16_t qdCount;
+    uint16_t anCount;
+    uint16_t nsCount;
+    uint16_t arCount;
+};
+
+struct Query {
+    string name;
+    QType type;
+    QClass qClass;
+};
+
+struct ResourceRecord {
+    std::string name;
+    QType type;
+    QClass qClass;
+    uint32_t ttl;
+    std::vector<uint8_t> recordData;
+};
 
 //Функция закрытие клиента
-void closeClient(int socket){
+void closeClient(int socket) {
     m.lock();
     close(socket);
     clients.erase(socket);
@@ -43,7 +101,7 @@ void closeClient(int socket){
 }
 
 //Функция закрытия сервера 
-void closeServer(){
+void closeServer() {
     //Отключить всех клиентов
     m.lock();
     for (auto client: clients) {
@@ -56,301 +114,300 @@ void closeServer(){
 
 }
 
-//Чтение части пакета
-int partRead(int socket, char** buffer){
-    int length = 0;
-    int n;
-    n = recv(socket, &length, sizeof(short), MSG_WAITALL);
-    if (n <= 0) {
-        perror("ERROR reading from socket");
-        closeClient(socket);
-    }
-    length = ntohs(length);
-    *buffer = new char[length+1];
-    bzero(*buffer,length+1);
-    n = recv(socket, *buffer, length, MSG_WAITALL);
-    if (n <= 0) {
-        perror("ERROR reading from socket");
-        closeClient(socket);
-    }
-    return 1;
+DnsHeader header;
+
+MessageType getMessageType() {
+    return static_cast<MessageType>((header.flags & 0b1000000000000000u) >> 15u);
 }
 
-uchar receive(int socket,int flag, int* id, char **email_addr, char **head, char** message, char** dest_addr){
-    int n;
-    switch(flag){
-        case 1: {
-            printf("Авторизация\n");
-            partRead(socket, email_addr);
-            return 0x81;
-        }
-        case 2: {
-            printf("Запрос состояния\n");
-            return 0x82;
-        }
-        case 3: {
-            printf("Запрос на отправку сообщения\n");
-            partRead(socket, dest_addr);
-            partRead(socket, head);
-            partRead(socket, message);
-            printf("Отправка сообщения от <%s>\n", *email_addr);
-            return 0x81;
-        }
-        case 4: {
-            printf("Запрос удаление сообщения\n");
-            int res = recv(socket, id, sizeof(int), MSG_WAITALL);
-            if (res <= 0) {
-                perror("ERROR reading from socket");
-                closeClient(socket);
-            }
-            *id = ntohl(*id);
-            return 0x81;
-        }
-        case 5: {
-            printf("Запрос на получение сообщения\n");
-            int res = recv(socket, id, sizeof(int), MSG_WAITALL);
-            if (res <= 0) {
-                perror("ERROR reading from socket");
-                closeClient(socket);
-            }
-            *id = ntohl(*id);
-            return 0x83;
-
-        }
-        default: {
-            perror("Unknown request\n");
-        }
+void setMessageType(MessageType type) {
+    if (type == MessageType::RESPONSE) {
+        header.flags |= 0x8000;
+    } else {
+        header.flags &= ~0x8000;
     }
+}
+
+Opcode getOpcode() {
+    return (Opcode) ((header.flags & 0x7800) >> 11u);
+}
+
+void setOpcode(Opcode opcode) {
+    header.flags &= ~0x7800;
+    header.flags |= (uint16_t) ((uint16_t) opcode << 11u);
+}
+
+bool isAuthoritativeAnswer() {
+    return header.flags & 0x0400;
+}
+
+void setAuthoritativeAnswer(bool value) {
+    if (value) {
+        header.flags |= 0x0400;
+    } else {
+        header.flags &= ~0x0400;
+    }
+}
+
+bool wasTruncated() {
+    return header.flags & 0x0200;
+}
+
+void setTruncated(bool value) {
+    if (value) {
+        header.flags |= 0x0200;
+    } else {
+        header.flags &= ~0x0200;
+    }
+}
+
+bool isRecursionDesired() {
+    return header.flags & 0x0100;
+}
+
+void setRecursionDesired(bool value) {
+    if (value) {
+        header.flags |= 0x0100;
+    } else {
+        header.flags &= ~0x0100;
+    }
+}
+
+bool isRecursionAvailable() {
+    return header.flags & 0x0080;
+}
+
+void setRecursionAvailable(bool value) {
+    if (value) {
+        header.flags |= 0x0080;
+    } else {
+        header.flags &= ~0x0080;
+    }
+}
+
+Rcode getResponseCode() {
+    return static_cast<Rcode>(header.flags & 0x000F);
+}
+
+void setResponseCode(Rcode code) {
+    header.flags &= ~0x000F;
+    header.flags |= (uint16_t) (code);
+}
+
+uint16_t getQuestionEntriesCount() {
+    return header.qdCount;
+}
+
+void setQuestionEntriesCount(uint16_t count) {
+    header.qdCount = count;
+}
+
+uint16_t getResourceRecordsCount() {
+    return header.anCount;
+}
+
+void setResourceRecordsCount(uint16_t count) {
+    header.anCount = count;
+}
+
+uint16_t getNameServerRRCount() {
+    return header.nsCount;
+}
+
+void setNameServerRRCount(uint16_t count) {
+    header.nsCount = count;
+}
+
+uint16_t getAdditionalRRCount() {
+    return header.arCount;
+}
+
+void setAdditionalRRCount(uint16_t count) {
+    header.arCount = count;
+}
+
+uint16_t getId() {
+    return header.id;
+}
+
+void setId(uint16_t id) {
+    header.id = id;
+}
+
+uchar receive(int socket, int flag) {
+
     return 0xFF;
 }
 
-//Отправка части пакета
-void writePart(int socket, const char *message){
-    int n;
-    short length = strlen(message);
-    length = htons(length);
-    n = send(socket, &length, sizeof(short), 0);
-    if (n < 0) {
-        perror("ERROR writing to socket");
-        closeClient(socket);
+ResourceRecord response(Query query, DnsHeader hQuery) {
+    DnsHeader hResp;
+    header.id = htonl(header.id);
+    setMessageType(MessageType::RESPONSE);
+    setOpcode(Opcode::QUERY);
+    setAuthoritativeAnswer(false);
+    setTruncated(false);
+    setRecursionDesired(false);
+    setRecursionAvailable(false);
+    setQuestionEntriesCount(0);
+    setResourceRecordsCount(1);
+    setNameServerRRCount(0);
+    setAdditionalRRCount(0);
+    setResponseCode(Rcode::NO_ERROR);
+    bool rd = (hResp = header, header = hQuery, isRecursionDesired());
+    header = hResp;
+    setRecursionDesired(rd);
+    setRecursionAvailable(true);
+    ResourceRecord resp;
+    switch (query.type) {
+        case QType::A: {
+            std::vector<uint8_t> answer{192, 168, 1, 4};
+            resp = ResourceRecord{query.name, query.type, query.qClass, 0, answer};
+            break;
+        }
+        case QType::AAAA: {
+            std::vector<uint8_t> answer(16, 0);
+            answer[12] = 192;
+            answer[13] = 168;
+            answer[14] = 1;
+            answer[15] = 4;
+            resp = ResourceRecord{query.name, query.type, query.qClass, 0, answer};
+            break;
+        }
+        case QType::MX: {
+            std::vector<uint8_t> answer{
+                    0, 1, // Preference
+                    2, 'm','y', 4, 'm','a','i','l', 0 // Exchange
+            };
+            resp = ResourceRecord{query.name, query.type, query.qClass, 0, answer};
+            break;
+        }
+        case QType::TXT: {
+            std::vector<uint8_t> answer{
+                    11, 'H', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd' // Exchange
+            };
+            resp = ResourceRecord{query.name, query.type, query.qClass, 0, answer};
+            break;
+        }
+        default:
+            throw std::exception();
     }
-    length = ntohs(length);
-    n = send(socket, message, length, 0);
-    if (n < 0) {
-        perror("ERROR writing to socket");
-        closeClient(socket);
-    }
+    return resp;
 }
-
-void response(int socket, int flag, void* data){
-
-    switch(flag){
-        case 0x81: {
-            int n;
-            //Отправили флаг
-            n = send(socket, &flag, sizeof(char), 0);
-            if (n < 0) {
-                perror("ERROR writing to socket");
-                closeClient(socket);
-            }
-            break;
-        }
-        case 0x82: {
-            int n;
-            //Отправили флаг
-            map<int,mail> ans = *(map<int,mail>*)data;
-            n = send(socket, &flag, sizeof(char), 0);
-            if (n < 0) {
-                perror("ERROR writing to socket");
-                closeClient(socket);
-            }
-
-            //Отправили количество сообщений
-            short size = ans.size();
-            size = htons(size);
-            n = send(socket, &size, sizeof(short), 0);
-            if (n < 0) {
-                perror("ERROR writing to socket");
-                closeClient(socket);
-            }
-            for (auto entry: ans){
-                int id = entry.first;
-                id = htonl(id);
-                n = send(socket, &id, sizeof(int), 0);
-                if (n < 0) {
-                    perror("ERROR writing to socket");
-                    closeClient(socket);
-                }
-                writePart(socket, entry.second.sender);
-                writePart(socket, entry.second.head);
-            }
-            break;
-        }
-        case 0x83: {
-            int n;
-            mail msg = *(mail*)data;
-            //Отправили флаг
-            n = send(socket, &flag, sizeof(char), 0);
-            if (n < 0) {
-                perror("ERROR writing to socket");
-                closeClient(socket);
-            }
-            writePart(socket, msg.sender);
-            writePart(socket, msg.head);
-            writePart(socket, msg.message);
-            break;
-        }
-        case 0xC1: {
-            int n;
-            //Отправили флаг
-            n = send(socket, &flag, sizeof(char), 0);
-            if (n < 0) {
-                perror("ERROR writing to socket");
-                closeClient(socket);
-            }
-            break;
-
-        }
-        case 0xC2: {
-            int n;
-            //Отправили флаг
-            n = send(socket, &flag, sizeof(char), 0);
-            if (n <= 0) {
-                perror("ERROR writing to socket");
-                closeClient(socket);
-            }
-            break;
-        }
-        case 0xC3: {
-            int n;
-            //Отправили флаг
-            n = send(socket, &flag, sizeof(char), 0);
-            if (n <= 0) {
-                perror("ERROR writing to socket");
-                closeClient(socket);
-            }
-			break;
-        }
-		case 0xC4: {
-			int n;
-            n = send(socket, &flag, sizeof(char), 0);
-            if (n <= 0) {
-                perror("ERROR writing to socket");
-                closeClient(socket);
-            }
-			break;
-		}
-    }
-
+ResourceRecord respErr() {
+    setMessageType(MessageType::RESPONSE);
+    setOpcode(Opcode::QUERY);
+    setAuthoritativeAnswer(false);
+    setTruncated(false);
+    setRecursionDesired(false);
+    setRecursionAvailable(false);
+    setResponseCode(Rcode::NOT_IMPLEMENTED);
+    setQuestionEntriesCount(0);
+    setResourceRecordsCount(0);
+    setNameServerRRCount(0);
+    setAdditionalRRCount(0);
+    ResourceRecord resp;
+    return resp;
 }
-//Обработчик потока клиента
-[[noreturn]] void* clientWorks(void* client){
-    
-    //Инициализация
-    int socket = *(int*) client;
-    char* dest = nullptr;
-    char* message = nullptr;
-    char* head = nullptr;
-    char* email = nullptr;
-    int flag = 0;
-    int id = 0;
-
-
-    //Слушаем запросы от клиента и даем ему ответы
-    while(1){
-        //Получаем значение флага
-        int n = recv(socket, &flag, sizeof(char), MSG_WAITALL);
-        if (n <= 0) {
-            perror("ERROR reading from socket\n");
-            closeClient(socket);
-        }
-        int res = 0;
-        switch(flag){
-            case 1: {
-                if (email != nullptr) res = 0xC1;
-                else {
-                    res = receive(socket, flag, nullptr, &email,
-                            nullptr, nullptr, nullptr);
-                }
-                response(socket, res, nullptr);
-                break;
-            }
-            case 2: {
-                map<int, mail> ans;
-                if (email == nullptr) res = 0xC1;
-                else {
-                    res = receive(socket, flag, nullptr, nullptr,
-                                  nullptr, nullptr, nullptr);
-                    for (auto entry: mails) {
-                        if (strcmp(entry.second.dest,email) == 0) {
-                            ans[entry.first] = entry.second;
-                        }
-                    }
-                }
-                response(socket, res, &ans);
-                break;
-            }
-            case 3: {
-                if (email == nullptr) res = 0xC2;
-                else {
-                    res = receive(socket, flag, nullptr, &email,
-                                  &head, &message, &dest);
-                    mail msg;
-                    msg.dest = dest;
-                    msg.head = head;
-                    msg.sender = email;
-                    msg.message = message;
-                    mails[nextId] = msg;
-                    nextId++;
-                }
-                response(socket, res, nullptr);
-                break;
-            }
-            case 4: {
-                if (email == nullptr) res = 0xC3;
-                else {
-                    res = receive(socket, flag, &id, nullptr,
-                                  nullptr, nullptr, nullptr);
-                    if (mails.find(id) == mails.end()) res = 0xC3;
-                    else {
-                        mail msg = mails[id];
-                        if (strcmp(msg.dest, email) == 0) {
-                            mails.erase(id);
-                        } else {
-                            res = 0xC3;
-                        }
-                    }
-                }
-                response(socket, res, nullptr); //--Данные записаны
-                printf("Ответ клиенту отправлен\n");
-
-                break;
-            }
-            case 5: {
-                mail msg;
-                if (email == nullptr) res = 0xC4;
-                else {
-                    res = receive(socket, flag, &id, nullptr,
-                                  nullptr, nullptr, nullptr);
-                    if (mails.find(id) == mails.end() || strcmp(mails[id].dest, email) != 0) res = 0xC4;
-                    else msg = mails[id];
-                }
-                response(socket, res, &msg);
-                break;
-            }
-        }   
-        
-        flag = 0;
-    }
-}   
 
 //Обработка сигнала выхода от пользователя
-void signalExit(int sig){
+void signalExit(int sig) {
     closeServer();
 }
 
+Query q;
+
+int decodeQuery(const uchar *buffer) {
+    Query query{};
+    int totalLength = 0;
+    int length;
+    do {
+        length = (unsigned char) *buffer++;
+        totalLength++;
+
+        for (int i = 0; i < length; i++) {
+            char c = *buffer++;
+            totalLength++;
+            query.name.append(1, c);
+        }
+        if (length != 0) {
+            query.name.append(1, '.');
+        }
+
+    } while (length != 0);
+
+    memcpy(&query.type, buffer, sizeof(query.type));
+    query.type = (QType) (ntohs((uint16_t) query.type));
+    memcpy(&query.qClass, buffer + sizeof(query.type), sizeof(query.qClass));
+    query.qClass = (QClass) (ntohs((uint16_t) query.qClass));
+    q = query;
+    return totalLength + (int) sizeof(query.type) + (int) sizeof(query.qClass);
+}
+
+void qMsgInit(const uchar *buffer, long size) {
+    if (size < sizeof(header)) {
+        std::fprintf(stderr, "Error! Can't parse message\n");
+    }
+    memcpy(&header, buffer, sizeof(header));
+    header.id = ntohs(header.id);
+    header.flags = ntohs(header.flags);
+    header.qdCount = ntohs(header.qdCount);
+    header.anCount = ntohs(header.anCount);
+    header.nsCount = ntohs(header.nsCount);
+    header.arCount = ntohs(header.arCount);
+    decodeQuery(buffer + sizeof(header));
+}
+
+int encodeResourceRecord(const ResourceRecord &record, uchar *buffer){
+    int start = 0;
+    int end;
+    uint16_t totalLength = 0;
+    while ((end = record.name.find('.', start)) != std::string::npos) {
+        *buffer++ = (uint8_t) (end - start); // label length
+        totalLength += 1;
+        for (int i = start; i < end; i++) {
+            *buffer++ = record.name[i]; // label
+            totalLength += 1;
+        }
+        start = end + 1; // skip '.'
+    }
+    *buffer++ = (uint8_t) (record.name.size() - start);
+    totalLength += 1;
+    for (int i = start; i < record.name.size(); i++) {
+        *buffer++ = record.name[i]; // last label
+        totalLength += 1;
+    }
+
+    uint16_t type = ntohs((uint16_t)record.type);
+    uint16_t qClass = ntohs((uint16_t)record.qClass);
+    uint32_t ttl = ntohl(record.ttl);
+    *buffer = 0;
+
+    std::memcpy(buffer, &type, sizeof(type));
+    std::memcpy(buffer + sizeof(type), &qClass, sizeof(qClass));
+    std::memcpy(buffer + sizeof(type) + sizeof(qClass), &ttl, sizeof(ttl));
+    uint16_t dataLength = record.recordData.size();
+    uint16_t swappedLength = ntohs(dataLength);
+    std::memcpy(buffer + sizeof(type) + sizeof(qClass) + sizeof(ttl), &swappedLength, sizeof(dataLength));
+    std::memcpy(buffer + sizeof(type) + sizeof(qClass) + sizeof(ttl) + sizeof(dataLength),
+                record.recordData.data(), dataLength);
+    return totalLength + sizeof(type) + sizeof(qClass) + sizeof(ttl) + sizeof(dataLength) + dataLength;
+}
+
+int encode(uchar* buff, ResourceRecord record) {
+    DnsHeader tempHeader {}; // to inverse the byte order
+    tempHeader.id = htons(header.id);
+    tempHeader.flags = htons(header.flags);
+    tempHeader.qdCount = htons(header.qdCount);
+    tempHeader.anCount = htons(header.anCount);
+    tempHeader.nsCount = htons(header.nsCount);
+    tempHeader.arCount = htons(header.arCount);
+    std::memcpy(buff, &tempHeader, sizeof(tempHeader));
+    int totalSize = sizeof(tempHeader);
+    if (header.anCount != 0) totalSize += encodeResourceRecord(record, buff + totalSize);
+    return totalSize;
+}
 int main(int argc, char *argv[]) {
-    
+
     int newsockfd;
     uint16_t portno;
     unsigned int clilen;
@@ -360,7 +417,7 @@ int main(int argc, char *argv[]) {
     //Идентификатор потока
     pthread_t clientTid;
     /* Сокет для прослушивания других клиентов */
-    sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sockfd < 0) {
         perror("ERROR opening socket");
     }
@@ -378,29 +435,36 @@ int main(int argc, char *argv[]) {
         perror("ERROR on binding");
         exit(1);
     }
-
+    uchar buff[512];
+    uchar rbuff[512];
+    int rsize;
     /*Слушаем клиентов */
     printf("Сервер запущен. Готов слушать\n");
-    
-    listen(sockfd, maxClients);
-    clilen = sizeof(cli_addr);
+    while (true) {
+        struct sockaddr_in caddr{};
+        int len = sizeof(caddr);
+        int s = recvfrom(sockfd, buff, 512, MSG_WAITALL, (sockaddr *) &caddr, (socklen_t *) &len);
+//        caddr.sin_port = ntohl(caddr.sin_port);
+        qMsgInit(buff, s);
+        printf("Addr: %d\n", ntohl(caddr.sin_addr.s_addr));
+        printf("Port: %d\n", ntohs(caddr.sin_port));
+        printf("Query message received.\n");
+        printf("ID: %d, MsgType: %hhu, RD: %d, RespCode: %hhu, QCnt: %d.\n",
+               getId(), getMessageType(),
+               isRecursionDesired(), getResponseCode(), getQuestionEntriesCount());
 
-    //Работа сервера
-    while (1){
-        /* Сокет для приёма новых клиентов */
-        newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-        if (newsockfd < 0) {
-            perror("ERROR on accept");
-            exit(1);
+        printf("Name: %s, Type: %hu, Class: %hu\n",
+               q.name.c_str(), (uint16_t) (q.type), (uint16_t) (q.qClass));
+
+        try {
+            printf("Query supported\n");
+            rsize = encode(rbuff,response(q,header));
+            printf("Send %d bytes\n", rsize);
+            sendto(sockfd, rbuff, rsize, 0, (sockaddr*)&caddr, (socklen_t)sizeof(caddr));
+        } catch (const std::exception &exception) {
+            encode(rbuff,respErr());
+            printf("Query not supported\n");
+            sendto(sockfd, rbuff, rsize, 0, (sockaddr*)&caddr, (socklen_t)sizeof(caddr));
         }
-        else{
-            m.lock();
-            //Добавление нового клиента в массив клиентов
-            clients.insert(newsockfd);
-            m.unlock();
-            //Создаем поток для клиента
-            pthread_create(&clientTid, nullptr, clientWorks, &newsockfd);
-        }
- 
     }
 }
