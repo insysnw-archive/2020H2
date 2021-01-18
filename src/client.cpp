@@ -13,7 +13,12 @@
 using namespace std;
 typedef unsigned char uchar;
 int sock;
-uchar msg[28+576];
+uchar yip[4];
+uchar mask[4];
+uchar host[4];
+uchar msg[576];
+int atime;
+int xid = rand();
 unsigned short csum(unsigned short *buf, int nwords)
 {
     unsigned long sum;
@@ -35,7 +40,6 @@ uchar* formMsg(int type) {
     *it = 0x01; it++;
     *it = 0x06; it++;
     *it = 0x00; it++;
-    int xid = rand();
     memcpy(it,&xid,4); it+=4;
     bzero(it,20); it+=20;
     struct ifreq ifr;
@@ -75,6 +79,16 @@ uchar* formMsg(int type) {
         *it = 53; it++;
         *it = 1; it++;
         *it = 1; it++;
+    } else if (type == 2) {
+        *it = 53; it++;
+        *it = 1; it++;
+        *it = 3; it++;
+        *it = 50; it++;
+        *it = 4; it++;
+        memcpy(it,yip,4); it+=4;
+        *it = 54; it++;
+        *it = 4; it++;
+        memcpy(it,host,4); it+=4;
     }
     *it = 0xFF; it+=1;
     return it;
@@ -88,31 +102,44 @@ void sendRequestToServer(int socket, char flag){
 //Получаем ответ от сервера
 void getResponseFromServer(){
     uchar* it = msg;
-    recv(sock,msg,244,MSG_WAITALL);
-    it += 244;
+    int r = recv(sock,msg,576,MSG_WAITALL);
+    memcpy(yip, msg+16, 4);
+    it += 240;
     uchar code = 0;
     while (code != 0xFF) {
-        recv(sock,it,1,MSG_WAITALL);
         code = *it; it++;
         switch(code) {
-            default: {
+            case 53: {
+                if (*(it+1) == 2) {
+                    printf("Offer\n");
+                }
+                if (*(it+1) == 5) {
+                    printf("ACK\n");
+                }
+                break;
+            }
+            case 54: {
+                memcpy(host,it+1,*it);
+                break;
+            }
+            case 1: {
+                memcpy(mask, it+1, *it);
+                break;
+            }
+            case 51: {
+                memcpy(&atime, it+1, *it);
+                atime = ntohl(atime);
                 break;
             }
         }
-        printf("%d\n",code);
-        recv(sock, it, 1, MSG_WAITALL); it++;
-        recv(sock, it, *(it-1), MSG_WAITALL); it+=*(it-1);
+        it++;
+        it+=*(it-1);
     }
 }
 
 //argv[2] - host; argv[3] - port
 int main(int argc, char *argv[]) {
-    int sock_fd;
-    uint16_t port_no;
-    struct sockaddr_in serv_addr{};
-    struct hostent *server;
-
-    if( (sock = socket(AF_INET, SOCK_RAW, IPPROTO_UDP)) == -1)
+    if( (sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     {
         perror("socket : ");
         return -1;
@@ -137,65 +164,8 @@ int main(int argc, char *argv[]) {
     s.sin_port = htons(68);
     bzero(&s.sin_zero, 8);
     s.sin_family = AF_INET;
-//    if (bind(sock,(sockaddr*)&s,sizeof(s)) < 0) return 0;
-//    u_int16_t src_port, dst_port;
-//    u_int32_t src_addr, dst_addr;
-//    src_addr = inet_addr(argv[1]);
-//    dst_addr = inet_addr(argv[3]);
-//    src_port = atoi(argv[2]);
-//    dst_port = atoi(argv[4]);
+    if (bind(sock,(sockaddr*)&s,sizeof(s)) < 0) printf("Failed to bind\n");
 
-//    int sock;
-    uchar* buffer = msg;
-    iphdr *ip = (struct iphdr *) buffer;
-    udphdr *udp = (struct udphdr *) (buffer + sizeof(iphdr));
-
-    struct sockaddr_in sin;
-    int one = 1;
-    const int *val = &one;
-    int PCKT_LEN = sizeof(iphdr) + sizeof(udphdr) + 576;
-    memset(buffer, 0, PCKT_LEN);
-
-    // create a raw socket with UDP protocol
-//    sd = socket(PF_INET, SOCK_RAW, IPPROTO_UDP);
-    if (sock < 0) {
-        perror("socket() error");
-        exit(2);
-    }
-    printf("OK: a raw socket is created.\n");
-
-    // inform the kernel do not fill up the packet structure, we will build our own
-//    if(setsockopt(sock, IPPROTO_IP, IP_HDRINCL, val, sizeof(one)) < 0) {
-//        perror("setsockopt() error");
-//        exit(2);
-//    }
-//    printf("OK: socket option IP_HDRINCL is set.\n");
-
-//    sin.sin_family = AF_INET;
-//    sin.sin_port = htons(dst_port);
-//    sin.sin_addr.s_addr = inet_addr("127.0.0.1");
-//
-//    // fabricate the IP header
-//    ip->ihl      = 5;
-//    ip->version  = 4;
-//    ip->tos      = 16; // low delay
-//    ip->tot_len  = sizeof(struct iphdr) + sizeof(struct udphdr);
-//    ip->id       = htons(54321);
-//    ip->ttl      = 64; // hops
-//    ip->protocol = 17; // UDP
-//    // source IP address, can use spoofed address here
-//    ip->saddr = src_addr;
-//    ip->daddr = dst_addr;
-//
-//    // fabricate the UDP header
-//    udp->source = htons(src_port);
-//    // destination port number
-//    udp->dest = htons(dst_port);
-//    udp->len = htons(sizeof(struct udphdr));
-//
-//    // calculate the checksum for integrity
-//    ip->check = csum((unsigned short *)buffer,
-//                     sizeof(struct iphdr) + sizeof(struct udphdr));
     uchar* end = formMsg(1);
     char ipd[] = "255.255.255.255";
     struct sockaddr_in si{};
@@ -204,10 +174,21 @@ int main(int argc, char *argv[]) {
     inet_aton( ipd, &si.sin_addr);
 
     /* send data */
-    size_t nBytes = send(sock, msg, end-msg, 0);
+    size_t nBytes = sendto(sock, msg, end-msg, 0,
+                           (sockaddr*)&si,(socklen_t)sizeof(si));
 
-    printf("Sent msg: %s, %d bytes with socket %d to %s\n", msg, nBytes, sock, ip);
+    printf("Sent msg: %s, %d bytes with socket %d to %s\n", msg, nBytes, sock, ipd);
     getResponseFromServer();
-
+    printf("New ip: %d.%d.%d.%d\n",yip[0],yip[1],yip[2],yip[3]);
+    printf("DHCP server: %d.%d.%d.%d\n",host[0],host[1],host[2],host[3]);
+    printf("Mask: %d.%d.%d.%d\n",mask[0],mask[1],mask[2],mask[3]);
+    end = formMsg(2);
+    nBytes = sendto(sock, msg, end-msg, 0,
+                           (sockaddr*)&si,(socklen_t)sizeof(si));
+    getResponseFromServer();
+    printf("New ip: %d.%d.%d.%d\n",yip[0],yip[1],yip[2],yip[3]);
+    printf("DHCP server: %d.%d.%d.%d\n",host[0],host[1],host[2],host[3]);
+    printf("Mask: %d.%d.%d.%d\n",mask[0],mask[1],mask[2],mask[3]);
+    printf("Lease time: %d hours\n", atime/3600);
     return 0;
 }
