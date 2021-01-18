@@ -1,6 +1,5 @@
-package com.dekinci.uni.net.first
+package com.dekinci.uni.net.first.nio
 
-import com.dekinci.uni.net.first.nio.NonBlockingServer
 import java.net.InetSocketAddress
 
 

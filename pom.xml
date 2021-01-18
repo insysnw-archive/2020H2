@@ -12,6 +12,9 @@
         <artifact.client>client</artifact.client>
         <artifact.server>server</artifact.server>
 
+        <artifact.nioclient>nioclient</artifact.nioclient>
+        <artifact.nioserver>nioserver</artifact.nioserver>
+
         <kotlin.version>1.4.21</kotlin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
@@ -139,6 +142,48 @@
                             <archive>
                                 <manifest>
                                     <mainClass>com.dekinci.uni.net.first.io.BlockingServerMainKt</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>${artifact.nioserver}</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>./</outputDirectory>
+                            <finalName>${artifact.nioserver}</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <archive>
+                                <manifest>
+                                    <mainClass>com.dekinci.uni.net.first.nio.NioServerMainKt</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>${artifact.nioclient}</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>./</outputDirectory>
+                            <finalName>${artifact.nioclient}</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <archive>
+                                <manifest>
+                                    <mainClass>com.dekinci.uni.net.first.nio.NioClientKt</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>

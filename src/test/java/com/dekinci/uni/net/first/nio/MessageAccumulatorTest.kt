@@ -34,7 +34,7 @@ internal class MessageAccumulatorTest {
 
         val builder = MessageAccumulator()
         buffer.flip()
-//        builder.read(channelWriter(channel), buffer)
+        builder.read(channelWriter(channel), buffer)
 
         assertEquals(MessageEncoder.messageType, builder.type)
         assertTrue(builder.ready)
@@ -49,11 +49,16 @@ internal class MessageAccumulatorTest {
         val channel = WritableByteChannelImpl()
 
         val builder = MessageAccumulator()
+        var extras = ByteArray(0)
         for (byte in data.first) {
+            buffer.put(extras)
             buffer.put(byte)
             buffer.flip()
-//            builder.read(channelWriter(channel), buffer)
+            builder.read(channelWriter(channel), buffer)
+            extras = ByteArray(buffer.remaining())
+            buffer.get(extras)
             buffer.clear()
+            assertTrue(extras.size < 4)
         }
 
         assertEquals(MessageEncoder.messageType, builder.type)
@@ -69,11 +74,16 @@ internal class MessageAccumulatorTest {
         val channel = WritableByteChannelImpl()
 
         val builder = MessageAccumulator()
+        var extras = ByteArray(0)
         for (byte in data.first) {
+            buffer.put(extras)
             buffer.put(byte)
             buffer.flip()
-//            builder.read(channelWriter(channel), buffer)
+            builder.read(channelWriter(channel), buffer)
+            extras = ByteArray(buffer.remaining())
+            buffer.get(extras)
             buffer.clear()
+            assertTrue(extras.size < 4)
         }
 
         assertEquals(MessageEncoder.messageType, builder.type)
@@ -90,11 +100,16 @@ internal class MessageAccumulatorTest {
         val channel = WritableByteChannelImpl()
 
         val builder = MessageAccumulator()
+        var extras = ByteArray(0)
         for (byte in data) {
+            buffer.put(extras)
             buffer.put(byte)
             buffer.flip()
-//            builder.read(channelWriter(channel), buffer)
+            builder.read(channelWriter(channel), buffer)
+            extras = ByteArray(buffer.remaining())
+            buffer.get(extras)
             buffer.clear()
+            assertTrue(extras.size < 4)
         }
 
         assertEquals(MessageEncoder.messageType, builder.type)
@@ -111,11 +126,16 @@ internal class MessageAccumulatorTest {
         val channel = WritableByteChannelImpl()
 
         val builder = MessageAccumulator()
+        var extras = ByteArray(0)
         for (byte in data) {
+            buffer.put(extras)
             buffer.put(byte)
             buffer.flip()
-//            builder.read(channelWriter(channel), buffer)
+            builder.read(channelWriter(channel), buffer)
+            extras = ByteArray(buffer.remaining())
+            buffer.get(extras)
             buffer.clear()
+            assertTrue(extras.size < 4)
         }
 
         assertEquals(MessageEncoder.messageType, builder.type)
@@ -138,7 +158,9 @@ internal class MessageAccumulatorTest {
         val channel = WritableByteChannelImpl()
 
         val builder = MessageAccumulator()
+        var extras = ByteArray(0)
 
+        buffer.put(extras)
         buffer.put(byteArrayOf(MessageEncoder.messageType.toByte()) +
                 encodeInt(2) +
                 encodeInt(key1.size) +
@@ -147,27 +169,42 @@ internal class MessageAccumulatorTest {
                 value1.slice(0 until MessageEncoder.chunkSize)
         )
         buffer.flip()
-//        builder.read(channelWriter(channel), buffer)
+        builder.read(channelWriter(channel), buffer)
+        extras = ByteArray(buffer.remaining())
+        buffer.get(extras)
         buffer.clear()
+        assertTrue(extras.size < 4)
         assertEquals(2, channel.writes)
 
+        buffer.put(extras)
         buffer.put(byteArrayOf() + value1.slice(MessageEncoder.chunkSize until value1.size))
         buffer.flip()
-//        builder.read(channelWriter(channel), buffer)
+        builder.read(channelWriter(channel), buffer)
+        extras = ByteArray(buffer.remaining())
+        buffer.get(extras)
         buffer.clear()
+        assertTrue(extras.size < 4)
         assertEquals(3, channel.writes)
 
+        buffer.put(extras)
         buffer.put(encodeInt(key2.size) + key2 +
                 encodeInt(value2.size) + value2.slice(0 until MessageEncoder.chunkSize))
         buffer.flip()
-//        builder.read(channelWriter(channel), buffer)
+        builder.read(channelWriter(channel), buffer)
+        extras = ByteArray(buffer.remaining())
+        buffer.get(extras)
         buffer.clear()
+        assertTrue(extras.size < 4)
         assertEquals(5, channel.writes)
 
+        buffer.put(extras)
         buffer.put(byteArrayOf() + value2.slice(MessageEncoder.chunkSize until value1.size))
         buffer.flip()
-//        builder.read(channelWriter(channel), buffer)
+        builder.read(channelWriter(channel), buffer)
+        extras = ByteArray(buffer.remaining())
+        buffer.get(extras)
         buffer.clear()
+        assertTrue(extras.size < 4)
         assertEquals(6, channel.writes)
 
         assertEquals(MessageEncoder.messageType, builder.type)
