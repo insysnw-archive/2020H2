@@ -2,8 +2,8 @@ package com.handtruth.net.lab3.nrating
 
 import com.handtruth.kommon.Log
 import com.handtruth.kommon.default
-import com.handtruth.net.lab3.message.readMessage
-import com.handtruth.net.lab3.message.writeMessage
+import com.handtruth.net.lab3.message.Message
+import com.handtruth.net.lab3.message.transmitter
 import com.handtruth.net.lab3.nrating.messages.DisconnectMessage
 import com.handtruth.net.lab3.nrating.messages.QueryMessage
 import com.handtruth.net.lab3.nrating.messages.QueryResponseMessage
@@ -16,29 +16,45 @@ import com.handtruth.net.lab3.options.toOptions
 import com.handtruth.net.lab3.util.validate
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.coroutines.CoroutineContext
 
 class RequestFailedException(message: String) : RuntimeException(message)
 class DisconnectException(message: String) : RuntimeException(message)
 
 class ClientAPI(
-    private val readChannel: ByteReadChannel,
-    private val writeChannel: ByteWriteChannel
-): Closeable {
+    readChannel: ByteReadChannel,
+    writeChannel: ByteWriteChannel,
+    coroutineContext: CoroutineContext
+): Closeable, CoroutineScope {
     private val log = Log.default("nrating/client/api")
+
+    override val coroutineContext = coroutineContext + log + CoroutineName("nrating/client/api")
 
     private val mutex = Mutex()
 
+    private val recv: ReceiveChannel<Message>
+    private val send: SendChannel<Message>
+
+    init {
+        val pair = transmitter(readChannel, writeChannel)
+        recv = pair.first
+        send = pair.second
+    }
+
     private suspend fun request(query: QueryMessage): QueryResponseMessage = mutex.withLock {
         log.info { "request:  $query" }
-        writeChannel.writeMessage(query)
-        writeChannel.flush()
-        val result = readChannel.readMessage()
+        send.send(query)
+        val result = recv.receive()
         log.info { "response: $result" }
         if (result is DisconnectMessage) {
-            writeChannel.close()
-            readChannel.cancel()
+            close()
             val error = result.getOption<ErrorMessageOption>().name
             log.error { "disconnected with error: $error" }
             throw DisconnectException(error)
@@ -100,7 +116,7 @@ class ClientAPI(
     suspend fun removeTopic(id: Int) = action(id, QueryMethod.DEL)
 
     override fun close() {
-        readChannel.cancel()
-        writeChannel.close()
+        send.close()
+        recv.cancel()
     }
 }
