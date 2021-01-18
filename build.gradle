@@ -25,6 +25,10 @@ compileKotlin {
     kotlinOptions.jvmTarget = '1.8'
 }
 
+run {
+    standardInput = System.in
+}
+
 application {
     mainClassName = 'ClientKt'
 }
