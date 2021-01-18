@@ -1,0 +1,12 @@
+Index: .idea/vcs.xml
+===================================================================
+--- .idea/vcs.xml	(revision 184175dc3ded3e7ea0e7def31cde21314beb7c67)
++++ .idea/vcs.xml	(revision 184175dc3ded3e7ea0e7def31cde21314beb7c67)
+@@ -1,6 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project version="4">
+-  <component name="VcsDirectoryMappings">
+-    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+-  </component>
+-</project>
+\ No newline at end of file
