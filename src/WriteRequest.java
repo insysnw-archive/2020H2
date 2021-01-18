@@ -62,7 +62,7 @@ class WriteRequest extends Thread {
                                 if (p.blockNumber() != blkNum) {
                                     throw new SocketTimeoutException();
                                 }
-                                //write to the file and send ack
+                                // write to the file and send ack
                                 bytesOut = p.write(outFile);
                                 AckPacket ackPacket = new AckPacket(blkNum);
                                 ackPacket.send(host, port, sock);

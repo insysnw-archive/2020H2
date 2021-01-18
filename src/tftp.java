@@ -34,7 +34,6 @@ public class tftp {
         }
     }
 
-    static boolean isRun = false;
 
     private static void startServer() {
         try {
@@ -45,17 +44,10 @@ public class tftp {
                 TftpPacket in = TftpPacket.receive(socket);
                 if (in instanceof ReadPacket) {
                     System.out.println("Read Request from " + in.getAddress());
-                    if (!isRun) {
-                        new ReadRequest((ReadPacket) in);
-                        isRun = true;
-                    }
-
+                    new ReadRequest((ReadPacket) in);
                 } else if (in instanceof WritePacket) {
                     System.out.println("Write Request from " + in.getAddress());
-                    if (!isRun) {
-                        new WriteRequest((WritePacket) in);
-                        isRun = true;
-                    }
+                    new WriteRequest((WritePacket) in);
                 }
             }
         } catch (SocketException e) {
