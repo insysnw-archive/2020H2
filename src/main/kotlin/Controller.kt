@@ -2,84 +2,58 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import model.*
-import java.net.Socket
+import model.ERROR_CODE
+import model.IndexData
+import model.MailData
+import model.SUCCESS_CODE
+import model.ServerMessage
+import model.UserNameData
 import kotlin.concurrent.thread
 import kotlin.system.exitProcess
 
-fun sendLoginSteward(name : String, type: String) {
-    val emailData = User(name, type)
+fun sendLogin(email: String) {
+    val emailData = UserNameData(email)
     val nameJson: String = Json.encodeToString(emailData)
     val resArr = byteArrayOf(0) + nameJson.toByteArray()
     socket.getOutputStream().write(resArr)
-    thread { getLoginStewardResponse(emailData.type) }
+    thread { getLoginResponse() }
 }
 
-fun getLoginStewardResponse(type: String) {
-    val buf = ByteArray(maxSize)
-    socket.getInputStream().read(buf)
-
-    when (buf.firstOrNull()) {
-        SUCCESS_CODE -> {
-            if (type == "steward") {
-                print(SUCCESS_STRING)
-                isAuthSteward = true
-            }
-            if (type == "participant") {
-                print(SUCCESS_STRING)
-                isAuthParticipant = true
-            }
-        }
-        ERROR_CODE -> print(ERROR_STRING)
-    }
-    processServerMsg(buf)
-}
-
-fun addItem(name: String, price: Int) {
-    socket.getOutputStream().write(
-        byteArrayOf(3) + Json.encodeToString(
-            Item(
-                name,
-                price,
-                null
-            )
-        ).toByteArray()
-    )
-    thread { getAddItem() }
-}
-
-fun bet(name: String, price: Int, owner: String) {
-    socket.getOutputStream().write(
-        byteArrayOf(1) + Json.encodeToString(
-            Item(
-                name,
-                price,
-                owner
-            )
-        ).toByteArray()
-    )
-    thread { getBet() }
-}
-
-fun getBet() {
+fun getLoginResponse() {
     val buf = ByteArray(maxSize)
     socket.getInputStream().read(buf)
 
     when (buf.firstOrNull()) {
         SUCCESS_CODE -> {
             print(SUCCESS_STRING)
+            isAuth = true
         }
         ERROR_CODE -> print(ERROR_STRING)
     }
     processServerMsg(buf)
 }
 
-fun getAddItem() {
+fun sendMail(toEmail: String, header: String, content: String) {
+    socket.getOutputStream().write(
+        byteArrayOf(1) + Json.encodeToString(
+            MailData(
+                to = toEmail,
+                header = header,
+                content = content,
+                time = getCurrTimeStr()
+            )
+        ).toByteArray()
+    )
+    thread { getSendMailResponse() }
+}
+
+fun getSendMailResponse() {
     val buf = ByteArray(maxSize)
     socket.getInputStream().read(buf)
 
     when (buf.firstOrNull()) {
         SUCCESS_CODE -> {
+            isAuth = true
             print(SUCCESS_STRING)
         }
         ERROR_CODE -> print(ERROR_STRING)
@@ -99,16 +73,18 @@ fun getReadResponse() {
     when (buf.firstOrNull()) {
         SUCCESS_CODE -> {
             print(SUCCESS_STRING)
-            val responseBody = Json.decodeFromString(ListSerializer(Item.serializer()), buf.getMsg())
+            val responseBody = Json.decodeFromString(ListSerializer(MailData.serializer()), buf.getMsg())
             if (responseBody.isEmpty()) {
-                println("No items")
+                println("Mailbox is empty")
             } else {
                 println()
-                responseBody.mapIndexed { index, item ->
+                responseBody.mapIndexed { index, mailData ->
                     println(
-                        "[$index] from: ${item.name}\n" +
-                            "    name: ${item.price}\n" +
-                            "    header: ${item.owner}\n"
+                        "[$index] from: ${mailData.from}\n" +
+                            "    to: ${mailData.to}\n" +
+                            "    header: ${mailData.header}\n" +
+                            "    content: ${mailData.content}\n" +
+                            "    time: ${mailData.time}\n"
                     )
                 }
             }
@@ -122,29 +98,23 @@ fun getReadResponse() {
     printConsoleLine()
 }
 
+fun sendDeleteRequest(index: Int) {
+    socket.getOutputStream().write(byteArrayOf(3) + Json.encodeToString(IndexData(index)).toByteArray())
+    thread { getSimpleResponse() }
+}
+
 fun sendQuitRequest(isExit: Boolean) {
-    socket.getOutputStream().write(byteArrayOf(5))
-    thread { getQuitResponse(isExit) }
-}
-
-fun sendAuctionEndingRequest() {
     socket.getOutputStream().write(byteArrayOf(4))
-    thread {
-        getAuctionEndingRequest()
-    }
-}
-
-fun getAuctionEndingRequest() {
-    getReadResponse()
+    thread { getQuitResponse(isExit) }
 }
 
 fun getQuitResponse(isExit: Boolean) {
     val buf = ByteArray(maxSize)
     socket.getInputStream().read(buf)
+
     when (buf.firstOrNull()) {
         SUCCESS_CODE -> {
-            isAuthSteward = false
-            isAuthParticipant = false
+            isAuth = false
             print(SUCCESS_STRING)
         }
         ERROR_CODE -> print(ERROR_STRING)
@@ -154,6 +124,17 @@ fun getQuitResponse(isExit: Boolean) {
         socket.close()
         exitProcess(0)
     }
+}
+
+fun getSimpleResponse() {
+    val buf = ByteArray(maxSize)
+    socket.getInputStream().read(buf)
+
+    when (buf.firstOrNull()) {
+        SUCCESS_CODE -> print(SUCCESS_STRING)
+        ERROR_CODE -> print(ERROR_STRING)
+    }
+    processServerMsg(buf)
 }
 
 private fun processServerMsg(buf: ByteArray) {

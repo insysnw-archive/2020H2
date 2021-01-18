@@ -8,8 +8,7 @@ var port = 9999
 var host = "127.0.0.1"
 lateinit var socket: Socket
 
-var isAuthSteward = false
-var isAuthParticipant = false
+var isAuth = false
 
 fun main(args: Array<String>) {
     if (args.isNotEmpty()) {
@@ -38,10 +37,9 @@ fun parseInput(inputString: String) {
     when (val command = args.firstOrNull()) {
         "login" -> {
             if (isCorrectLoginCommand(args)) {
-                if (!isAuthSteward && !isAuthParticipant) {
-                    val email = args[2]
-                    val type = args[4]
-                    sendLoginSteward(email, type)
+                if (!isAuth) {
+                    val email = args[1]
+                    sendLogin(email)
                 } else {
                     printConsoleLine()
                     println("You're already authorized. Print 'quit' to unauthorized")
@@ -50,12 +48,13 @@ fun parseInput(inputString: String) {
                 printIncorrectFormatError(command)
             }
         }
-        "add" -> {
-            if (isAuthSteward) {
-                if (isCorrectAddItemCommand(args)) {
+        "send" -> {
+            if (isAuth) {
+                if (isCorrectMailCommand(args)) {
                     val toEmail = args[2]
-                    val header = args[4].toInt()
-                    addItem(toEmail, header)
+                    val header = args[4]
+                    val content = args.slice(6 until args.size).joinToString(separator = " ")
+                    sendMail(toEmail, header, content)
                 } else {
                     printIncorrectFormatError(command)
                 }
@@ -64,16 +63,17 @@ fun parseInput(inputString: String) {
             }
         }
         "read" -> {
-            if (isAuthParticipant) {
+            if (isAuth) {
                 sendReadRequest()
             } else {
                 printNotAuthError()
             }
         }
-        "stop" -> {
-            if (isCorrectCommand(args)) {
-                if (isAuthSteward) {
-                    sendAuctionEndingRequest()
+        "delete" -> {
+            if (isCorrectDeleteCommand(args)) {
+                if (isAuth) {
+                    val index = args[1]
+                    sendDeleteRequest(index.toInt())
                 } else {
                     printNotAuthError()
                 }
@@ -81,28 +81,17 @@ fun parseInput(inputString: String) {
                 printIncorrectFormatError(command)
             }
         }
-        "bet" -> {
-            if (isAuthParticipant) {
-                if (isCorrectChangeItemCommand(args)) {
-                    val name = args[2]
-                    val price = args[4].toInt()
-                    val owner = args[6]
-                    bet(name, price, owner)
-                } else {
-                    printIncorrectFormatError(command)
-                }
-            } else {
-                printNotAuthError()
-            }
-        }
         "quit" -> {
-            if (isAuthSteward || isAuthParticipant) {
+            if (isAuth) {
                 sendQuitRequest(false)
             } else {
                 printNotAuthError()
             }
         }
-        "exit" ->  {
+        "help" -> printHelp()
+        "exit" -> if (isAuth) {
+            sendQuitRequest(true)
+        } else {
             socket.close()
             exitProcess(0)
         }
@@ -110,16 +99,10 @@ fun parseInput(inputString: String) {
     }
 }
 
-fun isCorrectChangeItemCommand(args: List<String>): Boolean =
-    (args.size == 7 && args[1] == "-name" && args[3] == "-price" && args[5] == "-owner")
+fun isCorrectLoginCommand(args: List<String>): Boolean = args.size == 2
 
+fun isCorrectDeleteCommand(args: List<String>): Boolean = (args.size == 2 && args[1].toIntOrNull() != null)
 
-fun isCorrectLoginCommand(args: List<String>): Boolean =
-    (args.size == 5 && args[3] == "-type" && args[1] == "-name")
+fun isCorrectMailCommand(args: List<String>): Boolean =
+    (args[1] == "-to" && args[3] == "-header" && args[5] == "-content")
 
-
-fun isCorrectAddItemCommand(args: List<String>): Boolean =
-    (args.size == 5 && args[1] == "-name" && args[3] == "-price")
-
-fun isCorrectCommand(args: List<String>): Boolean =
-    args.size == 1
