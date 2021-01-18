@@ -1,0 +1,7 @@
+E:\Education\7Sem\Nets\Labs2\NtpServer\NtpServer\bin\Debug\NtpServer.exe.config
+E:\Education\7Sem\Nets\Labs2\NtpServer\NtpServer\bin\Debug\NtpServer.exe
+E:\Education\7Sem\Nets\Labs2\NtpServer\NtpServer\bin\Debug\NtpServer.pdb
+E:\Education\7Sem\Nets\Labs2\NtpServer\NtpServer\obj\Debug\NtpServer.csprojAssemblyReference.cache
+E:\Education\7Sem\Nets\Labs2\NtpServer\NtpServer\obj\Debug\NtpServer.csproj.CoreCompileInputs.cache
+E:\Education\7Sem\Nets\Labs2\NtpServer\NtpServer\obj\Debug\NtpServer.exe
+E:\Education\7Sem\Nets\Labs2\NtpServer\NtpServer\obj\Debug\NtpServer.pdb
