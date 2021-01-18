@@ -17,6 +17,11 @@ import kotlin.time.ExperimentalTime
 object Server {
     private val selector = ActorSelectorManager(Dispatchers.IO)
 
+    private fun warn(condition: Boolean, message: String) {
+        if (!condition)
+            println(message)
+    }
+
     @ExperimentalTime
     @JvmStatic
     fun main(args: Array<String>) = runBlocking {
@@ -54,18 +59,14 @@ object Server {
                     println("Входящая дейтаграмма от ${inDgram.address}")
                     val incoming = Packet.decode(inDgram.packet)
                     println("Получено: $incoming")
-                    check(incoming.mode == Packet.Mode.Client) {
-                        "недопустимое значение mode: ${incoming.mode}"
-                    }
-                    check(incoming.poll in MINPOLL..MAXPOLL) {
-                        "недопустимое значение poll: ${incoming.poll}"
-                    }
-                    check(incoming.version <= VERSION) {
-                        "недопустимое значение version: ${incoming.version}"
-                    }
-                    check(incoming.rootDispersion.toDuration() in MINDISP..MAXDISP) {
-                        "недопустимое значение rootDispersion: ${incoming.rootDispersion.toDuration()}"
-                    }
+                    warn(incoming.mode == Packet.Mode.Client,
+                            "Недопустимое значение mode: ${incoming.mode}")
+                    warn(incoming.poll in MINPOLL..MAXPOLL,
+                            "Недопустимое значение poll: ${incoming.poll}")
+                    warn(incoming.version <= VERSION,
+                            "Недопустимое значение version: ${incoming.version}")
+                    warn(incoming.rootDispersion.toDuration() in MINDISP..MAXDISP,
+                            "Недопустимое значение rootDispersion: ${incoming.rootDispersion.toDuration()}")
 
                     val t3 = Clock.System.now().toNTPTimestamp()
                     val toSend = Packet(
