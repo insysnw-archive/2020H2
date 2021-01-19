@@ -42,9 +42,9 @@ int QueryMessage::decodeQuery(const char *buffer) {
     } while (length != 0);
 
     std::memcpy(&query.type, buffer, sizeof(query.type));
-    query.type = static_cast<QType>((uint16_t) bswap_16(query.type));
+    query.type = static_cast<QType>((uint16_t) bswap_16((uint16_t) query.type));
     std::memcpy(&query.qClass, buffer + sizeof(query.type), sizeof(query.qClass));
-    query.qClass = static_cast<QClass>((uint16_t) bswap_16(query.qClass));
+    query.qClass = static_cast<QClass>((uint16_t) bswap_16((uint16_t) query.qClass));
     queries.push_back(query);
     return totalLength + (int) sizeof(query.type) + (int) sizeof(query.qClass);
 }
