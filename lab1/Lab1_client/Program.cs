@@ -1,20 +1,54 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Lab1_client
 {
-    internal class Program
+    internal static class Program
     {
-        private static bool CheckHead(byte[] buffer, int n)
+        private struct MsgHead
         {
-            return buffer[0] != 99 || buffer[1] != 130 || buffer[n - 1] != 255;
+            public uint Size;
+            public DateTime Time;
+            public string Nik;
         }
+
+        private static MsgHead UnpackMsgHead(IReadOnlyCollection<byte> packet) => new MsgHead
+            {
+                Size = BitConverter.ToUInt32(packet.Skip(2).Take(4).ToArray()) / 2,
+                Time = new DateTime(1970, 1, 1) +
+                       TimeSpan.FromSeconds(BitConverter.ToUInt64(packet.Skip(6).Take(8).ToArray())),
+                Nik = packet.Count != 15
+                    ? Encoding.Unicode.GetString(packet.Skip(14).SkipLast(1).ToArray())
+                        .Trim('\u8263', '\u0000', '\n', '\uff00', '�', 'ÿ')
+                    : string.Empty
+            };
+
+        private static byte[] PackMsgHead(MsgHead head) => new byte[] {99, 130}
+            .Concat(BitConverter.GetBytes(head.Size * 2))
+            .Concat(BitConverter.GetBytes((ulong) ((DateTimeOffset) head.Time).ToUnixTimeSeconds()))
+            .Append((byte) 0xff).ToArray();
+
+        private static byte[] PackCode(int code) => new byte[] {99, 130, (byte) code, 0xff};
+        private static int UnpackCode(byte[] packet) => packet[2];
+
+        private static byte[] PackMsg(string msg) => new byte[] {99, 130}
+            .Concat(Encoding.Unicode.GetBytes(msg)).Append((byte) 0xff).ToArray();
+
+        private static string UnpackMsg(IEnumerable<byte> packet, int i) =>
+            Encoding.Unicode.GetString(packet.Skip(2).Take(i - 3).ToArray())
+                .Trim('\u8263', '\u0000', '\n', '\uff00', '�', 'ÿ');
+
+        private static bool IsValidPacket(IReadOnlyList<byte> packet, int i) =>
+            packet[0] == 99 && packet[1] == 130 && packet[i-1] == 0xff;
 
         private static void Main(string[] args)
         {
@@ -25,99 +59,160 @@ namespace Lab1_client
                 return;
             }
 
+            IPAddress adr;
+            if (Regex.IsMatch(args[0], @"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"))
+            {
+                try
+                {
+                    adr = IPAddress.Parse(args[0]);
+                }
+                catch (FormatException)
+                {
+                    Console.Error.WriteLine("An invalid IP address was specified");
+                    return;
+                }
+            }
+            else
+            {
+                adr = Dns.GetHostEntry(args[0]).AddressList[0];
+            }
+
             var port = Convert.ToInt32(args[1]);
             var nik = args[2];
+            if (nik.Length > 2000)
+            {
+                Console.Error.WriteLine("An invalid nik was specified");
+                return;
+            }
 
             var tcp = new TcpClient();
             var cancel = new CancellationTokenSource();
+            NetworkStream socket;
             try
             {
-                tcp.Connect(IPAddress.Parse(args[0]), port);
-                var socket = tcp.GetStream();
-                var tmp = new byte[] {99, 130}
-                    .Concat(Encoding.Unicode.GetBytes(nik)).Append((byte) 255)
-                    .ToArray();
-                socket.Write(tmp, 0, tmp.Length);
-                
-                var incoming = Task.Factory.StartNew(ct =>
+                tcp.Connect(adr, port);
+                socket = tcp.GetStream();
+                socket.Write(PackMsg(nik));
+                byte[] buf;
+                int size;
+                while (true)
                 {
-                    CancellationToken c = (CancellationToken) ct;
-                    while (!c.IsCancellationRequested)
+                    buf = new byte[4096];
+                    size = socket.Read(buf);
+                    if (size == 4)
                     {
-                        var tmp = new byte[1024];
-                        var n = socket.Read(tmp);
-                        if (!CheckHead(tmp, n))
+                        switch (UnpackCode(buf))
                         {
-                            var size = BitConverter.ToUInt32(tmp.Skip(2).Take(4).ToArray()) / 2;
-                            if (size == 0)
-                            {
-                                return;
-                            }
+                            case 1:
+                                Console.WriteLine("Incorrect nik");
+                                break;
+                            case 2:
+                                Console.WriteLine("Nik already existed");
+                                break;
+                        }
+                        Console.Write("Choose another nickname\n>");
+                        nik = Console.ReadLine();
+                        socket.Write(PackMsg(nik));
+                    }
+                    else break;
+                }
+                Console.WriteLine("Server`s welcome message: {0}", UnpackMsg(buf, size));
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine("Exception {0}", ex);
+                return;
+            }
 
-                            var nsize = BitConverter.ToInt32(tmp.Skip(6).Take(4).ToArray());
+            void IncomingTask(object? ct)
+            {
+                Debug.Assert(ct != null, nameof(ct) + " != null");
+                var c = (CancellationToken) ct;
+                while (!c.IsCancellationRequested)
+                {
+                    var tmp = new byte[4096];
+                    var n = socket.Read(tmp);
+                    switch (n)
+                    {
+                        case 4:
+                            Console.WriteLine("Server disconnect us T.T");
+                            return;
+                        case 0:
+                            Console.WriteLine("Connection error");
+                            return;
+                    }
 
-                            DateTime dt = new DateTime(1970, 1, 1) +
-                                         TimeSpan.FromSeconds(BitConverter.ToUInt64(tmp.Skip(10).Take(8).ToArray()));
+                    if (!IsValidPacket(tmp, n))
+                    {
+                        Console.WriteLine("incorrect head message");
+                        continue;
+                    }
 
-                            var nik = Encoding.Unicode.GetString(tmp.Skip(18).Take(nsize).ToArray())
-                                .Trim(Convert.ToChar(0), '\n', '�');
-                            var text = new StringBuilder(Encoding.Unicode.GetString(tmp.Skip(18 + nsize).ToArray())
-                                .Trim(Convert.ToChar(0x8263), Convert.ToChar(0), '\n', Convert.ToChar(0xff00)));
-                            for (var i = text.Length; i < size;)
-                            {
-                                n = socket.Read(tmp);
-                                text.Append(Encoding.Unicode.GetString(tmp.Take(n).ToArray())
-                                    .Trim('\u8263', '\u0000', '\n', '\uff00', '�', 'ÿ'));
-                                i += n;
-                            }
+                    var head = UnpackMsgHead(tmp);
+                    n = socket.Read(tmp);
 
-                            Console.WriteLine("[{0:g}] <{1}> {2}", dt, nik, text.ToString().Trim('ÿ'));
+                    var msg = new StringBuilder();
+                    if (n == 4096 && head.Size > 4093)
+                    {
+                        msg.Append(Encoding.Unicode.GetString(tmp.Skip(2).ToArray()));
+                        while (msg.Length < head.Size)
+                        {
+                            n = socket.Read(tmp);
+                            msg.Append(n < 4096
+                                ? Encoding.Unicode.GetString(tmp)
+                                : Encoding.Unicode.GetString(tmp.Take(n - 1).ToArray()));
                         }
                     }
-                }, cancel.Token, cancel.Token);
-                var output = Task.Factory.StartNew(ct =>
+                    else
+                        msg.Append(UnpackMsg(tmp, n));
+
+                    Console.WriteLine("\n-> [{0:g}] <{1}> {2}\n>", head.Time, head.Nik, msg);
+                }
+            }
+            
+            void OutcomingTask(object? ct)
+            {
+                Debug.Assert(ct != null, nameof(ct) + " != null");
+                var c = (CancellationToken) ct;
+                while (!c.IsCancellationRequested)
                 {
-                    CancellationToken c = (CancellationToken) ct;
-                    while (!c.IsCancellationRequested)
+                    Console.Write(">");
+                    try
                     {
                         string text;
                         do
                         {
                             text = (Console.ReadLine() ?? "").Trim();
-                        } while (text.Length < 0);
-                        socket.Write(new byte[] {99, 130}
-                            .Concat(BitConverter.GetBytes(text.Length * 2))
-                            .Concat(BitConverter.GetBytes((ulong) DateTimeOffset.Now.ToUnixTimeSeconds()))
-                            .Append((byte) 0x00).Append((byte) 0xff)
-                            .ToArray());
-                        socket.Write(new byte[] {99, 130}
-                            .Concat(Encoding.Unicode.GetBytes(text))
-                            .Append((byte) 0x00).Append((byte) 0xff).ToArray());
+                        } while (text.Length <= 0);
+
+                        socket.Write(PackMsgHead(new MsgHead {Size = (uint) text.Length, Time = DateTime.Now}));
+                        socket.Write(PackMsg(text));
                     }
-                }, cancel.Token, cancel.Token);
-                Console.CancelKeyPress += (sender, eventArgs) =>
-                {
-                    Console.WriteLine("Shutting down");
-                    try
+                    catch (Exception)
                     {
-                        cancel.Cancel();
-                        incoming.Wait(cancel.Token);
+                        // ignored
                     }
-                    catch (OperationCanceledException)
-                    {
-                        // output.Dispose();
-                        // incoming.Dispose();
-                        socket.Close();
-                        tcp.Close();
-                    }
-                };
-                output.Wait(cancel.Token);
-                incoming.Wait(cancel.Token);
+                }
             }
-            catch (Exception ex)
+
+
+            var incoming = Task.Factory.StartNew(IncomingTask, cancel.Token, cancel.Token);
+            Task.Factory.StartNew(OutcomingTask, cancel.Token, cancel.Token);
+
+            void ExitEvent(object sender, ConsoleCancelEventArgs eventArgs)
             {
-                Console.WriteLine("Exception {0}", ex);
+                Console.WriteLine("Shutting down");
+                cancel.Cancel();
+                socket.Write(PackCode(0));
+                socket.Close();
+                tcp.Close();
+                Environment.Exit(0);
             }
+
+            Console.CancelKeyPress += ExitEvent;
+            incoming.Wait(cancel.Token);
+            ExitEvent(null, null);
         }
+
     }
 }
