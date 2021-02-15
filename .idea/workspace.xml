@@ -2,38 +2,24 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="482b27bc-62cc-40ba-954f-8a7b17061693" name="Default Changelist" comment="fixes">
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/Client/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/Client.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Client/Client.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/out/artifacts/Client_jar/Client.jar" beforeDir="false" afterPath="$PROJECT_DIR$/Client/out/artifacts/Client_jar/Client.jar" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/META-INF/MANIFEST.MF" beforeDir="false" afterPath="$PROJECT_DIR$/Client/out/production/Client/META-INF/MANIFEST.MF" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow$1.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow$2.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow$3.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow$4.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow$5.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/ClientWindow.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/lyalin/Main.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/src/META-INF/MANIFEST.MF" beforeDir="false" afterPath="$PROJECT_DIR$/Client/src/META-INF/MANIFEST.MF" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/src/com/alexandr/lyalin/ClientWindow.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/src/com/alexandr/lyalin/Main.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/Server/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/Server/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/Server.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Server/Server.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/out/artifacts/Server_jar/Server.jar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/out/production/Server/META-INF/MANIFEST.MF" beforeDir="false" afterPath="$PROJECT_DIR$/Server/out/production/Server/META-INF/MANIFEST.MF" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/lyalin/ClientHandler.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/lyalin/Main.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/lyalin/Server$1.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/lyalin/Server$2.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/lyalin/Server.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/src/META-INF/MANIFEST.MF" beforeDir="false" afterPath="$PROJECT_DIR$/Server/src/META-INF/MANIFEST.MF" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/src/com/alexandr/lyalin/ClientHandler.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/src/com/alexandr/lyalin/Main.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/src/com/alexandr/lyalin/Server.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client$2.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client.class" beforeDir="false" afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Main.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/protocol/ClientMessege.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/src/com/alexandr/client/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/Client/src/com/alexandr/client/Client.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/src/com/alexandr/client/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/Client/src/com/alexandr/client/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Server/out/artifacts/Server_jar/Server.jar" beforeDir="false" afterPath="$PROJECT_DIR$/Server/out/artifacts/Server_jar/Server.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/protocol/ClientMessege.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/ClientHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/ClientHandler.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Main.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Server$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Server$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Server.class" beforeDir="false" afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Server.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Server/src/com/alexandr/server/ClientHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/Server/src/com/alexandr/server/ClientHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Server/src/com/alexandr/server/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/Server/src/com/alexandr/server/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Server/src/com/alexandr/server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/Server/src/com/alexandr/server/Server.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -96,7 +82,14 @@
       <option name="project" value="LOCAL" />
       <updated>1610636777206</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="fixes">
+      <created>1613394272969</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1613394272969</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
