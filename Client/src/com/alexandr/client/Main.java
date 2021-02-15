@@ -5,10 +5,10 @@ import java.util.Scanner;
 public class Main {
 
     public static void main(String[] args) {
+        System.out.println("Введите порт сервера: ");
         Scanner scan = new Scanner(System.console().readLine());
         int port  = 0;
         String name = "";
-        System.out.println("Введите порт сервера: ");
         if(scan.hasNext()){
             port = scan.nextInt();
         }
@@ -20,7 +20,6 @@ public class Main {
         }
         sc.close();
         Client client = new Client(port,name);
-        //Client client = new Client(6666,"AlexeyNavaly");
         client.run();
     }
 
