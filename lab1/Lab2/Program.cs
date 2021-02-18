@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,114 +13,163 @@ namespace Lab2
 {
     internal static class Program
     {
-        private static List<Socket> Pull = new List<Socket>();
-        private static List<Task> Tasks = new List<Task>();
-
-        private static bool CheckHead(byte[] buffer, int n)
+        private static readonly List<Socket> Pull = new List<Socket>();
+        private static List<string> Niks = new List<string>();
+        
+        private readonly struct MsgHead
         {
-            return buffer[0] != 99 || buffer[1] != 130 || buffer[n - 1] != 255;
-        }
+            public readonly uint Size;
+            public readonly DateTime Time;
 
-        private static string Handshake(Socket socket)
-        {
-            var buffer = new byte[1024];
-            var n = socket.Receive(buffer);
-            if (CheckHead(buffer, n))
+            public MsgHead(byte[] packet)
             {
-                Console.WriteLine("Client not send handshake packet");
-                socket.Close();
-                return "";
+                Size = BitConverter.ToUInt32(packet.Skip(2).Take(4).ToArray()) / 2;
+                Time = new DateTime(1970, 1, 1) +
+                        TimeSpan.FromSeconds(BitConverter.ToUInt64(packet.Skip(6).Take(8).ToArray()));
             }
 
-            var nik = Encoding.Unicode.GetString(buffer.Skip(2).Take(n - 3).ToArray()).Trim();
-            Console.WriteLine("New client: " + nik);
-            string msg = "Hello! Glad to see you " + nik + " on our server";
-
-            socket.Send(new byte[] {99, 130}
-                .Concat(BitConverter.GetBytes(msg.Length * 2))
-                .Concat(BitConverter.GetBytes("Server".Length * 2))
-                .Concat(BitConverter.GetBytes((ulong) DateTimeOffset.Now.ToUnixTimeSeconds()))
-                .Concat(Encoding.Unicode.GetBytes("Server"))
-                .Append((byte) 0x00).Append((byte) 0xff)
-                .ToArray());
-
-            socket.Send(new byte[] {99, 130}
-                .Concat(Encoding.Unicode.GetBytes(msg))
-                .Append((byte) 0x00).Append((byte) 0xff)
-                .ToArray());
-            return nik;
+            public byte[] GetHead(string nik) => new byte[] {99, 130}
+                .Concat(BitConverter.GetBytes(Size * 2))
+                .Concat(BitConverter.GetBytes((ulong) ((DateTimeOffset) Time).ToUnixTimeSeconds()))
+                .Concat(Encoding.Unicode.GetBytes(nik))
+                .Append((byte) 0xff).ToArray();
         }
 
-        private static void Handler(Socket socket, string nik, CancellationToken token)
+        private static byte[] PackCode(int code) => new byte[] {99, 130, (byte) code, 0xff};
+        private static byte[] PackMsg(string msg) => new byte[] {99, 130}
+            .Concat(Encoding.Unicode.GetBytes(msg)).Append((byte) 0xff).ToArray();
+        private static string UnpackMsg(IEnumerable<byte> packet, int size) =>
+            Encoding.Unicode.GetString(packet.Skip(2).Take(size - 3).ToArray())
+                .Trim('\u8263', '\u0000', '\n', '\uff00', '�', 'ÿ');
+        private static bool IsValidPacket(IReadOnlyList<byte> packet, int size) => 
+            packet[0] == 99 && packet[1] == 130 && packet[size - 1] == 0xff;
+
+        private static void Handle(Socket socket, CancellationToken token)
         {
-            try
+            var data = new byte[4096];
+            var nik = string.Empty;
+            do
             {
-                var disc = 0;
-                while (!token.IsCancellationRequested)
+                if (!socket.Poll(1000, SelectMode.SelectRead)) continue;
+                var size = socket.Receive(data);
+                if (size > 4003 || !IsValidPacket(data, size))
+                    socket.Send(PackCode(1));
+                else
                 {
-                    var buffer = new byte[16];
-                    var text = new StringBuilder();
-                    if (!socket.Poll(1000, SelectMode.SelectRead)) continue;
-                    int n = socket.Receive(buffer);
-                    if (n != 16 || CheckHead(buffer, n))
+                    if (data.Length == 4)
                     {
-                        disc++;
-                        if (disc == 3)
-                        {
-                            Console.WriteLine("Client not send head packet");
-                            Pull.Remove(socket);
-                            return;
-                        }
-
-                        continue;
+                        Pull.Remove(socket);
+                        return;
                     }
-
-                    var size = BitConverter.ToUInt32(buffer.Skip(2).Take(4).ToArray());
-                    var dt = new DateTime(1970, 1, 1) +
-                             TimeSpan.FromSeconds(BitConverter.ToUInt64(buffer.Skip(6).Take(8).ToArray()));
-                    buffer = new byte[1024];
-                    for (var i = 0; i < size;)
+                    nik = UnpackMsg(data, size);
+                    if (Niks.Contains(nik))
                     {
-                        n = socket.Receive(buffer);
-                        text.Append(Encoding.Unicode.GetString(buffer, 0, n)
-                            .Trim('\u8263', '\u0000', '\n', '\uff00', '�'));
-                        i += n;
+                        socket.Send(PackCode(2));
+                        nik = string.Empty;
                     }
-
-                    var res = text.ToString();
-                    Console.WriteLine("[{0:g}] <{1}> {2}", dt, nik, text);
-                    var t = (ulong) DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
-                    var head = new List<byte> {99, 130}
-                        .Concat(BitConverter.GetBytes(res.Length * 2))
-                        .Concat(BitConverter.GetBytes(nik.Length * 2))
-                        .Concat(BitConverter.GetBytes((ulong) DateTimeOffset.Now.ToUnixTimeSeconds()))
-                        .Concat(Encoding.Unicode.GetBytes(nik)).Append((byte)00).Append((byte) 255).ToArray();
-                    foreach (var s in Pull)
-                        if (!s.Equals(socket))
-                        {
-                            s.Send(head);
-                            s.Send(Encoding.Unicode.GetBytes(text.ToString())
-                                .Append((byte)00).Append((byte) 255).ToArray());
-                        }
-
-                    disc = 0;
+                    else
+                    {
+                        Niks.Add(nik);
+                    }
                 }
-            }
-            catch (Exception ex)
+            } while (nik == string.Empty && !token.IsCancellationRequested);
+            Console.WriteLine("New client: {0}", nik);
+            socket.Send(PackMsg("Hello " + nik + " on our server!"));
+            socket.ReceiveTimeout = 600_000;
+            while (!token.IsCancellationRequested)
             {
-                Console.WriteLine("Exception {0}", ex);
+                var size = 0;
+                try
+                {
+                    data = new byte[15];
+                    while (!socket.Poll(1000, SelectMode.SelectRead)) {}
+                    size = socket.Receive(data);
+                }
+                catch (SocketException)
+                {
+                    Console.WriteLine("Client {0} disconnected by timeout", nik);
+                    socket.Send(PackCode(0));
+                    Niks.Remove(nik);
+                    Pull.Remove(socket);
+                    socket.Close();
+                    return;
+                }
+
+                if (!IsValidPacket(data, size) || size == 3) continue;
+                if (size == 4)
+                {
+                    Console.WriteLine("Client {0} live us", nik);
+                    Niks.Remove(nik);
+                    Pull.Remove(socket);
+                    socket.Close();
+                    return;
+                }
+
+                var head = new MsgHead(data);
+                var msg = new StringBuilder();
+
+                data = new byte[4096];
+                while (!socket.Poll(1000, SelectMode.SelectRead)) {}
+                size = socket.Receive(data);
+                if (size == 4096 && head.Size > 4093)
+                {
+                    msg.Append(Encoding.Unicode.GetString(data.Skip(2).ToArray()));
+                    while (msg.Length < head.Size)
+                    {
+                        if (!socket.Poll(1000, SelectMode.SelectRead)) continue;
+                        size = socket.Receive(data);
+                        msg.Append(size < 4096
+                            ? Encoding.Unicode.GetString(data)
+                            : Encoding.Unicode.GetString(data.Take(size - 1).ToArray()));
+                    }
+                }
+                else
+                    msg.Append(UnpackMsg(data, size));
+
+                if (msg.Length != head.Size) continue;
+                Console.WriteLine("[{0:g}] <{1}> {2}", head.Time, nik, msg);
+                
+                Parallel.ForEach(Pull, socket1 =>
+                {
+                    if (socket1 == socket) return;
+                    socket1.Send(head.GetHead(nik));
+                    socket1.Send(PackMsg(msg.ToString()));
+                });
             }
+
+            Pull.Remove(socket);
         }
 
         private static void Main(string[] args)
         {
-            if (args.Length != 1)
+            if (args.Length < 1)
             {
                 Console.Error.WriteLine("No port specified");
                 return;
             }
 
-            var ip = new IPEndPoint(IPAddress.Any, Convert.ToInt32(args[0]));
+            if (!int.TryParse(args[0], out _))
+            {
+                Console.Error.WriteLine("An invalid port number was specified.");
+                return;
+            }
+
+            var adr = IPAddress.Any;
+            if (args.Length >= 2)
+                if (Regex.IsMatch(args[1], @"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"))
+                    try
+                    {
+                        adr = IPAddress.Parse(args[1]);
+                    }
+                    catch (FormatException)
+                    {
+                        Console.Error.WriteLine("An invalid IP address was specified");
+                        return;
+                    }
+                else
+                    adr = Dns.GetHostEntry(args[1]).AddressList[0];
+
+            var ip = new IPEndPoint(adr, Convert.ToInt32(args[0]));
             var listener =
                 new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp) {Blocking = false};
             var cancel = new CancellationTokenSource();
@@ -130,16 +180,10 @@ namespace Lab2
             Console.WriteLine("Server started...");
             while (true)
             {
-                if (listener.Poll(100, SelectMode.SelectRead))
-                {
-                    var nsocket = listener.Accept();
-                    Pull.Add(nsocket);
-                    Tasks.Add(Task.Factory.StartNew(() =>
-                    {
-                        var nik = Handshake(nsocket);
-                        if (nik != "") Handler(nsocket, nik, cancel.Token);
-                    }, cancel.Token));
-                }
+                if (!listener.Poll(100, SelectMode.SelectRead)) continue;
+                var nsocket = listener.Accept();
+                Pull.Add(nsocket);
+                Task.Factory.StartNew(delegate { Handle(nsocket, cancel.Token); }, cancel.Token);
             }
         }
     }

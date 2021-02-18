@@ -166,7 +166,7 @@ namespace Lab1_client
                     else
                         msg.Append(UnpackMsg(tmp, n));
 
-                    Console.WriteLine("\n-> [{0:g}] <{1}> {2}\n>", head.Time, head.Nik, msg);
+                    Console.Write("\n-> [{0:g}] <{1}> {2}\n>", head.Time, head.Nik, msg);
                 }
             }
             
