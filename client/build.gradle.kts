@@ -23,5 +23,6 @@ tasks.withType<Jar> {
 }
 
 dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.1")
     implementation(project(":protocol"))
 }
