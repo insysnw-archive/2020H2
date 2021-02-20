@@ -13,7 +13,7 @@ import kotlin.concurrent.thread
 
 const val DEFAULT_PORT = 8888
 const val DEFAULT_ADDRESS = "127.0.0.1"
-const val DEFAULT_NAME = "MAN_WITH_NO_NAME"
+const val DEFAULT_NAME = "ManWithNoName"
 
 
 fun main(args: Array<String>) {
@@ -41,8 +41,8 @@ fun main(args: Array<String>) {
     val keepConnection = AtomicBoolean(true)
     val currentConnection = AtomicReference<IoFacade>()
 
-    val pinguin = Executors.newSingleThreadScheduledExecutor { Thread(it).apply { isDaemon = true } }
-    pinguin.scheduleAtFixedRate({
+    val pingDaemon = Executors.newSingleThreadScheduledExecutor { Thread(it).apply { isDaemon = true } }
+    pingDaemon.scheduleAtFixedRate({
         val connection = currentConnection.get()
         if (keepConnection.get() && connection != null) {
             try {
@@ -67,7 +67,7 @@ fun main(args: Array<String>) {
                         while (keepConnection.get()) {
                             when (val message = decodeMapped(connection.waitForMessage())) {
                                 is Update -> println(message)
-                                else -> println("unknown message ")
+                                else -> println("unknown message")
                             }
                         }
                     } catch (e: Exception) {
@@ -76,15 +76,18 @@ fun main(args: Array<String>) {
                     }
                 }
 
-                println("Connecting to $address:$port")
+                println("Connecting to $address:$port as $name")
+
                 connection.writeMessage(encode(Handshake(name)))
+
+                println("Please, write message in the following format \"name -> message\"")
+                println("Omitting \"*name->\" part or putting * for name would make a broadcast message")
 
                 while (keepConnection.get()) {
                     if (keepConnection.get() && System.`in`.available() > 0) {
                         readLine()?.let { connection.writeMessage(encode(it.parse())) }
                     }
-                    // rate and cycle limiter XD
-                    Thread.sleep(10)
+                    Thread.sleep(10) // debounce
                 }
                 currentConnection.set(null)
             }
