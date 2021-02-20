@@ -3,11 +3,10 @@
 The server gets messages from the client and sends them back to other clients (broadcast messaging).
 
 ``` bash 
-git clone https://github.com/Grom9941/TCP_Chat.git
-
+$python3 client.py
+$python3 server.py
+or
 TCP_Chat/.vscode/launch.json 
-or 
-$python client.py && server.py
 ```
 ---
 
