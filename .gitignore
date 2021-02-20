@@ -32,7 +32,6 @@
 
 # Executables
 *.exe
-*.out
 *.app
 
 ### CMake ###
@@ -354,7 +353,6 @@ dlldata.c
 # .NET Core
 project.lock.json
 project.fragment.lock.json
-artifacts/
 **/Properties/launchSettings.json
 
 *_i.c
