@@ -1,0 +1,88 @@
+{
+  "error": {
+    "opcode": 0,
+    "message": ""
+  },
+  "response": {
+    "opcode": 1,
+    "accepted": true,
+    "message": ""
+  },
+  "signinRequest": {
+    "opcode": 2,
+    "username": "",
+    "password": ""
+  },
+  "signupRequest": {
+    "opcode": 3,
+    "username": "",
+    "password": ""
+  },
+  "walletListRequest": {
+    "opcode": 4
+  },
+  "walletList": {
+    "opcode": 5,
+    "wallets": [
+      {
+        "owner": "",
+        "uid": 0
+      }
+    ]
+  },
+  "send": {
+    "opcode": 6,
+    "walletId": 0,
+    "sum": 0
+  },
+  "sendStatus": {
+    "opcode": 7,
+    "sum": 0,
+    "balance": 0,
+    "recipient": "",
+    "successful": true
+  },
+  "receiveStatus": {
+    "opcode": 8,
+    "sum": 0,
+    "balance": 0,
+    "sender": ""
+  },
+  "sendRequest": {
+    "opcode": 9,
+    "sum": 0,
+    "sender": "",
+    "recipient": "",
+    "walletId": 0
+  },
+  "requestResponse": {
+    "opcode": 10,
+    "answer": false,
+    "requestId": 0
+  },
+  "requestList": {
+    "opcode": 11,
+    "requests": [
+      {
+        "sum": 0,
+        "sender": "",
+        "requestId": 0
+      }
+    ]
+  },
+  "checkRequests": {
+    "opcode": 12
+  },
+  "checkWallet": {
+    "opcode": 13
+  },
+  "answerWallet": {
+    "opcode": 14,
+    "balance": 0,
+    "walletId": 0
+  },
+  "disconnectClient": {
+    "opcode": 15,
+    "message": ""
+  }
+}
