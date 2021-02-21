@@ -1,9 +1,12 @@
 package chat
 
 import java.net.InetAddress
-import java.net.ServerSocket
-import java.net.Socket
-import kotlin.concurrent.thread
+import java.net.InetSocketAddress
+import java.nio.ByteBuffer
+import java.nio.channels.SelectionKey
+import java.nio.channels.Selector
+import java.nio.channels.ServerSocketChannel
+import java.nio.channels.SocketChannel
 
 var port = 9999
 var host = "127.0.0.1"
@@ -15,61 +18,53 @@ if (args.isNotEmpty()) {
     }
 }
 
-val startMsgIndex = 6
-val maxSize = 1024
-val server = ServerSocket(port, 1024, InetAddress.getByName(host))
+val hostAddress: InetAddress = InetAddress.getByName(host)
+val selector: Selector = Selector.open()
+val serverSocketChannel: ServerSocketChannel = ServerSocketChannel.open().apply {
+    configureBlocking(false)
+    bind(InetSocketAddress(hostAddress, port))
+    register(selector, SelectionKey.OP_ACCEPT)
+}
 
-var sockets = mutableListOf<Socket>()
-var names = mutableListOf<String>()
-println("Server Started on address: $host, port: $port")
-receive()
+println("Server started on address: $host:$port")
 
+val selectedKeys: MutableSet<SelectionKey> = selector.selectedKeys()
+while (true) {
+    if (selector.select() <= 0) continue
+    val iterator = selectedKeys.iterator()
 
-fun broadcast(msg: ByteArray, fromClient: Socket?, name: String) {
-    val resMsg =
-        msg.filter { it != 0.toByte() }
-            .toByteArray() + byteArrayOf(name.length.toByte()) + name.toByteArray()
-    sockets.forEach { client ->
-        if (client != fromClient) {
-            client.outputStream.write(resMsg)
+    while (iterator.hasNext()) {
+        val key: SelectionKey = iterator.next()
+        iterator.remove()
+        if (key.isAcceptable) {
+            val sc = serverSocketChannel.accept()
+            sc.configureBlocking(false)
+            sc.register(selector, SelectionKey.OP_READ or SelectionKey.OP_WRITE)
+            println("New client connected: ${sc.localAddress}...")
+        }
+        if (key.isReadable) {
+            val clientSocketChannel = key.channel() as SocketChannel
+            val msgByteBuffer = ByteBuffer.allocate(1024)
+            clientSocketChannel.read(msgByteBuffer)
+            if (!msgByteBuffer.array().all { it == 0.toByte() }) {
+                broadcast(msgByteBuffer.array(), clientSocketChannel)
+            } else {
+                clientSocketChannel.close()
+                println("Client left the chat")
+            }
         }
     }
 }
 
-fun handle(clientSocket: Socket, username: String) {
-    try {
-        while (true) {
-            val buf = ByteArray(maxSize)
-            clientSocket.getInputStream().read(buf)
-            if (!buf.all { it == 0.toByte() }) {
-                broadcast(buf, clientSocket, username)
+fun broadcast(msg: ByteArray, sender: SocketChannel) {
+    val byteBufferMsg = ByteBuffer.wrap(msg)
+    for (selectionKey in selector.keys()) {
+        if (selectionKey.isValid && selectionKey.channel() is SocketChannel) {
+            val socketChannel = selectionKey.channel() as SocketChannel
+            if (socketChannel != sender) {
+                socketChannel.write(byteBufferMsg)
+                byteBufferMsg.rewind()
             }
-            else {
-                println("$username exited")
-                clientSocket.close()
-                names.remove(username)
-                sockets.remove(clientSocket)
-            }
-        }
-    } catch (e: java.net.SocketException) {
-        clientSocket.close()
-        names.remove(username)
-        sockets.remove(clientSocket)
-    }
-}
-
-fun receive() {
-    while (true) {
-        val clientSocket = server.accept()
-        val buf = ByteArray(maxSize)
-        clientSocket.inputStream.read(buf)
-        val lengthMsg = buf.first()
-        val username = String(buf.slice(startMsgIndex until startMsgIndex + lengthMsg).toByteArray())
-        sockets.add(clientSocket)
-        names.add(username)
-        println("Client connected with name is $username")
-        thread {
-            handle(clientSocket, username)
         }
     }
 }
