@@ -19,7 +19,7 @@ class DHCP_client(object):
         
         data, address = s.recvfrom(MAX_BYTES)
         print("Receive DHCP offer.")
-        print(data)
+#         print(data)
 
         print("Send DHCP request.")
         data = DHCP_client.request_get();
@@ -27,7 +27,7 @@ class DHCP_client(object):
         
         data,address = s.recvfrom(MAX_BYTES)
         print("Receive DHCP pack.\n")
-        print(data)
+#         print(data)
 
     def discover_get():
         OP = bytes([0x01])
