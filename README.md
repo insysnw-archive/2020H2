@@ -16,7 +16,7 @@ Server time: 2021-02-22 13:44:01.798760
 Local time: 2021-02-22 13:44:01.676619
 
 ### Запуск
->python3 client.py -s [Server IP] -t [Timeout]
+>python3 NTPClient.py -s [Server IP] -t [Timeout]
 
 ### Структура пакета
 1. Leap indicator - Индикатор коррекции (2 bits)
