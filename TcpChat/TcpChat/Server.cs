@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace TcpChat
@@ -26,7 +25,6 @@ namespace TcpChat
                 listenSocket.Bind(ipPoint);
                 listenSocket.Listen(10);
                 Console.WriteLine("The server is running. Waiting for connections...");
-
                 while (true)
                 {
                     Socket handler = listenSocket.Accept();
@@ -57,24 +55,10 @@ namespace TcpChat
         {
             while (true)
             {
-                string message = GetMessage(socket, true);
+                string message = GetMessage(socket);
                 if (!clients.ContainsKey(socket)) break;
-                BroadcastMessage(socket, $"{message}");
+                BroadcastMessage(socket, $"[{clients[socket]}]: {message}");
             }
-        }
-
-        public string MessageWithDate(string message, Socket fromSocket)
-        {
-            string pattern = @"\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2}";
-            var date = Regex.Match(message, pattern);
-            return message.Replace(date.Value, $"<{date.Value}> [{clients[fromSocket]}]: ");
-        }
-
-        public string MessageWithoutDate(string message)
-        {
-            string pattern = @"\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2}";
-            var date = Regex.Match(message, pattern);
-            return message.Replace(date.Value, "");
         }
 
         public void BroadcastMessage(Socket fromSocket, string message)
@@ -83,37 +67,48 @@ namespace TcpChat
                 SendMessage(client.Key, message);
         }
 
-        public string GetMessage(Socket socket, bool date)
+        public string GetMessage(Socket socket)
         {
             StringBuilder builder = new StringBuilder();
-            byte[] data = new byte[256];
+            byte[] data = new byte[8];
             try
             {
+                byte[] bytesSize = new byte[4];
+                int bytes = socket.Receive(bytesSize);
+                int size = BitConverter.ToInt32(bytesSize);
                 do
                 {
-                    int bytes = socket.Receive(data);
+                    bytes = socket.Receive(data);
                     builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
                 }
-                while (socket.Available > 0);
+                while (socket.Available > 0 && socket.Available < size);
             }
             catch (Exception)
             {
                 BroadcastMessage(socket, $"{clients[socket]} left TcpChat");
                 clients.Remove(socket);
             }
-            if (date) return MessageWithDate(builder.ToString(), socket);
-            else return MessageWithoutDate(builder.ToString());
+            return builder.ToString();
         }
-        public void SendMessage(Socket socket, string message) => socket.Send(Encoding.Unicode.GetBytes(message));
+        public void SendMessage(Socket socket, string message)
+        {
+            byte[] bytesMessage = Encoding.Unicode.GetBytes(message);
+            byte[] bytesSize = BitConverter.GetBytes(bytesMessage.Length);
+            byte[] bytesDate = BitConverter.GetBytes(DateTimeOffset.Now.ToUnixTimeSeconds());
+            byte[] packet = new byte[bytesMessage.Length + bytesSize.Length + bytesDate.Length];
+            bytesSize.CopyTo(packet, 0);
+            bytesDate.CopyTo(packet, bytesSize.Length);
+            bytesMessage.CopyTo(packet, bytesSize.Length + bytesDate.Length);
+            socket.Send(packet);
+        }
 
         public void AddClient(Socket socket)
         {
-            SendMessage(socket, "Enter your username: ");
-            string username = GetMessage(socket, false);
+            string username = GetMessage(socket);
             while (clients.ContainsValue(username))
             {
                 SendMessage(socket, "This username is already taken. Please enter another username");
-                username = GetMessage(socket, false);
+                username = GetMessage(socket);
             }
             clients.Add(socket, username);
             SendMessage(socket, "Welcome to TcpChat!");

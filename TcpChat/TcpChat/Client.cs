@@ -22,6 +22,9 @@ namespace TcpChat
                 socket.Connect(ipPoint);
                 Console.WriteLine(socket.LocalEndPoint);
 
+                Console.WriteLine("Enter your username: ");
+                SendMessage();
+
                 var thread = new Thread(() => GetMessages());
                 thread.Start();
 
@@ -56,29 +59,35 @@ namespace TcpChat
 
         public void SendMessage()
         {
-            string message = $"{DateTime.UtcNow}{Console.ReadLine()}";
-            byte[] data = Encoding.Unicode.GetBytes(message);
-            socket.Send(data);
-        }
-
-        public void SendMessage(DateTime dateTime)
-        {
-            string message = $"{dateTime} {Console.ReadLine()}";
-            byte[] data = Encoding.Unicode.GetBytes(message);
-            socket.Send(data);
+            byte[] data = Encoding.Unicode.GetBytes($"{Console.ReadLine()}");
+            byte[] dataSize = BitConverter.GetBytes(data.Length);
+            byte[] packet = new byte[data.Length + dataSize.Length];
+            dataSize.CopyTo(packet, 0);
+            data.CopyTo(packet, dataSize.Length);
+            socket.Send(packet);
         }
 
         public void GetMessage()
         {
-            var data = new byte[256];
             StringBuilder builder = new StringBuilder();
+            byte[] data = new byte[8];
+
+            byte[] bytesSize = new byte[4];
+            int bytes = socket.Receive(bytesSize);
+            int size = BitConverter.ToInt32(bytesSize);
+
+            byte[] bytesDate = new byte[8];
+            socket.Receive(bytesDate);
+            var date = DateTimeOffset.FromUnixTimeSeconds(BitConverter.ToInt64(bytesDate)).LocalDateTime;
+
             do
             {
-                int bytes = socket.Receive(data, data.Length, 0);
+                bytes = socket.Receive(data);
                 builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
             }
-            while (socket.Available > 0);
-            Console.WriteLine(MessageWithTime(builder.ToString()));
+            while (socket.Available > 0 && socket.Available < size);
+
+            Console.WriteLine($"<{date}> {builder}");
         }
 
         public string MessageWithTime(string message)
