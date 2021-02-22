@@ -23,7 +23,6 @@ tasks.withType<Jar> {
 }
 
 dependencies {
-    implementation("io.ktor:ktor-network:1.5.0")
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.1")
     implementation(project(":protocol"))
 }

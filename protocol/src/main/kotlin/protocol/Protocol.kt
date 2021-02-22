@@ -1,9 +1,9 @@
 package protocol
 
 
-data class Amount(val value: Int) {
-    companion object : Parser<Amount> {
-        override fun parse(map: Map<String, String>) = Amount(map["value"]!!.toInt())
+data class IntData(val value: Int) {
+    companion object : Parser<IntData> {
+        override fun parse(map: Map<String, String>) = IntData(map["value"]!!.toInt())
     }
 }
 
@@ -35,6 +35,12 @@ data class ProductList(val list: List<Product>) {
 data class Error(val message: String) {
     companion object : Parser<Error> {
         override fun parse(map: Map<String, String>) = Error(map["message"]!!)
+    }
+}
+
+data class Info(val message: String){
+    companion object : Parser<Info> {
+        override fun parse(map: Map<String, String>) = Info(map["message"]!!)
     }
 }
 

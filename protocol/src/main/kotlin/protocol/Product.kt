@@ -11,7 +11,7 @@ data class Product(
         }
     }
 
-    fun toProtocolString() = "${id.toString()}-$name-$price"
+    fun toProtocolString() = "$id-$name-$price"
 
 }
 

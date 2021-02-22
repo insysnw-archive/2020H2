@@ -2,29 +2,34 @@ package domain
 
 import protocol.Product
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 class Storage {
 
     fun supply(id: Int, amount: Int): Int? {
-        val good = goods[id]
-        good?.let { rec ->
-            val newamount = rec.amount + amount
-            goods[id] = rec.copy(amount = newamount)
-            return newamount
+        synchronized(this) {
+            val good = goods[id]
+            good?.let { rec ->
+                val newAmount = rec.amount + amount
+                goods[id] = rec.copy(amount = newAmount)
+                return newAmount
+            }
+            return null
         }
-        return null
     }
 
     fun buy(id: Int, amount: Int): Int? {
-        val good = goods[id]
-        good?.let { rec ->
-            val newamount = rec.amount - amount
-            if (newamount >= 0) {
-                goods[id] = rec.copy(amount = newamount)
-                return newamount
+        synchronized(this) {
+            val good = goods[id]
+            good?.let { rec ->
+                val newAmount = rec.amount - amount
+                if (newAmount >= 0) {
+                    goods[id] = rec.copy(amount = newAmount)
+                    return newAmount
+                }
             }
+            return null
         }
-        return null
     }
 
     fun addProduct(name: String, price: Int): Int {
@@ -39,9 +44,9 @@ class Storage {
 
     private val goods = ConcurrentHashMap<Int, Record>()
 
-    private var nextId: Int = 0
+    private var nextId = AtomicInteger(0)
 
-    private fun getNextId() = nextId++
+    private fun getNextId() = nextId.incrementAndGet()
 
     data class Record(
         val product: Product,
