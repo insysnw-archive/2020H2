@@ -7,7 +7,7 @@ data class Product(
 ) {
     companion object {
         fun fromString(string: String) = with(string.split('-')) {
-            Product(this[0].toInt(), this[1], this[0].toInt())
+            Product(this[0].toInt(), this[1], this[2].toInt())
         }
     }
 
@@ -15,3 +15,6 @@ data class Product(
 
 }
 
+fun List<Product>.encode() = this.joinToString(",") { it.toProtocolString() }
+
+fun String.decode() = this.split(",").map { Product.fromString(it) }

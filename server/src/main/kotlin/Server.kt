@@ -37,6 +37,7 @@ fun main(args: Array<String>) {
     registerMapping(Buy::class)
     registerMapping(Get::class)
     registerMapping(Supply::class)
+    registerMapping(GetProducts::class)
 
     val server = Server(port, InetAddress.getByName(address))
     while (true) {
@@ -94,6 +95,7 @@ class Server(port: Int, address: InetAddress) {
             is Get -> handleGet(message)
             is Buy -> handleBuy(message)
             is Supply -> handleSupply(message)
+            is GetProducts -> handleGetList()
             else -> handleUnknown()
         }
 
@@ -113,6 +115,8 @@ class Server(port: Int, address: InetAddress) {
     private fun handleSupply(command: Supply) =
         storage.supply(command.id, command.amount)?.let { IntData(it) }
             ?: Error("looks like you selling air. No product with id ${command.id}")
+
+    private fun handleGetList() = ProductList(storage.getGoods())
 
     private fun handleUnknown() = Error("Unknown message type, sorry")
 

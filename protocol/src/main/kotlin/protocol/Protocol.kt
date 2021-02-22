@@ -23,13 +23,12 @@ data class ProductDetails(
     }
 }
 
-data class ProductList(val list: List<Product>) {
+data class ProductList(val list: String) {
     companion object : Parser<ProductList> {
-        override fun parse(map: Map<String, String>): ProductList {
-            val listString = map["list"]!!
-            return ProductList(listString.split(",").map { Product.fromString(it) })
-        }
+        override fun parse(map: Map<String, String>): ProductList = ProductList(map["list"]!!)
     }
+
+    constructor(list: List<Product>) : this(list.encode())
 }
 
 data class Error(val message: String) {
@@ -38,7 +37,7 @@ data class Error(val message: String) {
     }
 }
 
-data class Info(val message: String){
+data class Info(val message: String) {
     companion object : Parser<Info> {
         override fun parse(map: Map<String, String>) = Info(map["message"]!!)
     }
@@ -65,5 +64,11 @@ data class Buy(val id: Int, val amount: Int) {
 data class Get(val id: Int) {
     companion object : Parser<Get> {
         override fun parse(map: Map<String, String>) = Get(map["id"]!!.toInt())
+    }
+}
+
+class GetProducts {
+    companion object : Parser<GetProducts> {
+        override fun parse(map: Map<String, String>) = GetProducts()
     }
 }
