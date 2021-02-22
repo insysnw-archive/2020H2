@@ -18,6 +18,8 @@ const val DEFAULT_NAME = "ManWithNoName"
 
 fun main(args: Array<String>) {
 
+    registerMapping(Message::class)
+
     val parser = ArgParser("client")
 
     val address by parser.option(
