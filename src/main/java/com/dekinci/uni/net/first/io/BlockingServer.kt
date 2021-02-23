@@ -2,24 +2,24 @@ package com.dekinci.uni.net.first.io
 
 import com.dekinci.uni.net.first.*
 import java.io.EOFException
-import java.net.InetAddress
-import java.net.ServerSocket
-import java.net.SocketException
+import java.net.*
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
-class BlockingServer(val port: Int, val address: InetAddress) {
+class BlockingServer(address: InetSocketAddress) {
     private val clients = ConcurrentHashMap<String, IoFacade>()
-    private val server = ServerSocket(port, 50, address)
+    private val server = ServerSocket()
     private val massMailer = Executors.newSingleThreadExecutor()
     private val pinguin = Executors.newSingleThreadScheduledExecutor()
 
     init {
         server.receiveBufferSize = BlockingReceiver.bufferSize
-        println("Running server on port $port")
+        server.reuseAddress = true
+        server.bind(address)
+        println("Running server on $address")
 
         pinguin.scheduleAtFixedRate({
             clients.filter {

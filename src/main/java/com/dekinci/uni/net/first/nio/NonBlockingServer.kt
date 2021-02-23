@@ -5,6 +5,7 @@ import com.dekinci.uni.net.first.encode
 import java.io.EOFException
 import java.net.InetSocketAddress
 import java.net.SocketException
+import java.net.StandardSocketOptions
 import java.nio.channels.SelectionKey
 import java.nio.channels.Selector
 import java.nio.channels.ServerSocketChannel
@@ -20,7 +21,8 @@ class NonBlockingServer(val addr: InetSocketAddress) {
     private val pinguin = Executors.newSingleThreadScheduledExecutor()
 
     init {
-        serverSocket.bind(InetSocketAddress("localhost", 4269))
+        serverSocket.setOption(StandardSocketOptions.SO_REUSEADDR, true)
+        serverSocket.bind(addr)
         serverSocket.configureBlocking(false)
         serverSocket.register(selector, SelectionKey.OP_ACCEPT)
 
