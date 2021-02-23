@@ -1,4 +1,3 @@
-
 # Лабораторная 3
 
 
@@ -225,4 +224,3 @@ egmail> exit
 Process finished with exit code 0
 
 ````
-=======
