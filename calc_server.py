@@ -125,7 +125,10 @@ def handle_client(connection, connection_address):
             calc_thread = threading.Thread(target=handle_long_opareation(connection, msg))
             calc_thread.start()
 
-    calc_thread.join()
+    try:
+        calc_thread.join()
+    except UnboundLocalError:  # maybe there isn't any calc_thread started
+        pass
     connection.shutdown(socket.SHUT_RDWR)
     connection.close()
     client_sockets.remove(connection)
