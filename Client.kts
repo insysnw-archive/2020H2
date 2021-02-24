@@ -40,7 +40,9 @@ val sc: SocketChannel = SocketChannel.open().apply {
 }
 println("Welcome to the chat, $username!")
 
-thread { write() }
+thread {
+    write()
+}
 
 while (true) {
     if (selector.select() > 0) {
@@ -80,7 +82,8 @@ fun processReadySet(readySet: MutableSet<*>): Boolean {
                     buf.array().slice(startMsgIndex + msgLength + 1..startMsgIndex + msgLength + nameLength)
                         .toByteArray()
                 )
-            println("$time [$name]: $msg")
+            if (time.isNotEmpty() && name.isNotEmpty() && msg.isNotEmpty())
+                println("$time [$name]: $msg")
         }
         return false
     } catch (e: IOException) {
