@@ -1,6 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+#
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NtpServer", "NtpServer\NtpServer.csproj", "{B5B6FA59-0FCF-4894-AB47-62EA69934381}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SnmpClient", "SnmpClient\SnmpClient.csproj", "{C6EC7EA8-5892-4033-AFED-D97E2EBB8C01}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,5 +15,9 @@ Global
 		{B5B6FA59-0FCF-4894-AB47-62EA69934381}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B5B6FA59-0FCF-4894-AB47-62EA69934381}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B5B6FA59-0FCF-4894-AB47-62EA69934381}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6EC7EA8-5892-4033-AFED-D97E2EBB8C01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6EC7EA8-5892-4033-AFED-D97E2EBB8C01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6EC7EA8-5892-4033-AFED-D97E2EBB8C01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6EC7EA8-5892-4033-AFED-D97E2EBB8C01}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
