@@ -47,13 +47,6 @@ fun buildRequest(response: ByteArray, requestedIp: ByteArray): ByteArray {
         j++
     }
     val options = byteArrayOf(53, 1, DHCPREQUEST, 50, 4) + requestedIp + OPTIONS_END
-//    for (i in 0 until 2) {
-//        ret[j] = response[j]
-//        j++
-//    }
-//    ret[j] = DHCPREQUEST
-//    j++
-//    ret[j] = OPTIONS_END
     return ret + options
 }
 
@@ -86,29 +79,4 @@ private fun hasMagicCookie(buf: ByteArray): Boolean {
         if (buf[i] != MAGIC_COOKIE[i - MAGIC_OFFSET]) return false
     }
     return true
-}
-
-fun createRequest(response: ByteArray, secs: ByteArray?): ByteArray? {
-    val ret = ByteArray(246)
-    ret[0] = CLIENT_OP
-    System.arraycopy(response, 1, ret, 1, 235)
-    var j = 236
-    run {
-        var i = 0
-        while (i < MAGIC_COOKIE.size) {
-            ret[j] = MAGIC_COOKIE[i]
-            i++
-            j++
-        }
-    }
-    var i = 0
-    while (i < 2) {
-        ret[j] = response[j]
-        i++
-        j++
-    }
-    ret[j] = 3.toByte()
-    j++
-    ret[j] = 255.toByte()
-    return ret
 }

@@ -15,10 +15,10 @@ const val DEFAULT_PORT = 123
 const val DEFAULT_ADDRESS = "127.0.0.1"
 const val DEFAULT_REF_ID = "PPS"
 
-const val DUMMY_PRECISION = -29
+const val DUMMY_PRECISION = -16
 val NULL_TIMESTAMP = Timestamp64(0, 0)
-val ROOT_DELAY = Timestamp32(1, 0)
-val ROOT_DISPERSION = Timestamp32(1, 0)
+val ROOT_DELAY = Timestamp32(0, 1)
+val ROOT_DISPERSION = Timestamp32(0, 1)
 
 val ktorSelector = ActorSelectorManager(Dispatchers.IO)
 
@@ -44,7 +44,7 @@ fun main(args: Array<String>) = runBlocking {
     val stratum by parser.option(
         type = ArgType.Int,
         shortName = "s"
-    ).default(1)
+    ).default(2)
 
     parser.parse(args)
 
@@ -77,7 +77,7 @@ fun main(args: Array<String>) = runBlocking {
                     rootDispersion = ROOT_DISPERSION,
                     referenceId = reference,
                     originTimestamp = NULL_TIMESTAMP,
-                    receiveTimestamp = request.transmitTimestamp,
+                    receiveTimestamp = request.destinationTimestamp,
                     transmitTimestamp = transmitTimestamp,
                     destinationTimestamp = destinationTimestamp
                 )
@@ -116,7 +116,7 @@ fun check(packet: NTPPacket) {
     require(packet.mode == Mode.Client) {
         "Wrong mode: ${packet.mode}"
     }
-    check(packet.version <= VERSION) {
+    check(packet.version >= VERSION) {
         "Wrong version: ${packet.version}"
     }
 }
