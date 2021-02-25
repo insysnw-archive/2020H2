@@ -1,0 +1,13 @@
+/home/zhmyr/work/2020H2/Lab2/SnmpClient/bin/Debug/netcoreapp3.1/SnmpClient
+/home/zhmyr/work/2020H2/Lab2/SnmpClient/bin/Debug/netcoreapp3.1/SnmpClient.deps.json
+/home/zhmyr/work/2020H2/Lab2/SnmpClient/bin/Debug/netcoreapp3.1/SnmpClient.runtimeconfig.json
+/home/zhmyr/work/2020H2/Lab2/SnmpClient/bin/Debug/netcoreapp3.1/SnmpClient.runtimeconfig.dev.json
+/home/zhmyr/work/2020H2/Lab2/SnmpClient/bin/Debug/netcoreapp3.1/SnmpClient.dll
+/home/zhmyr/work/2020H2/Lab2/SnmpClient/bin/Debug/netcoreapp3.1/SnmpClient.pdb
+/home/zhmyr/work/2020H2/Lab2/SnmpClient/obj/Debug/netcoreapp3.1/SnmpClient.csprojAssemblyReference.cache
+/home/zhmyr/work/2020H2/Lab2/SnmpClient/obj/Debug/netcoreapp3.1/SnmpClient.AssemblyInfoInputs.cache
+/home/zhmyr/work/2020H2/Lab2/SnmpClient/obj/Debug/netcoreapp3.1/SnmpClient.AssemblyInfo.cs
+/home/zhmyr/work/2020H2/Lab2/SnmpClient/obj/Debug/netcoreapp3.1/SnmpClient.csproj.CoreCompileInputs.cache
+/home/zhmyr/work/2020H2/Lab2/SnmpClient/obj/Debug/netcoreapp3.1/SnmpClient.dll
+/home/zhmyr/work/2020H2/Lab2/SnmpClient/obj/Debug/netcoreapp3.1/SnmpClient.pdb
+/home/zhmyr/work/2020H2/Lab2/SnmpClient/obj/Debug/netcoreapp3.1/SnmpClient.genruntimeconfig.cache
