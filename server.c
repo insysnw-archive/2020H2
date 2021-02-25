@@ -11,7 +11,6 @@
 #include <time.h>
 #include <fcntl.h>
 
-
 #include "chat_protocol.h"
 
 #define DEF_PORT "8888" // Port we're listening on
@@ -145,19 +144,17 @@ int main(int argc, char **argv)
     }
 
     listener = get_listener_socket(port);
-	
 
     if (listener == -1)
     {
         fprintf(stderr, "error getting listening socket\n");
         exit(1);
     }
-	
-	fcntl(listener, F_SETFL, O_NONBLOCK);
+
+    fcntl(listener, F_SETFL, O_NONBLOCK);
 
     pfds[0].fd = listener;
     pfds[0].events = POLLIN;
-
 
     fd_count = 2;
 
@@ -191,7 +188,7 @@ int main(int argc, char **argv)
                     }
                     else
                     {
-						fcntl(newfd, F_SETFL, O_NONBLOCK);
+                        fcntl(newfd, F_SETFL, O_NONBLOCK);
                         add_to_pfds(&pfds, newfd, &fd_count, &fd_size);
 
                         printf("pollserver: new connection from %s on "
@@ -227,24 +224,24 @@ int main(int argc, char **argv)
                     else
                     {
                         // Got message from client
-                            int i = 0;
+                        int i = 0;
 
-                            time_t rawtime;
-                            time(&rawtime);
-                            pkt->time = rawtime;
+                        time_t rawtime;
+                        time(&rawtime);
+                        pkt->time = rawtime;
 
-                            chat_print_packet(pkt);
-                            for (int j = 0; j < fd_count; j++)
+                        chat_print_packet(pkt);
+                        for (int j = 0; j < fd_count; j++)
+                        {
+
+                            int dest_fd = pfds[j].fd;
+
+                            // Except the listener and ourselves
+                            if (dest_fd != listener && dest_fd != sender_fd)
                             {
-
-                                int dest_fd = pfds[j].fd;
-
-                                // Except the listener and ourselves
-                                if (dest_fd != listener && dest_fd != sender_fd)
-                                {
-                                        chat_packet_send(pkt, dest_fd);
-                                }
+                                chat_packet_send(pkt, dest_fd);
                             }
+                        }
                         free(pkt->data);
                         free(pkt);
                     }

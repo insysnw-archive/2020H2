@@ -11,7 +11,6 @@
 #include <time.h>
 #include <pthread.h>
 
-
 #include "chat_protocol.h"
 
 #define DEF_PORT "8888" // Port we're listening on
@@ -86,47 +85,53 @@ int get_listener_socket(char *port)
     return listener;
 }
 
-void* clientHandler(void* args){
-	int sock = *(int*) args;
-	
-	for(;;) {
-		struct chat_packet *pkt = calloc(1, sizeof(struct chat_packet));
+void *clientHandler(void *args)
+{
+    int sock = *(int *)args;
+
+    for (;;)
+    {
+        struct chat_packet *pkt = calloc(1, sizeof(struct chat_packet));
         int res = chat_packet_receive(pkt, sock);
-		printf("received packet!\n");
+        printf("received packet!\n");
 
-		if (res <= 0)
-                    {
-                        if (res == 0)
-                        {
-                            printf("pollserver: socket %d hung up\n", sock);
-                        }
-                        else
-                        {
-                            perror("recv");
-                        }
+        if (res <= 0)
+        {
+            if (res == 0)
+            {
+                printf("pollserver: socket %d hung up\n", sock);
+            }
+            else
+            {
+                perror("recv");
+            }
 
-                        close(sock);
+            close(sock);
 
-                        for (int i = 0; i < 256; i++) {
-							if (sockets[i] == sock) {
-								sockets[i] = -1;
-								return;
-								break;
-							}
-						}
-                    }
+            for (int i = 0; i < 256; i++)
+            {
+                if (sockets[i] == sock)
+                {
+                    sockets[i] = -1;
+                    return;
+                    break;
+                }
+            }
+        }
 
-                            time_t rawtime;
-                            time(&rawtime);
-                            pkt->time = rawtime;
+        time_t rawtime;
+        time(&rawtime);
+        pkt->time = rawtime;
 
-                            chat_print_packet(pkt);
-		for (int i = 0; i < 256; i++) {
-			if (sockets[i] != -1 && sockets[i] != sock){
-				chat_packet_send(pkt, sockets[i]);
-			}
-		}
-	}
+        chat_print_packet(pkt);
+        for (int i = 0; i < 256; i++)
+        {
+            if (sockets[i] != -1 && sockets[i] != sock)
+            {
+                chat_packet_send(pkt, sockets[i]);
+            }
+        }
+    }
 }
 
 // Main
@@ -142,10 +147,11 @@ int main(int argc, char **argv)
 
     int o;
     char *port;
-	
-	for (int i =0; i < 256; i++){
-		sockets[i] = -1;
-	}
+
+    for (int i = 0; i < 256; i++)
+    {
+        sockets[i] = -1;
+    }
 
     while ((o = getopt(argc, argv, "p:")) != -1)
     {
@@ -160,47 +166,48 @@ int main(int argc, char **argv)
     }
 
     listener = get_listener_socket(port);
-	
 
     if (listener == -1)
     {
         fprintf(stderr, "error getting listening socket\n");
         exit(1);
     }
-	
+
     for (;;)
     {
-                    addrlen = sizeof remoteaddr;
-                    newfd = accept(listener,
-                                   (struct sockaddr *)&remoteaddr,
-                                   &addrlen);
+        addrlen = sizeof remoteaddr;
+        newfd = accept(listener,
+                       (struct sockaddr *)&remoteaddr,
+                       &addrlen);
 
-                    if (newfd == -1)
+        if (newfd == -1)
+        {
+            perror("accept");
+        }
+        else
+        {
+            for (int i = 0; i < 256; i++)
+            {
+                if (sockets[i] == -1)
+                {
+                    sockets[i] = newfd;
+                    pthread_t clientH;
+                    int res = pthread_create(&clientH, NULL, clientHandler, (void *)(&newfd));
+                    if (res)
                     {
-                        perror("accept");
+                        printf("Error while creating new thread\n");
                     }
-                    else
-                    {
-                        for (int i =0; i  < 256; i++){
-							if (sockets[i] == -1){
-								sockets[i] = newfd;
-								pthread_t clientH;
-    int res = pthread_create(&clientH, NULL, clientHandler, (void*)(&newfd));
-    if (res){
-        printf("Error while creating new thread\n");
-    }
-	break;
-							}
-						}
+                    break;
+                }
+            }
 
-                        printf("pollserver: new connection from %s on "
-                               "socket %d\n",
-                               inet_ntop(remoteaddr.ss_family,
-                                         get_in_addr((struct sockaddr *)&remoteaddr),
-                                         remoteIP, INET6_ADDRSTRLEN),
-                               newfd);
-                    }
-
+            printf("pollserver: new connection from %s on "
+                   "socket %d\n",
+                   inet_ntop(remoteaddr.ss_family,
+                             get_in_addr((struct sockaddr *)&remoteaddr),
+                             remoteIP, INET6_ADDRSTRLEN),
+                   newfd);
+        }
     }
 
     return 0;

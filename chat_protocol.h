@@ -6,12 +6,13 @@
 #define PACKET_SIZE 252
 #define HEADER_SIZE 12
 
-struct chat_packet {
-    u_int32_t time;
+struct chat_packet
+{
+	u_int32_t time;
 	u_int32_t nick_size;
-	char* nick;
+	char *nick;
 	u_int32_t data_size;
-    char *data;
+	char *data;
 };
 
 void chat_print_packet(struct chat_packet *pkt);

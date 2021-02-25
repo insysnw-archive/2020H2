@@ -94,7 +94,6 @@ int main(int argc, char **argv)
 
 		break;
 	}
-	
 
 	if (p == NULL)
 	{
@@ -137,15 +136,16 @@ int main(int argc, char **argv)
 			//Пользователь ввел сообщение, пытаемся послать
 			//Для начала пытаемся его прочитать
 			numbytes = read(pfds[0].fd, buf, sizeof buf);
-			
+
 			if (numbytes < 0)
 			{
 				perror("read_user_input");
 				printf("Error occured while trying to read user input\n");
 				continue;
 			}
-			
-			if (numbytes - 1 == 0){
+
+			if (numbytes - 1 == 0)
+			{
 				close(sockfd);
 				return 0;
 			}
@@ -160,7 +160,7 @@ int main(int argc, char **argv)
 			pkt->nick = calloc(strlen(nick), sizeof(char));
 			memcpy(pkt->nick, nick, strlen(nick));
 			pkt->data_size = strlen(buf);
-			pkt->data =malloc(sizeof(buf));
+			pkt->data = malloc(sizeof(buf));
 			memcpy(pkt->data, buf, strlen(buf));
 			chat_packet_send(pkt, pfds[1].fd);
 			free(pkt->nick);
@@ -175,7 +175,8 @@ int main(int argc, char **argv)
 			//Пришло сообщение от сервера, пытаемся прочитать
 			pkt = calloc(1, sizeof(struct chat_packet));
 			int res = chat_packet_receive(pkt, pfds[1].fd);
-			if (res == 0){
+			if (res == 0)
+			{
 				printf("server is offline\n");
 				return 0;
 			}
