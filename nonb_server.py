@@ -11,6 +11,7 @@ TYPE_DATA = 2
 TYPE_OKNAME = 3
 TYPE_DUP = 4
 TYPE_END = 5
+TYPE_LEN = 6
 
 MSG_SIZE = 1024  # message size
 
@@ -44,17 +45,21 @@ def handle_client(connection):
                 partition = 1
                 break
         if partition == 1:
-            msg = bytes([TYPE_DUP])
+            msg = bytes([TYPE_DUP]) + bytes([0])
             connection.send(msg)
         else:
-            print('Новый посетитель:', client_name)
+            if 0 < len(client_name) < 20:
+                print('New person', client_name)
 
-            # append the name and client_socket to the respective lists
-            clients[connection] = client_name
-            sockets.append(connection)
+                # append the name and client_socket to the respective lists
+                clients[connection] = client_name
+                sockets.append(connection)
 
-            msg = bytes([TYPE_OKNAME]) + msg[1:] + bytearray(' Вошел в чат!'.encode(FORMAT))
-            send_to_clietns(msg)
+                msg = bytes([TYPE_OKNAME]) + msg[1:] + bytearray(' joined chat!'.encode(FORMAT))
+                send_to_clietns(msg)
+            else:
+                msg = bytes([TYPE_LEN]) + bytes([0])
+                connection.send(msg)
 
     elif msg[0] == TYPE_DATA:
         reply = bytes([TYPE_DATA]) + clients[connection].encode(FORMAT) + bytes([0]) + msg[1:] + bytes([0])

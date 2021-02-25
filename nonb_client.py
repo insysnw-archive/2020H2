@@ -11,16 +11,17 @@ TYPE_DATA = 2
 TYPE_OKNAME = 3
 TYPE_DUP = 4
 TYPE_END = 5
-
+TYPE_LEN = 6
 MSG_SIZE = 1024  # message size
 
 FORMAT = "utf-8"
 
 working = True
+check = False
 
 
 def handle_incoming():
-    global working, msg
+    global working, msg, check
     while True:
         # non-blocking sockets return even if they received no data
         try:
@@ -35,10 +36,13 @@ def handle_incoming():
             break
         elif msg[0] == TYPE_OKNAME:
             print(msg[1:].decode(FORMAT))
+            check = True
 
         elif msg[0] == TYPE_DUP:
             print("Дублирование никнейма")
-            continue
+
+        elif msg[0] == TYPE_LEN:
+            print("Имя не соответствует параметрам")
 
         elif msg[0] == TYPE_DATA:
             name = bytearray()
@@ -86,14 +90,15 @@ while True:
 
     if not working:
         break
-
-    if msg == 'close chat\n':
-        print('Ending connection with server')
-        client_socket.send(bytes([TYPE_END]))
-        break
-
+    if check:
+        if msg == 'close chat\n':
+            print('Ending connection with server')
+            client_socket.send(bytes([TYPE_END]))
+            break
+        else:
+            client_socket.send(bytes([TYPE_DATA]) + msg.encode(FORMAT))
     else:
-        client_socket.send(bytes([TYPE_DATA]) + msg.encode(FORMAT))
+        client_socket.send(bytes([TYPE_INIT]) + msg.encode(FORMAT))
 
 reading_thread.join()
 client_socket.shutdown(socket.SHUT_RDWR)
