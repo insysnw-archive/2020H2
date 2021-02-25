@@ -56,6 +56,16 @@ class Server(port: Int, address: InetAddress) {
         serverSocket.receiveBufferSize = BlockingReceiver.bufferSize
         println("Running server on $address:$port")
 
+
+        storage.supply(storage.addProduct("Pens", 100), 10)
+        storage.supply(storage.addProduct("Pencils", 50), 15)
+        storage.supply(storage.addProduct("Coins", 1), 678)
+        storage.supply(storage.addProduct("Pebbles", 7), 3)
+        storage.supply(storage.addProduct("Broomstick handle", 799), 5)
+        storage.supply(storage.addProduct("Fishing rod handle", 1699), 9)
+        storage.supply(storage.addProduct("Umbrella handle", 99), 1)
+
+
         pinger.scheduleAtFixedRate({
             clients.filter {
                 try {
@@ -99,26 +109,26 @@ class Server(port: Int, address: InetAddress) {
             else -> handleUnknown()
         }
 
-        connection.writeMessage(encode(reply))
+        connection.writeMessage(reply)
     }
 
-    private fun handleAdd(command: Add) = IntData(storage.addProduct(command.name, command.price))
+    private fun handleAdd(command: Add) = encode(IntData(storage.addProduct(command.name, command.price)))
 
     private fun handleGet(command: Get) =
-        storage.get(command.id)?.let { ProductDetails(it.product.id, it.product.name, it.product.price, it.amount) }
-            ?: Error("no product with id ${command.id}")
+            storage.get(command.id)?.let { encode(ProductDetails(it.product.id, it.product.name, it.product.price, it.amount)) }
+                    ?: encode(Error("no product with id ${command.id}"))
 
     private fun handleBuy(command: Buy) =
-        storage.buy(command.id, command.amount)?.let { IntData(it) }
-            ?: Error("can't buy your love and ${command.amount} of ${command.id}")
+            storage.buy(command.id, command.amount)?.let { encode(Info("You can have $it more of this product!")) }
+                    ?: encode(Error("can't buy your love and ${command.amount} of ${command.id}"))
 
     private fun handleSupply(command: Supply) =
-        storage.supply(command.id, command.amount)?.let { IntData(it) }
-            ?: Error("looks like you selling air. No product with id ${command.id}")
+            storage.supply(command.id, command.amount)?.let { encode(Info("Now there is $it in stock!")) }
+                    ?: encode(Error("looks like you selling air. No product with id ${command.id}"))
 
-    private fun handleGetList() = ProductList(storage.getGoods())
+    private fun handleGetList() = encode(ProductList(storage.getGoods()))
 
-    private fun handleUnknown() = Error("Unknown message type, sorry")
+    private fun handleUnknown() = encode(Error("Unknown message type, sorry uwu"))
 
     private fun handleCommunicationException(e: Exception, logName: String) {
         when {

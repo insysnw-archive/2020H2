@@ -16,7 +16,8 @@ fun registerMapping(k: KClass<*>) {
 }
 
 fun decodeMapped(message: Map<String, String>): Any {
-    val parser = mappings[message["__type"]!!]!!.companionObjectInstance
+    val parser = mappings[message["__type"]!!]?.companionObjectInstance
+            ?: error("No mapping registered for type ${message["__type"]!!}")
     if (parser !is Parser<*>)
         error("No mapper")
 

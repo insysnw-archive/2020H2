@@ -28,7 +28,7 @@ data class ProductList(val list: String) {
         override fun parse(map: Map<String, String>): ProductList = ProductList(map["list"]!!)
     }
 
-    constructor(list: List<Product>) : this(list.encode())
+    constructor(list: List<Product>) : this(list.encodeProducts())
 }
 
 data class Error(val message: String) {
