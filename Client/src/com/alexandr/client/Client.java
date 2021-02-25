@@ -114,27 +114,22 @@ public class Client implements Runnable {
                 public void run() {
                     while (true) {
                         if (scan.hasNext()) {
-                            try {
-                                byte[] data = new byte[2048];
-                                int count = clientSocket.getInputStream().read(data);
-                                ClientMessege cm = new ClientMessege();
-                                cm.decodeMsg(data);
-                                String res = "[" + cm.getTime() + "] " + cm.getName() + ": " + cm.getText();
-                                if(cm.getText().length() == 0){
-                                    System.out.println("Дублирование ника");
+                            byte[] data = new byte[2048];
+                            ClientMessege cm = new ClientMessege();
+                            cm.decodeMsg(data);
+                            String res = "[" + cm.getTime() + "] " + cm.getName() + ": " + cm.getText();
+                            if(cm.getText().length() == 0){
+                                System.out.println("Дублирование ника");
+                                break;
+                            } else {
+                                if(cm.getText().equals("Отключение сервера")){
+                                    System.out.println("Потеря соединения с сервером");
                                     break;
                                 } else {
-                                    if(cm.getText().equals("Отключение сервера")){
-                                        System.out.println("Потеря соединения с сервером");
-                                        break;
-                                    } else {
-                                        System.out.println(res);
-                                    }
+                                    System.out.println(res);
                                 }
-
-                            } catch (IOException exception) {
-                                exception.printStackTrace();
                             }
+
                         }
                     }
                     System.exit(0);

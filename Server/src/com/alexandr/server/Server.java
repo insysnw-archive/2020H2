@@ -1,6 +1,7 @@
 package com.alexandr.server;
 
 
+import java.awt.*;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -17,6 +18,7 @@ public class Server {
     ServerSocket serverSocket = null;
     Integer port;
     String host;
+    boolean work = true;
     List<ClientHandler> clientsList = new ArrayList<>();
     List<String> names = new ArrayList<>();
     private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -121,7 +123,20 @@ public class Server {
         try {
             serverSocket = new ServerSocket(port,0, InetAddress.getByName(host));
             System.out.println("[SERVER] Сервер запущен на порту:" +serverSocket.getLocalPort());
-            while (true){
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                    System.out.println("Running Shutdown Hook");
+                    byte[] b = new byte[3];
+                    sendToAll(1,b);
+                    work = false;
+                    try {
+                        serverSocket.close();
+                    } catch (IOException exception) {
+                        exception.printStackTrace();
+                    }
+                }
+            });
+            while (work){
                 System.out.println("[SERVER] Ожидание подключений клиентов...");
                 System.out.println("[SERVER] Для выключения сервера введите 'stop server'");
                 clientSocket = serverSocket.accept();

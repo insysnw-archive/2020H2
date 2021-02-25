@@ -73,6 +73,13 @@ private ByteArrayInputStream inp;
         }
     }
 
+    public void stop() throws IOException {
+        byte[] m = new byte[10];
+        server.sendToAll(1,m);
+        socket.close();
+
+    }
+
 
     public void sendMsg(byte[] msg){
         try {

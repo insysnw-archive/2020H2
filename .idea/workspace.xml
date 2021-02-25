@@ -1,20 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="482b27bc-62cc-40ba-954f-8a7b17061693" name="Default Changelist" comment="fixes">
-      <change afterPath="$PROJECT_DIR$/Client/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Server/.idea/vcs.xml" afterDir="false" />
+    <list default="true" id="482b27bc-62cc-40ba-954f-8a7b17061693" name="Default Changelist" comment="host config + fix port">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/out/artifacts/Client_jar/Client.jar" beforeDir="false" afterPath="$PROJECT_DIR$/Client/out/artifacts/Client_jar/Client.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client$2.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client.class" beforeDir="false" afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Main.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/src/com/alexandr/client/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/Client/src/com/alexandr/client/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/src/com/alexandr/client/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/Client/src/com/alexandr/client/Main.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Server/out/artifacts/Server_jar/Server.jar" beforeDir="false" afterPath="$PROJECT_DIR$/Server/out/artifacts/Server_jar/Server.jar" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Main.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Server$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Server$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/ClientHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/ClientHandler.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Server.class" beforeDir="false" afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Server.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/src/com/alexandr/server/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/Server/src/com/alexandr/server/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Server/src/com/alexandr/server/ClientHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/Server/src/com/alexandr/server/ClientHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Server/src/com/alexandr/server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/Server/src/com/alexandr/server/Server.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -120,7 +117,21 @@
       <option name="project" value="LOCAL" />
       <updated>1613397394164</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="host config + fix port">
+      <created>1614216188884</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1614216188884</updated>
+    </task>
+    <task id="LOCAL-00009" summary="host config + fix port">
+      <created>1614216361953</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1614216361953</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -138,6 +149,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="init" />
     <MESSAGE value="fixes" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixes" />
+    <MESSAGE value="host config + fix port" />
+    <option name="LAST_COMMIT_MESSAGE" value="host config + fix port" />
   </component>
 </project>
