@@ -46,7 +46,7 @@ javac -sourcepath ./src -d bin src/com/alexandr/server/Main.java
 На выходе команды получаем бинарники и его можно запустить
 
 запускаем 
-java -classpath ./bin com/alexandr/server/Server
+java -classpath ./bin com/alexandr/server/Main
 
 Клиент:
 компилируем
@@ -54,7 +54,7 @@ java -classpath ./bin com/alexandr/server/Server
 javac -sourcepath ./src -d bin src/com/alexandr/client/Main.java 
 
 запускаем 
-java -classpath ./bin com/alexandr/client/Client
+java -classpath ./bin com/alexandr/client/Main
 
 ## Протокол
 
