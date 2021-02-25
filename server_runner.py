@@ -1,6 +1,6 @@
 import sys
 
-from src.lab3.elmail.server import Server
+from src.lab3.email.server import Server
 
 if __name__ == '__main__':
     address = sys.argv[1]

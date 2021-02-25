@@ -1,10 +1,9 @@
 import re
 import socket
 import sys
-from time import sleep
 
-from src.lab3.elmail.protocol.socket_wrapper import SocketWrapper
-from src.lab3.elmail.protocol import Message, Mail
+from src.lab3.email.protocol.socket_wrapper import SocketWrapper
+from src.lab3.email.protocol import Message, Mail
 
 
 class Client:
@@ -53,58 +52,79 @@ quit - принудительное отключение от сервера
                 print("\nIncorrect command format")
 
             if client_args[0] == "entry":
-                if re.match(r'[\w\.-]+@[\w\.-]+(\.[\w]+)+', client_args[1]):
-                    msg = {"name": client_args[1]}
-                    self.socket_w.send(Message(0, len(msg), msg))
-                else:
-                    print("\nIncorrect mail format")
-            elif client_args[0] == "send":
-                if re.match(r'[\w\.-]+@[\w\.-]+(\.[\w]+)+', client_args[1]):
-                    msg = {"to": client_args[1]}
-                    header = input("ВВедите заголовок письма: ")
-                    msg["header"] = header
-                    text = input("Введите текст письма: ")
-                    msg["text"] = text
-                    self.socket_w.send(Message(1, len(msg), msg))
-                else:
-                    print("\nIncorrect mail format")
-            elif client_args[0] == "mailbox":
-                self.socket_w.send(Message(2, None, None))
-            elif client_args[0] == "open":
-                if re.match(r'#^[0-9]+$#', client_args[1]):
-                    msg = {"index": client_args[1]}
-                    self.socket_w.send(Message(3, len(msg), msg))
-                else:
-                    print("\nIncorrect index format")
-            elif client_args[0] == "del":
-                if re.match(r'#^[0-9]+$#', client_args[1]):
-                    msg = {"index": client_args[1]}
-                    self.socket_w.send(Message(4, len(msg), msg))
-                else:
-                    print("\nIncorrect index format")
-            elif client_args[0] == "quit":
-                self.socket_w.send(Message(5, None, None))
+                if len(client_args) == 2:
+                    self.send_entry(client_args[1])
+            elif client_args[0] == "send" and self.is_authed == 1:
+                if len(client_args) == 2:
+                    self.send_send(client_args[1])
+            elif client_args[0] == "mailbox" and self.is_authed == 1:
+                self.socket_w.send(Message(2, None))
+            elif client_args[0] == "open" and self.is_authed == 1:
+                self.send_command_about_mail(3, client_args[1])
+            elif client_args[0] == "del" and self.is_authed == 1:
+                self.send_command_about_mail(4, client_args[1])
+            elif client_args[0] == "quit" and self.is_authed == 1:
+                self.send_quit()
+                break
             else:
                 print("\nUnknown command")
+                print()
+                continue
 
             message = self.socket_w.recv()
-            if message.msg_type == 2:
+            if message.msg_type == 0:
+                print("Success.")
+            elif message.msg_type == 2:
                 mails = message.msg_content
+                print("Mailbox")
                 for x in mails:
-                    print(x)
-                    for y in mails[x]:
-                        print(y, ':', mails[x][y])
+                    self.print_mail(x)
+                    print()
+
             elif message.msg_type == 3:
                 mail = message.msg_content
-                for x in mail:
-                    print(x, ':', mail[x])
+                self.print_mail(mail)
             elif message.msg_type == -2:
                 print(message.msg_content)
             else:
                 print("\nUnknown packet")
 
+    def send_entry(self, name):
+        if re.match(r'[\w\.-]+@[\w\.-]+(\.[\w]+)+', name):
+            msg = {"name": name}
+            self.is_authed = 1
+            self.socket_w.send(Message(0, msg))
+        else:
+            print("\nIncorrect mail format")
 
-    def __server_closed(self):
+    def send_send(self, name):
+        if re.match(r'[\w\.-]+@[\w\.-]+(\.[\w]+)+', name):
+            msg = {"to": name}
+            header = input("ВВедите заголовок письма: ")
+            msg["header"] = header
+            text = input("Введите текст письма: ")
+            msg["text"] = text
+            self.socket_w.send(Message(1, msg))
+        else:
+            print("\nIncorrect mail format")
+
+    def send_command_about_mail(self, type, index):
+        if re.match(r'^[0-9]+$', index):
+            msg = {"index": index}
+            if type == 3:
+                self.socket_w.send(Message(3, msg))
+            else:
+                self.socket_w.send(Message(4, msg))
+        else:
+            print("\nIncorrect index format")
+
+    def send_quit(self):
+        self.is_authed = 0
+        self.socket_w.send(Message(5, None))
         self.client_socket.close()
-        print("\nСоединение с сервером прервано!")
-        sys.exit(1)
+        print("Подключение разорвано")
+
+    @staticmethod
+    def print_mail(mail):
+        for x in mail:
+            print(x, ':', mail[x])
