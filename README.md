@@ -1,17 +1,5 @@
  ### Инструкция по использованию
- Запустить скрипт командой `python3 dhcp_server.py` с нужными аргументами. Для использования порта 67 необходимо запускать программу с правами суперпользователя: `sudo python3 dhcp_server.py`. Возможные аргументы:
- 
- ```
-   -h, --help       show this help message and exit
-   --ip IP          ip address at wich server will receive messages
-   --port PORT      port at wich server will receive messages
-   --mask MASK      subnet mask
-   --router ROUTER  router address
-   --domain DOMAIN  domain name server
-   -d D             show details: 1 to show all incoming and outcoming messages
- ```
- 
- По дефолту сервер запускается по адресу 0.0.0.0, порт 67.
+ Запустить скрипт командой `python3 DHCPClient.py`. Для использования порта 67 необходимо запускать программу с правами суперпользователя: `sudo python3 DHCPServer.py`.
  
  ### Описание используемого протокола.
  Структура DHCP-сообщения, в скобках указана длина поля в октетах (байтах):
@@ -162,52 +150,49 @@
  ```
  
 Подразумевается использование только одного роутера и одного сервера имен. Важным моментом является то, что механизм аренды адресов реализован тривиально, не по RFC-стандарту. Предлагаемый/назначаемый адрес отсчитывается от адреса сервера, назначенные адреса хранятся в простом массиве, адрес выдается на максимальное время.
- Сервер умеет принимать сообщения типа DHCPDISCOVER, DHCPREQUEST, DHCPRELEASE и DHCPDECLINE и отвечать DHCPOFFER и DHCPACK.
- Сервер проверялся работой с клиентом dhclient. Для проверки работы нужно запустить сервер и клиент
+Сервер умеет принимать сообщения типа DHCPDISCOVER, DHCPREQUEST, DHCPRELEASE и DHCPRENEW и отвечать DHCPOFFER и DHCPACK.
+Сервер проверялся работой с клиентом DHCPClient. Для проверки работы нужно запустить сервер и клиент
 Результаты:
-Вывод клиента
-
-```
-    MacBook-Pro-Aleksej-2:lab2s Alex$ python3 dhcp_client.py 
-    DHCP client is starting...
-
-    Send DHCP discovery.
-    Receive DHCP offer.
-    Send DHCP request.
-    Receive DHCP pack.
-```
-
 Вывод сервера
+
+```
+    MacBook-Pro-Aleksej-2:lab2s Alex$ python3 DHCPServer.py 
+    DHCP Server started
+    -------------------
+    DISCOVER,c4:b3:01:be:55:01,0.0.0.0
+    Server received Discover message from client
+    This MAC address does not have an assigned IP yet
+    Server is sending Offer message to client
+    Sending message to client: OFFER,c4:b3:01:be:55:01,192.168.1.254
+    
+    REQUEST,c4:b3:01:be:55:01,192.168.1.254
+    Server received a Request message from client
+    Client is assigned IP address:192.168.1.254
+    Server is sending Acknowledge message to client
+    Sending message to client: ACK,c4:b3:01:be:55:01,192.168.1.254
+```
+
+Вывод клиента
     
 ```
-    MacBook-Pro-Aleksej-2:lab2s Alex$ sudo python3 dhcp_serv.py
-    Password:
-    DHCP server starting at 0.0.0.0 : 67
-    MESSAGE RECEIVED FROM:  ('192.168.1.74', 68)
-    MESSAGE TYPE: 1
-    DHCPDISCOVER ACCEPTED
-    SENDING DHCPOFFER TO  ('192.168.1.74', 68)
-    extracted xid:  b'9\x03\xf3&'
-    extracted flags:  b'\x00\x00'
-    extracted ciaddr:  b'\x00\x00\x00\x00'
-    extracted giaddr:  b'\x00\x00\x00\x00'
-    extracted chaddr:  b'\x00\x05<\x04\x8dY\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-    offered yiaddr:  [192, 168, 1, 100]
-    MESSAGE RECEIVED FROM:  ('192.168.1.74', 68)
-    MESSAGE TYPE: 3
-    DHCPREQUEST ACCEPTED
-    SENDING DHCPACK TO  ('192.168.1.74', 68)
-    extracted xid:  b'9\x03\xf3&'
-    extracted flags:  b'\x00\x00'
-    extracted ciaddr:  b'\x00\x00\x00\x00'
-    extracted giaddr:  b'\x00\x00\x00\x00'
-    extracted chaddr:  b'\x00\x0c)\xdd\\\xa7\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-    yiaddr to assign:  [192, 168, 1, 100]
+    MacBook-Pro-Aleksej-2:lab2s Alex$ python3 DHCPClient.py 
+    DHCP Client Started
+    -------------------
+    Sending discover from client to server
+    DISCOVER,c4:b3:01:be:55:01,0.0.0.0
+    
+    Received message from server: OFFER,c4:b3:01:be:55:01,192.168.1.254
+    Received offer from server
+    offered ip: 192.168.1.254
+    Sending request from client to server
+    
+    Received message from server: ACK,c4:b3:01:be:55:01,192.168.1.254
+    ACK received from server
+    Client IP Address: 192.168.1.254
+    Choose From The Following
+    RELEASE: 1
+    RENEW:   2
+    QUIT:    3
 
 ```
- 
-
-
- 
- Здесь назначаемый адрес был взят из поля Requested IP Address опций поступившего DHCPREQUEST.
 
