@@ -86,7 +86,6 @@ def login():
     while True:
         print('Enter your role and name separated by space. Roles are: player and croupier. Name is maximum 20 ASCII characters. Input example: player Jack')
         user = input().strip().split()
-        print(user)
         if len(user) != 2 or (user[0] != 'player' and user[0] != 'croupier') or len(user[1]) > 20:
             print('Strange input, please try again.')
             continue
