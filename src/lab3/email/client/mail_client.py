@@ -53,7 +53,8 @@ quit - принудительное отключение от сервера
 
             if client_args[0] == "entry":
                 if len(client_args) == 2:
-                    self.send_entry(client_args[1])
+                    if not self.send_entry(client_args[1]):
+                        continue
             elif client_args[0] == "send" and self.is_authed == 1:
                 if len(client_args) == 2:
                     self.send_send(client_args[1])
@@ -90,12 +91,14 @@ quit - принудительное отключение от сервера
                 print("\nUnknown packet")
 
     def send_entry(self, name):
-        if re.match(r'[\w\.-]+@[\w\.-]+(\.[\w]+)+', name):
+        if re.match(r'[\w.-]+@[\w.-]+(\.[\w]+)+', name):
             msg = {"name": name}
             self.is_authed = 1
             self.socket_w.send(Message(0, msg))
+            return True
         else:
             print("\nIncorrect mail format")
+            return False
 
     def send_send(self, name):
         if re.match(r'[\w\.-]+@[\w\.-]+(\.[\w]+)+', name):
