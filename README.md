@@ -14,7 +14,7 @@ Server: pool.ntp.org
 Thu Feb 25 06:28:11 MSK 2021
 
 ### Запуск
->kotlinc -script Client.kts
+>kotlinc -script Client.kts [server-name]
 
 ### Структура пакета
 1. Leap indicator - Индикатор коррекции (2 bits)

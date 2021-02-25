@@ -8,7 +8,13 @@ import kotlin.experimental.and
 import kotlin.experimental.inv
 import kotlin.experimental.or
 
-    val diff = synchronize("pool.ntp.org")
+    var server = "pool.ntp.org"
+
+    if (args.isNotEmpty()) {
+        server = args[0]
+    }
+
+    val diff = synchronize(server)
     println(Date(System.currentTimeMillis() + diff))
 
     @Throws(IOException::class)
