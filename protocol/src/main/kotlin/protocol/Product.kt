@@ -15,6 +15,6 @@ data class Product(
 
 }
 
-fun List<Product>.encode() = this.joinToString(",") { it.toProtocolString() }
+fun List<Product>.encodeProducts() = this.joinToString(",") { it.toProtocolString() }
 
-fun String.decode() = this.split(",").map { Product.fromString(it) }
+fun String.decodeProducts() = this.split(",").map { Product.fromString(it) }
