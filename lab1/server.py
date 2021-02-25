@@ -1,8 +1,12 @@
 import socket
-import time
+import sys
 import threading
 
-address = ('0.0.0.0', 9090)
+if len(sys.argv) != 3:
+    print("Specify IP and port")
+    sys.exit()
+
+address = (sys.argv[1], int(sys.argv[2]))
 clients = list()
 users = dict()
 
@@ -11,6 +15,7 @@ server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server.bind(address)
 server.listen()
 print("Server ready to work")
+
 
 def getMessage(client):
     while True:
@@ -25,19 +30,24 @@ def getMessage(client):
         return {'header': header, 'data': client.recv(size)}
 
 
-def handleConnections(client, address):
+def handleConnections(client):
     if client not in clients:
         user = getMessage(client)
         if user is False:
             return
+        if user['data'] in users.values():
+            msg = "Such login is already in use "
+            msgHeader = len(msg).to_bytes(5, byteorder='big')
+            client.send(user['header'] + user['data'] + msgHeader + msg)
+        else:
+            users[client] = user
 
-        users[client] = user
-        clients.append(client)
-        msg = f"{user['data'].decode()} joined to Server".encode()
-        msgHeader = len(msg).to_bytes(5, byteorder='big')
+            clients.append(client)
+            msg = f"{user['data'].decode('')} joined to Server".encode()
+            msgHeader = len(msg).to_bytes(5, byteorder='big')
 
-        for anyClinet in clients:
-            anyClinet.send(user['header'] + user['data'] + msgHeader + msg)
+            for anyClinet in clients:
+                anyClinet.send(user['header'] + user['data'] + msgHeader + msg)
 
     while True:
         message = getMessage(client)
@@ -55,8 +65,8 @@ def handleConnections(client, address):
                 anyClinet.send(user['header'] + user['data'] + message['header'] + message['data'])
 
 
-
-while True:
-    connSocket, addrSocket = server.accept()
-    thread = threading.Thread(target=handleConnections, args=(connSocket, addrSocket))
-    thread.start()
+if __name__ == '__main__':
+    while True:
+        connSocket, addrSocket = server.accept()
+        thread = threading.Thread(target=handleConnections, args=(connSocket, addrSocket))
+        thread.start()
