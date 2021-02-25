@@ -1,60 +1,119 @@
-import io.ktor.network.selector.*
-import io.ktor.network.sockets.*
-import kotlinx.cli.ArgParser
-import kotlinx.cli.ArgType
-import kotlinx.cli.default
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import java.net.InetSocketAddress
-import kotlin.system.exitProcess
+import protocol.*
+import utils.BlockingReceiver
+import utils.IoFacade
+import java.io.EOFException
+import java.net.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
-const val DEFAULT_PORT = 123
-const val DEFAULT_ADDRESS = "127.0.0.1"
+class Server(address: InetSocketAddress) {
+    private val clients = ConcurrentHashMap<String, IoFacade>()
+    private val server = ServerSocket()
+    private val massMailer = Executors.newSingleThreadExecutor()
+    private val pinguin = Executors.newSingleThreadScheduledExecutor()
 
+    init {
+        server.receiveBufferSize = BlockingReceiver.bufferSize
+        server.reuseAddress = true
+        server.bind(address)
+        println("Running server on $address")
 
-val ktorSelector = ActorSelectorManager(Dispatchers.IO)
-
-fun main(args: Array<String>) = runBlocking {
-
-    val parser = ArgParser("server")
-
-    val address by parser.option(
-        type = ArgType.String,
-        shortName = "a"
-    ).default(DEFAULT_ADDRESS)
-
-    val port by parser.option(
-        type = ArgType.Int,
-        shortName = "p"
-    ).default(DEFAULT_PORT)
-
-    parser.parse(args)
-
-    try {
-
-        println("Server started with address $address ; port $port")
-
-        val socket = aSocket(ktorSelector).udp().bind(InetSocketAddress(address, port))
-
-        while (true) {
-            val datagram = socket.receive()
-            println("Datagram from ${datagram.address} recieved")
-
-            try {
-
-//                socket.send(Datagram(buildPacket { response.encode(this) }, datagram.address))
-//                println("RESPONSE: $response")
-            } catch (e: Exception) {
-
-                println("ERROR occured ${e.message}")
-
-
-//                socket.send(Datagram(buildPacket { response.encode(this) }, datagram.address))
+        pinguin.scheduleAtFixedRate({
+            clients.filter {
+                try {
+                    it.value.ping()
+                    true
+                } catch (e: Exception) {
+                    handleCommunicationException(e, it.key, it.key)
+                    false
+                }
             }
-        }
-    } catch (e: Exception) {
-        e.printStackTrace()
-        exitProcess(1)
+        }, 0, 500, TimeUnit.MILLISECONDS)
     }
 
+    fun handleConnection() {
+        val socket = server.accept()
+        thread(isDaemon = true) {
+            socket.sendBufferSize = BlockingReceiver.bufferSize
+            val connection = IoFacade(socket.getInputStream(), socket.getOutputStream())
+            val name = decode<Handshake>(connection.waitForMessage()).name
+            val logName = "${socket.inetAddress.hostAddress}:${socket.port} aka $name"
+
+            if (!handleHandshake(connection, name, logName)) {
+                socket.close()
+                return@thread
+            }
+
+            try {
+                while (true) {
+                    handleMessage(connection, name, logName)
+                }
+            } catch (e: Exception) {
+                handleCommunicationException(e, name, logName)
+            }
+        }
+    }
+
+    private fun handleHandshake(connection: IoFacade, name: String, logName: String): Boolean {
+        if (clients.putIfAbsent(name, connection) != null) {
+            println("$logName kicked for duplicating name")
+            connection.writeMessage(encode(Update("*", "Get lost, U R not special")))
+            return false
+        }
+        connection.writeMessage(encode(Update("*", "Welcome! Online: ${clients.keys}")))
+
+        println("$logName connected")
+
+        massMailer.submit {
+            val encodedMessage = encode(Update("*", "$name connected"))
+            clients.asSequence()
+                    .filter { it.key != name }
+                    .forEach { it.value.writeSilently(encodedMessage, it.key) }
+        }
+        return true
+    }
+
+    private fun handleMessage(connection: IoFacade, name: String, logName: String) {
+        val receivedMessage = decode<Message>(connection.waitForMessage())
+        println("$logName incoming message of length ${receivedMessage.text.length}")
+        val encodedMessage = encode(Update(name, receivedMessage.text.trim()))
+
+        if (receivedMessage.destination != "*") {
+            clients[receivedMessage.destination]?.writeSilently(encodedMessage, receivedMessage.destination)
+        } else {
+            massMailer.submit {
+                clients.asSequence()
+                        .filter { it.key != name }
+                        .forEach { it.value.writeSilently(encodedMessage, it.key) }
+            }
+        }
+    }
+
+    private fun handleCommunicationException(e: Exception, name: String, logName: String) {
+        when {
+            e is SocketException && e.message in okExceptionMessages -> Unit
+            e is EOFException -> Unit
+            else -> e.printStackTrace()
+        }
+
+        handleDisconnect(name, logName)
+    }
+
+    private fun handleDisconnect(name: String, logName: String) {
+        clients.remove(name)
+        println("$logName disconnected")
+        massMailer.submit {
+            val encodedMessage = encode(Update("*", "$name disconnected"))
+            clients.forEach { it.value.writeSilently(encodedMessage, it.key) }
+        }
+    }
+
+    companion object {
+        private val okExceptionMessages = listOf(
+                "Connection reset",
+                "An established connection was aborted by the software in your host machine"
+        )
+    }
 }

@@ -18,7 +18,7 @@ const val DEFAULT_NAME = "ManWithNoName"
 
 fun main(args: Array<String>) {
 
-    registerMapping(Message::class)
+    registerMapping(Update::class)
 
     val parser = ArgParser("client")
 
@@ -68,7 +68,7 @@ fun main(args: Array<String>) {
                     try {
                         while (keepConnection.get()) {
                             when (val message = decodeMapped(connection.waitForMessage())) {
-                                is Update -> println(message)
+                                is Update -> println("${message.sender}: ${message.text}")
                                 else -> println("unknown message")
                             }
                         }
