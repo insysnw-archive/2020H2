@@ -5,7 +5,7 @@ plugins {
 }
 
 application {
-    mainClassName = "ServerKt"
+    mainClassName = "ServerMainKt"
 }
 
 setJarMain(application.mainClassName)
