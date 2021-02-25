@@ -34,7 +34,7 @@ class Storage {
 
     fun addProduct(name: String, price: Int): Int {
         val id = getNextId()
-        goods[id] = Record(Product(getNextId(), name, price), 0)
+        goods[id] = Record(Product(id, name, price), 0)
         return id
     }
 

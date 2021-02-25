@@ -1,5 +1,3 @@
-package com.dekinci.uni.net.first.io
-
 import protocol.*
 import utils.BlockingReceiver
 import utils.IoFacade
