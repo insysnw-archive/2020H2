@@ -10,6 +10,8 @@
 
     <properties>
         <kotlin.version>1.4.30</kotlin.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -23,6 +25,11 @@
             <artifactId>kotlin-test</artifactId>
             <version>${kotlin.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
+            <version>3.8.0</version>
         </dependency>
     </dependencies>
 
@@ -71,6 +78,46 @@
                             <archive>
                                 <manifest>
                                     <mainClass>com.dekinci.uni.net.second.dnsserver.MainKt</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>tftpclient</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <outputDirectory>./</outputDirectory>
+                            <finalName>tftpclient</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <archive>
+                                <manifest>
+                                    <mainClass>com.dekinci.uni.net.second.tftpclient.MainKt</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>tftpserver</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <outputDirectory>./</outputDirectory>
+                            <finalName>tftpserver</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <archive>
+                                <manifest>
+                                    <mainClass>com.dekinci.uni.net.second.tftpclient.ServerKt</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>
