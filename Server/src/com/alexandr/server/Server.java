@@ -2,6 +2,7 @@ package com.alexandr.server;
 
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -15,11 +16,13 @@ public class Server {
     Socket clientSocket = null;
     ServerSocket serverSocket = null;
     Integer port;
+    String host;
     List<ClientHandler> clientsList = new ArrayList<>();
     List<String> names = new ArrayList<>();
     private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
-    Server(Integer port){
+    Server(String host, Integer port){
         this.port = port;
+        this.host = host;
     }
 
     private void disconnect(){
@@ -116,7 +119,7 @@ public class Server {
             }
         }).start();
         try {
-            serverSocket = new ServerSocket(port);
+            serverSocket = new ServerSocket(port,0, InetAddress.getByName(host));
             System.out.println("[SERVER] Сервер запущен на порту:" +serverSocket.getLocalPort());
             while (true){
                 System.out.println("[SERVER] Ожидание подключений клиентов...");

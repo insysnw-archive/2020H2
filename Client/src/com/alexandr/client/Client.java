@@ -1,4 +1,6 @@
 package com.alexandr.client;
+
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -19,18 +21,18 @@ public class Client implements Runnable {
     int fl = 0;
 
     String SERVER_HOST = "localhost";
-    Integer SERVER_PORT = 6666;
     private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    Client(Integer port, String name) {
+    Client(String host, Integer port, String name) {
         this.port = port;
         this.myName = name;
+        this.SERVER_HOST = host;
     }
 
     private int connect() {
         try {
             // подключаемся к серверу
-            clientSocket = new Socket(SERVER_HOST, SERVER_PORT);
+            clientSocket = new Socket(SERVER_HOST, port);
             inMessage = clientSocket.getInputStream();
             outMessage = clientSocket.getOutputStream();
             scan = new Scanner(inMessage);
@@ -167,8 +169,5 @@ public class Client implements Runnable {
         } else {
             System.out.println("Че то пошло не так");
         }
-    }
-    private void entering(){
-
     }
 }

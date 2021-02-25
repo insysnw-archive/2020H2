@@ -2,22 +2,18 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="482b27bc-62cc-40ba-954f-8a7b17061693" name="Default Changelist" comment="fixes">
+      <change afterPath="$PROJECT_DIR$/Client/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/out/artifacts/Client_jar/Client.jar" beforeDir="false" afterPath="$PROJECT_DIR$/Client/out/artifacts/Client_jar/Client.jar" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client$2.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client.class" beforeDir="false" afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Client.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/client/Main.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Client/out/production/Client/com/alexandr/protocol/ClientMessege.class" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/src/com/alexandr/client/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/Client/src/com/alexandr/client/Client.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Client/src/com/alexandr/client/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/Client/src/com/alexandr/client/Main.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Server/out/artifacts/Server_jar/Server.jar" beforeDir="false" afterPath="$PROJECT_DIR$/Server/out/artifacts/Server_jar/Server.jar" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/protocol/ClientMessege.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/ClientHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/ClientHandler.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Main.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Server$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Server$1.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Server.class" beforeDir="false" afterPath="$PROJECT_DIR$/Server/out/production/Server/com/alexandr/server/Server.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/src/com/alexandr/server/ClientHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/Server/src/com/alexandr/server/ClientHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Server/src/com/alexandr/server/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/Server/src/com/alexandr/server/Main.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Server/src/com/alexandr/server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/Server/src/com/alexandr/server/Server.java" afterDir="false" />
     </list>
@@ -38,12 +34,33 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="jdk.selected.JAVA_MODULE" value="1.8" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/Client" />
-    <property name="project.structure.last.edited" value="Modules" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../TCPchat" />
+    <property name="project.structure.last.edited" value="Project" />
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.6138855" />
     <property name="settings.editor.selected.configurable" value="configurable.group.other" />
+  </component>
+  <component name="RunManager">
+    <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.alexandr.server.Main" />
+      <module name="2020H2" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.alexandr.server.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.Main" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -89,7 +106,21 @@
       <option name="project" value="LOCAL" />
       <updated>1613394272969</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="fixes">
+      <created>1613395310960</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1613395310960</updated>
+    </task>
+    <task id="LOCAL-00007" summary="fixes">
+      <created>1613397394164</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1613397394164</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
