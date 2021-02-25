@@ -18,9 +18,9 @@ jar файл сервера находится в Server/out/artifacts/Server_ja
 
 Далее запускается клиент:
 
-  java -jar [path] Client.jar
+java -jar [path] Client.jar
   
-  потом ввести порт сервера и нажать Enter а далее ввести имя пользователя
+потом ввести порт сервера и нажать Enter а далее ввести имя пользователя
 
 jar файл клиента находится в Client/out/artifacts/Client_jar/Client.jar
 
@@ -40,18 +40,20 @@ jar файл клиента находится в Client/out/artifacts/Client_ja
 
 Сервер:
 компилируем
-javac -sourcepath ./src -d bin src/com/alexandr/server/Main.java 
-На выходе команды получаем бинарники и его можно запустить
-запускаем 
 
+javac -sourcepath ./src -d bin src/com/alexandr/server/Main.java 
+
+На выходе команды получаем бинарники и его можно запустить
+
+запускаем 
 java -classpath ./bin com/alexandr/server/Server
 
 Клиент:
 компилируем
+
 javac -sourcepath ./src -d bin src/com/alexandr/client/Main.java 
 
 запускаем 
-
 java -classpath ./bin com/alexandr/client/Client
 
 ## Протокол
