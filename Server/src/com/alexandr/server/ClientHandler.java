@@ -31,6 +31,7 @@ private ByteArrayInputStream inp;
     @Override
     public void run() {
         while (true){
+
             if(scan.hasNext()){
                 if(first_appear == 0){
                     try {

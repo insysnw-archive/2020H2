@@ -20,6 +20,7 @@ public class ClientMessege implements Serializable {
         int len = text.length();
         if(len > MAX_SIZE_TEXT){
             return -1;
+
         } else {
             if (len == 0) {
                 return -2;

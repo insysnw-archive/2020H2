@@ -18,6 +18,7 @@ public class ClientMessege implements Serializable {
 
     public int setText(String text) {
         int len = text.length();
+
         if(len > MAX_SIZE_TEXT){
             return -1;
         } else {

@@ -39,6 +39,7 @@ public class Server {
 
     public void sendToAll(int flag,byte[] mesg){
         switch (flag) {
+
             case 0 -> {
                 ClientMessege pack = new ClientMessege();
                 pack.decodeMsg(mesg);

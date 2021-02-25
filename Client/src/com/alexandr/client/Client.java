@@ -108,6 +108,7 @@ public class Client implements Runnable {
     public void run() {
         int conn = connect();
         if (conn == 0) {
+
             System.out.println("Для входа в чат нажмите Enter два раза");
             new Thread(new Runnable() {
                 @Override
