@@ -1,24 +1,17 @@
-CFLAGS := -g -Wall
-CC := cc
-
-objects = client.o server.o chat_protocol.o server_blocking.o
-headers = chat_protocol.h
+CC = gcc
+CFLAGS = -g -O0 -Wall
+headers = server.h dns_protocol.h
+objects = server.o main.o dns_protocol.o
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
-all: server client server_blocking
+all: dns_server
 
-client: client.o chat_protocol.o
-	$(CC) $(CFLAGS) client.o chat_protocol.o -o client.out
-
-server: server.o chat_protocol.o
-	$(CC) $(CFLAGS) server.o chat_protocol.o -o server.out
-	
-server_blocking: server_blocking.o chat_protocol.o
-	$(CC) $(CFLAGS) server_blocking.o chat_protocol.o -o server_blocking.out -pthread
+dns_server: server.o main.o dns_protocol.o
+	$(CC) $(CFLAGS) -o server.out server.o main.o dns_protocol.o
 
 $(objects): $(headers)
 
 clean:
-	rm -f $(objects) client server server_blocking client.out server.out server_blocking.out
+	rm -f $(objects) server.out

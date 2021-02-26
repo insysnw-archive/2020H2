@@ -1,254 +1,151 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <poll.h>
-#include <time.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <syslog.h>
+#include <errno.h>
 #include <fcntl.h>
 
-#include "chat_protocol.h"
+#include "dns_protocol.h"
+#include "server.h"
 
-#define DEF_PORT "8888" // Port we're listening on
+struct dns_server dns_server;
 
-// Get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa)
+void dns_init(void)
 {
-    if (sa->sa_family == AF_INET)
-    {
-        return &(((struct sockaddr_in *)sa)->sin_addr);
-    }
+	printf("Initializing DNS server.\n");
 
-    return &(((struct sockaddr_in6 *)sa)->sin6_addr);
+	dns_server.config.port = 53;
+	dns_server.config.host = "127.0.0.1";
+
+	dns_server.listenfd = 0;
 }
 
-// Return a listening socket
-int get_listener_socket(char *port)
+//Запускаем сервер
+void dns_start(void)
 {
-    int listener; // Listening socket descriptor
-    int yes = 1;  // For setsockopt() SO_REUSEADDR, below
-    int rv;
+	printf("Starting DNS server.\n");
 
-    struct addrinfo hints, *ai, *p;
+	struct sockaddr_in sin;
+	int sd;
 
-    // Get us a socket and bind it
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
-    if ((rv = getaddrinfo(NULL, port, &hints, &ai)) != 0)
-    {
-        fprintf(stderr, "selectserver: %s\n", gai_strerror(rv));
-        exit(1);
-    }
+	printf("Opening sockets.\n");
 
-    for (p = ai; p != NULL; p = p->ai_next)
-    {
-        listener = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-        if (listener < 0)
-        {
-            continue;
-        }
+	assert((sd = socket(AF_INET, SOCK_DGRAM, 0)) > 0);
 
-        // Lose the pesky "address already in use" error message
-        setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+	memset((char *)&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(dns_server.config.port);
+	sin.sin_addr.s_addr = inet_addr(dns_server.config.host);
+	assert(bind(sd, (struct sockaddr *)&sin, sizeof(sin)) == 0);
 
-        if (bind(listener, p->ai_addr, p->ai_addrlen) < 0)
-        {
-            close(listener);
-            continue;
-        }
-
-        break;
-    }
-
-    freeaddrinfo(ai); // All done with this
-
-    // If we got here, it means we didn't get bound
-    if (p == NULL)
-    {
-        return -1;
-    }
-
-    // Listen
-    if (listen(listener, 10) == -1)
-    {
-        return -1;
-    }
-
-    return listener;
+	dns_server.listenfd = sd;
 }
 
-// Add a new file descriptor to the set
-void add_to_pfds(struct pollfd *pfds[], int newfd, int *fd_count, int *fd_size)
+//Обрабатываем запросы в цикле
+void dns_loop(void)
 {
-    // If we don't have room, add more space in the pfds array
-    if (*fd_count == *fd_size)
-    {
-        *fd_size *= 2; // Double it
+	int req_size;
+	char buf[PACKET_SIZE + 4];
+	socklen_t from_len;
+	struct sockaddr_in from;
+	struct dns_packet *pkt;
 
-        *pfds = realloc(*pfds, sizeof(**pfds) * (*fd_size));
-    }
+	from_len = sizeof(from);
 
-    (*pfds)[*fd_count].fd = newfd;
-    (*pfds)[*fd_count].events = POLLIN; // Check ready-to-read
+	printf("Accepting connections...\n");
+	for (;;)
+	{
+		req_size = recvfrom(dns_server.listenfd, buf, PACKET_SIZE + 4, 0, (struct sockaddr *)&from, &from_len);
+		printf("client: %s %d\n", strerror(errno), req_size);
 
-    (*fd_count)++;
-}
+		pkt = calloc(1, sizeof(struct dns_packet));
+		dns_request_parse(pkt, buf, req_size);
 
-// Remove an index from the set
-void del_from_pfds(struct pollfd pfds[], int i, int *fd_count)
-{
-    // Copy the one from the end over this one
-    pfds[i] = pfds[*fd_count - 1];
+		//dns_print_packet(pkt);
 
-    (*fd_count)--;
-}
+		if (pkt->question.qtype == 1)
+		{
+			pkt->rr.name = pkt->question.qname;
+			pkt->rr.type = 1;
+			pkt->rr.class = 1;
+			pkt->rr.ttl = 540;
+			pkt->rr.rdlength = 4;
+			pkt->rr.rdata = calloc(4, sizeof(char));
+			memcpy(pkt->rr.rdata, "0000", 4);
+			pkt->header.flags = 0b1000000000000000;
+			pkt->header.ancount = 1;
+		}
 
-// Main
-int main(int argc, char **argv)
-{
-    int listener; // Listening socket descriptor
+		if (pkt->question.qtype == 15)
+		{
+			pkt->rr.name = pkt->question.qname;
+			pkt->rr.type = 15;
+			pkt->rr.class = 1;
+			pkt->rr.ttl = 540;
+			char mail_buf[10];
+			mail_buf[0] = 2;
+			mail_buf[1] = 'm';
+			mail_buf[2] = 'x';
+			mail_buf[3] = 2;
+			mail_buf[4] = 'y';
+			mail_buf[5] = 'a';
+			mail_buf[6] = 2;
+			mail_buf[7] = 'r';
+			mail_buf[8] = 'u';
+			mail_buf[9] = 0;
+			pkt->rr.rdlength = 12;
+			pkt->rr.rdata = calloc(pkt->rr.rdlength, sizeof(char));
+			char pref[2];
+			pref[0] = 0;
+			pref[1] = 10;
+			memcpy(pkt->rr.rdata, pref, 2);
+			memcpy(pkt->rr.rdata + 2, mail_buf, 10);
+			pkt->header.flags = 0b1000000000000000;
+			pkt->header.ancount = 1;
+		}
 
-    int newfd;
-    struct sockaddr_storage remoteaddr;
-    socklen_t addrlen;
+		if (pkt->question.qtype == 16)
+		{
+			pkt->rr.name = pkt->question.qname;
+			pkt->rr.type = 16;
+			pkt->rr.class = 1;
+			pkt->rr.ttl = 540;
+			char *buf = "Hello, this is example txt on server";
+			pkt->rr.rdlength = strlen(buf);
+			pkt->rr.rdata = calloc(strlen(buf), sizeof(char));
+			memcpy(pkt->rr.rdata, buf, strlen(buf));
+			pkt->header.flags = 0b1000000000000000;
+			pkt->header.ancount = 1;
+		}
 
-    char buf[256]; // Buffer for client data
+		if (pkt->question.qtype == 28)
+		{
+			pkt->rr.name = pkt->question.qname;
+			pkt->rr.type = 28;
+			pkt->rr.class = 1;
+			pkt->rr.ttl = 540;
+			pkt->rr.rdlength = 16;
+			pkt->rr.rdata = calloc(4, sizeof(char));
+			memcpy(pkt->rr.rdata, "0000000000000000", 16);
+			pkt->header.flags = 0b1000000000000000;
+			pkt->header.ancount = 1;
+		}
 
-    char remoteIP[INET6_ADDRSTRLEN];
+		req_size = dns_packet_pack(pkt, buf);
+		printf("resulting packet size:%d\n", req_size);
 
-    struct chat_packet *pkt;
+		//dns_request_parse(pkt, buf, req_size);
+		//dns_print_packet(pkt);
 
-    int fd_count = 0;
-    int fd_size = 5;
-    struct pollfd *pfds = malloc(sizeof *pfds * fd_size);
+		sendto(dns_server.listenfd, buf, req_size, 0, (struct sockaddr *)&from, from_len);
 
-    int o;
-    char *port;
-
-    while ((o = getopt(argc, argv, "p:")) != -1)
-    {
-        switch (o)
-        {
-        case 'p':
-            port = optarg;
-            break;
-        default:
-            abort();
-        }
-    }
-
-    listener = get_listener_socket(port);
-
-    if (listener == -1)
-    {
-        fprintf(stderr, "error getting listening socket\n");
-        exit(1);
-    }
-
-    fcntl(listener, F_SETFL, O_NONBLOCK);
-
-    pfds[0].fd = listener;
-    pfds[0].events = POLLIN;
-
-    fd_count = 2;
-
-    for (;;)
-    {
-        int poll_count = poll(pfds, fd_count, -1);
-
-        if (poll_count == -1)
-        {
-            perror("poll");
-            exit(1);
-        }
-
-        for (int i = 0; i < fd_count; i++)
-        {
-
-            if (pfds[i].revents & POLLIN)
-            {
-
-                if (pfds[i].fd == listener)
-                {
-
-                    addrlen = sizeof remoteaddr;
-                    newfd = accept(listener,
-                                   (struct sockaddr *)&remoteaddr,
-                                   &addrlen);
-
-                    if (newfd == -1)
-                    {
-                        perror("accept");
-                    }
-                    else
-                    {
-                        fcntl(newfd, F_SETFL, O_NONBLOCK);
-                        add_to_pfds(&pfds, newfd, &fd_count, &fd_size);
-
-                        printf("pollserver: new connection from %s on "
-                               "socket %d\n",
-                               inet_ntop(remoteaddr.ss_family,
-                                         get_in_addr((struct sockaddr *)&remoteaddr),
-                                         remoteIP, INET6_ADDRSTRLEN),
-                               newfd);
-                    }
-                }
-                else
-                {
-                    pkt = calloc(1, sizeof(struct chat_packet));
-                    int res = chat_packet_receive(pkt, pfds[i].fd);
-
-                    int sender_fd = pfds[i].fd;
-
-                    if (res <= 0)
-                    {
-                        if (res == 0)
-                        {
-                            printf("pollserver: socket %d hung up\n", sender_fd);
-                        }
-                        else
-                        {
-                            perror("recv");
-                        }
-
-                        close(pfds[i].fd);
-
-                        del_from_pfds(pfds, i, &fd_count);
-                    }
-                    else
-                    {
-                        // Got message from client
-                        int i = 0;
-
-                        time_t rawtime;
-                        time(&rawtime);
-                        pkt->time = rawtime;
-
-                        chat_print_packet(pkt);
-                        for (int j = 0; j < fd_count; j++)
-                        {
-
-                            int dest_fd = pfds[j].fd;
-
-                            // Except the listener and ourselves
-                            if (dest_fd != listener && dest_fd != sender_fd)
-                            {
-                                chat_packet_send(pkt, dest_fd);
-                            }
-                        }
-                        free(pkt->data);
-                        free(pkt);
-                    }
-                }
-            }
-        }
-    }
-
-    return 0;
+		free(pkt->data);
+		free(pkt);
+	}
 }
