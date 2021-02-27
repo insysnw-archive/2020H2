@@ -1,17 +1,17 @@
 CC = gcc
 CFLAGS = -g -O0 -Wall
-headers = server.h dns_protocol.h
-objects = server.o main.o dns_protocol.o
+headers = snmp_protocol.h
+objects = client.o snmp_protocol.o
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
-all: dns_server
+all: snmp_client
 
-dns_server: server.o main.o dns_protocol.o
-	$(CC) $(CFLAGS) -o server.out server.o main.o dns_protocol.o
+snmp_client: client.o snmp_protocol.o
+	$(CC) $(CFLAGS) -o client.out client.o snmp_protocol.o -pthread
 
 $(objects): $(headers)
 
 clean:
-	rm -f $(objects) server.out
+	rm -f $(objects) client.out
