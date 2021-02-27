@@ -7,20 +7,24 @@ using System.Threading;
 
 namespace TcpChat
 {
-    class Client
+    public class Client
     {
-        readonly string ip = "127.0.0.1";
-        readonly int port = 1234;
-        readonly Socket socket;
+        private readonly string ip = "127.0.0.1";
+        private readonly int port = 1234;
+        private readonly Socket _socket;
+        private readonly IPEndPoint ipPoint;
 
         public Client()
         {
             try
             {
-                IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(ip), port);
-                socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                socket.Connect(ipPoint);
-                Console.WriteLine(socket.LocalEndPoint);
+                ipPoint = new IPEndPoint(IPAddress.Parse(ip), port);
+                _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                _socket.Connect(ipPoint);
+                _socket.Blocking = false;
+                
+
+                Console.WriteLine(_socket.LocalEndPoint);
 
                 Console.WriteLine("Enter your username: ");
                 SendMessage();
@@ -35,9 +39,9 @@ namespace TcpChat
             }
             catch (Exception ex)
             {
-                socket.Shutdown(SocketShutdown.Both);
-                socket.Close();
-                Console.WriteLine(ex.Message);
+                _socket.Shutdown(SocketShutdown.Both);
+                _socket.Close();
+                Console.WriteLine(ex.GetBaseException());
             }
         }
 
@@ -49,10 +53,13 @@ namespace TcpChat
                 {
                     GetMessage();
                 }
-                catch (Exception)
+                catch (SocketException ex)
                 {
+                    if (ex.SocketErrorCode == SocketError.WouldBlock ||
+                        ex.SocketErrorCode == SocketError.TryAgain) continue;
                     Console.WriteLine("Oops, the server was down...");
                     Environment.Exit(0);
+
                 }
             }
         }
@@ -64,7 +71,7 @@ namespace TcpChat
             byte[] packet = new byte[data.Length + dataSize.Length];
             dataSize.CopyTo(packet, 0);
             data.CopyTo(packet, dataSize.Length);
-            socket.Send(packet);
+            _socket.Send(packet);
         }
 
         public void GetMessage()
@@ -73,29 +80,21 @@ namespace TcpChat
             byte[] data = new byte[8];
 
             byte[] bytesSize = new byte[4];
-            int bytes = socket.Receive(bytesSize);
+            _socket.Receive(bytesSize);
             int size = BitConverter.ToInt32(bytesSize);
 
             byte[] bytesDate = new byte[8];
-            socket.Receive(bytesDate);
+            _socket.Receive(bytesDate);
             var date = DateTimeOffset.FromUnixTimeSeconds(BitConverter.ToInt64(bytesDate)).LocalDateTime;
 
             do
             {
-                bytes = socket.Receive(data);
+                int bytes = _socket.Receive(data);
                 builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
             }
-            while (socket.Available > 0 && socket.Available < size);
+            while (_socket.Available > 0 && _socket.Available < size);
 
             Console.WriteLine($"<{date}> {builder}");
-        }
-
-        public string MessageWithTime(string message)
-        {
-            string pattern = @"\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2}";
-            var date = Regex.Match(message, pattern);
-            if (!DateTime.TryParse(date.Value, out DateTime dateTime)) return message;
-            return message.Replace(date.Value, dateTime.ToLocalTime().ToString());
         }
     }
 }

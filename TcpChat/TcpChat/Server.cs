@@ -8,17 +8,17 @@ using System.Threading;
 
 namespace TcpChat
 {
-    class Server
+    public class Server
     {
-        readonly string ip = "127.0.0.1";
-        readonly int port = 1234;
-        readonly Dictionary<Socket, string> clients;
-        readonly Socket listenSocket;
+        private readonly string ip = "127.0.0.1";
+        private readonly int port = 1234;
+        private readonly Dictionary<Socket, string> _clients;
+       
         public Server()
         {
-            clients = new Dictionary<Socket, string>();
+            _clients = new Dictionary<Socket, string>();
             IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(ip), port);
-            listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            var listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
             try
             {
@@ -28,7 +28,7 @@ namespace TcpChat
                 while (true)
                 {
                     Socket handler = listenSocket.Accept();
-                    if (!clients.ContainsKey(handler))
+                    if (!_clients.ContainsKey(handler))
                     {
                         var thread = new Thread(() => AddClient(handler));
                         try
@@ -56,14 +56,14 @@ namespace TcpChat
             while (true)
             {
                 string message = GetMessage(socket);
-                if (!clients.ContainsKey(socket)) break;
-                BroadcastMessage(socket, $"[{clients[socket]}]: {message}");
+                if (!_clients.ContainsKey(socket)) break;
+                BroadcastMessage(socket, $"[{_clients[socket]}]: {message}");
             }
         }
 
         public void BroadcastMessage(Socket fromSocket, string message)
         {
-            foreach (var client in clients.Where(cl => cl.Key != fromSocket))
+            foreach (var client in _clients.Where(cl => cl.Key != fromSocket))
                 SendMessage(client.Key, message);
         }
 
@@ -74,19 +74,19 @@ namespace TcpChat
             try
             {
                 byte[] bytesSize = new byte[4];
-                int bytes = socket.Receive(bytesSize);
+                socket.Receive(bytesSize);
                 int size = BitConverter.ToInt32(bytesSize);
                 do
                 {
-                    bytes = socket.Receive(data);
+                    int bytes = socket.Receive(data);
                     builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
                 }
                 while (socket.Available > 0 && socket.Available < size);
             }
             catch (Exception)
             {
-                BroadcastMessage(socket, $"{clients[socket]} left TcpChat");
-                clients.Remove(socket);
+                BroadcastMessage(socket, $"{_clients[socket]} left TcpChat");
+                _clients.Remove(socket);
             }
             return builder.ToString();
         }
@@ -105,14 +105,14 @@ namespace TcpChat
         public void AddClient(Socket socket)
         {
             string username = GetMessage(socket);
-            while (clients.ContainsValue(username))
+            while (_clients.ContainsValue(username))
             {
                 SendMessage(socket, "This username is already taken. Please enter another username");
                 username = GetMessage(socket);
             }
-            clients.Add(socket, username);
+            _clients.Add(socket, username);
             SendMessage(socket, "Welcome to TcpChat!");
-            BroadcastMessage(socket, $"{clients[socket]} just entered TcpChat!");
+            BroadcastMessage(socket, $"{_clients[socket]} just entered TcpChat!");
             GetMessages(socket);
         }
     }
