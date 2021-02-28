@@ -2,7 +2,7 @@
 _Выполнил:_ Никитин И.Н. гр 3530901/70201
 
 ## Задание: 
-Разработать NTP-клиент на основе стандартного протокола NTP. 
+Разработать SNMP-сервер на основе стандартного протокола SNMP (Сервер являеется частичной реализацией RFC). 
 
 ## Запусук
 Для работы нужен Python3.7 и выше.
@@ -11,18 +11,19 @@ _Выполнил:_ Никитин И.Н. гр 3530901/70201
 "_python snmp_server.py_ [опции]"
 
 Реализовано несколько опций, такие как:
-* --host [IP] - IP адрес для подключения
-* --port [port] - порт для работы
-* --repository [path] - путь до файла c переменными (формат TOML)
-* --engine [agent] - идентификатор агента SNMP
+* --p [port] - порт для работы (по умолчанию _161_)
+* --с [path] - путь до файла c переменными
+* --v [version] - версия SNMP (нужна для структуры пакета)
 
 Опции являются необязательными.
 
 ## Проверка работы
 
-Для проверки работы использовали файл _test.toml_, в котором указаны нельсколько переменных. Для проверка осуществлялась
-командами snmpget, snmpgetnext, snmpwalk из пакета snmp.
-
+Включим сервер
+```
+python snmp_server.py -c config.py
+SNMP server listening on 0.0.0.0:161
+```
 
 * Получим пару переменных при помощи _snmpget_
 * Получим первую переменную через GetNext запрос при помощи _snmpgetnext_
@@ -30,22 +31,18 @@ _Выполнил:_ Никитин И.Н. гр 3530901/70201
 
 
 ```
-patron@Callisto:~$ snmpget -u nobody localhost 1.5.4.55.66
-iso.5.4.55.66 = STRING: "Test string"
-patron@Callisto:~$ snmpget -u nobody localhost 1.5.45.55.6.12
-iso.5.45.55.6.12 = IpAddress: 0.0.0.0
-patron@Callisto:~$ snmpgetnext -u nobody localhost 1.5
-iso.5.4.55.66 = STRING: "Test string"
-patron@Callisto:~$ snmpwalk -u nobody localhost 1.5
-iso.5.4.55.66 = STRING: "Test string"
-iso.5.4.55.67 = STRING: "Other text"
-iso.5.4.56.66 = INTEGER: 1010
-iso.5.4.56.67 = INTEGER: 2021
-iso.5.45.55.6.12 = IpAddress: 0.0.0.0
-iso.5.45.55.6.13 = IpAddress: 192.168.0.1
-iso.5.45.55.6.13 = No more variables left in this MIB View (It is past the end of the MIB tree)
-patron@Callisto:~$
+patron@Callisto:~$ snmpget -v 2c -c public 0.0.0.0:161 1.3.6.1.4.1.1.1.0
+iso.3.6.1.4.1.1.1.0 = INTEGER: 2021
+patron@Callisto:~$ snmpgetnext -v 2c -c public 0.0.0.0:161 1.3.6.1.4.1.1.1.0
+iso.3.6.1.4.1.1.3.0 = STRING: "Test string"
+patron@Callisto:~$ snmpwalk -v 2c -c public 0.0.0.0:161 .1.3.6.1.4.1
+iso.3.6.1.4.1.1.1.0 = INTEGER: 2021
+iso.3.6.1.4.1.1.3.0 = STRING: "Test string"
+iso.3.6.1.4.1.1.4.0 = NULL
+iso.3.6.1.4.1.1.5.0 = OID: iso.3.6.7.8.9
+iso.3.6.1.4.1.1.5.0 = No more variables left in this MIB View (It is past the end of the MIB tree)
 ```
+
 ## Описание протокола
 SNMP — стандартный интернет-протокол для управления устройствами в IP-сетях на основе архитектур TCP/UDP. Протокол 
 обычно используется в системах сетевого управления для контроля подключённых к сети устройств на предмет условий.
