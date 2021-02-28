@@ -1,3 +1,4 @@
+import errno
 import socket
 import sys
 import threading
@@ -10,6 +11,7 @@ if len(sys.argv) != 3:
 address = (sys.argv[1], int(sys.argv[2]))
 my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 my_socket.connect(address)
+my_socket.setblocking(False)
 
 my_nick = input("Your nickname: ")
 nickname = my_nick.encode()
@@ -51,7 +53,8 @@ while True:
 
         print('<{}> [{}] {}'.format(time.strftime('%H:%M', time.localtime()), nick, msg))
 
-    except Exception as e:
-        print("Exception: " + str(e))
-        my_socket.close()
-        sys.exit()
+    except IOError as e:
+        if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
+            print("Error: " + str(e))
+            my_socket.close()
+            sys.exit()
