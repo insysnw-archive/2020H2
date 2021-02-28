@@ -13,6 +13,7 @@ TYPE_DUP = 4
 TYPE_END = 5
 TYPE_LEN = 6
 
+
 MSG_SIZE = 1024  # message size
 
 FORMAT = "utf-8"
