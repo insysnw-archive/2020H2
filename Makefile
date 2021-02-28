@@ -1,17 +1,17 @@
 CC = gcc
 CFLAGS = -g -O0 -Wall
-headers = snmp_protocol.h
-objects = client.o snmp_protocol.o
+headers = protocol.h
+objects = server.o protocol.o
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
-all: snmp_client
+all: server
 
-snmp_client: client.o snmp_protocol.o
-	$(CC) $(CFLAGS) -o client.out client.o snmp_protocol.o -pthread
+server: server.o protocol.o
+	$(CC) $(CFLAGS) -o server.out server.o protocol.o -pthread
 
 $(objects): $(headers)
 
 clean:
-	rm -f $(objects) client.out
+	rm -f $(objects) server.out
