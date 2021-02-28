@@ -25,7 +25,7 @@ python snmp_server.py -c config.py
 SNMP server listening on 0.0.0.0:161
 ```
 
-* Получим пару переменных при помощи _snmpget_
+* Получим переменную при помощи _snmpget_
 * Получим первую переменную через GetNext запрос при помощи _snmpgetnext_
 * Обойдем весь репозиторий при помощи _snmpwalk_
 
