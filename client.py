@@ -23,12 +23,7 @@ check = False
 def handle_incoming():
     global working, msg, check
     while True:
-        # non-blocking sockets return even if they received no data
-        try:
-            msg = client_socket.recv(MSG_SIZE)
-        except IOError as e:
-            if e.errno == errno.EWOULDBLOCK:  # no data received just yet
-                continue
+        msg = client_socket.recv(MSG_SIZE)
 
         if len(msg) == 0 or msg[0] == TYPE_END:
             print("Соединение с сервером разорвано")
@@ -74,7 +69,7 @@ print('Server address', server_ip, ':', server_port)
 print('Для выключения чата введите close chat')
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect(server_address)
-client_socket.setblocking(False)
+client_socket.setblocking(True)
 
 # send name to server to connect to chat
 print('Ник:')

@@ -78,7 +78,7 @@ server_address = (server_ip, server_port)
 print('Server is starting at', server_ip,':', server_port)
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.setblocking(False)
+server_socket.setblocking(True)
 server_socket.bind(server_address)
 server_socket.listen()
 
@@ -99,11 +99,13 @@ try:
                 handle_client(sock)
 
 except KeyboardInterrupt:
+    send_to_clietns(bytes([TYPE_END]))
     server_socket.shutdown(socket.SHUT_RDWR)
     server_socket.close()
     print("\nserver socket closed")
-    pass
 finally:
+    send_to_clietns(bytes([TYPE_END]))
     server_socket.shutdown(socket.SHUT_RDWR)
     server_socket.close()
     print("\nserver socket closed")
+
