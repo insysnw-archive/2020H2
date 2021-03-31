@@ -1,17 +1,17 @@
 CC = gcc
 CFLAGS = -g -O0 -Wall
 headers = protocol.h
-objects = server.o protocol.o
+objects = client.o protocol.o
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
-all: server
+all: client
 
-server: server.o protocol.o
-	$(CC) $(CFLAGS) -o server.out server.o protocol.o -pthread
+client: client.o protocol.o
+	$(CC) $(CFLAGS) -o client.out client.o protocol.o
 
 $(objects): $(headers)
 
 clean:
-	rm -f $(objects) server.out
+	rm -f $(objects) client.out
