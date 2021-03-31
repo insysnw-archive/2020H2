@@ -1,0 +1,13 @@
+C:\Users\Samsung\source\repos\insysnw\NtpServer\NtpServer\bin\Debug\netcoreapp3.1\NtpServer.exe
+C:\Users\Samsung\source\repos\insysnw\NtpServer\NtpServer\bin\Debug\netcoreapp3.1\NtpServer.deps.json
+C:\Users\Samsung\source\repos\insysnw\NtpServer\NtpServer\bin\Debug\netcoreapp3.1\NtpServer.runtimeconfig.json
+C:\Users\Samsung\source\repos\insysnw\NtpServer\NtpServer\bin\Debug\netcoreapp3.1\NtpServer.runtimeconfig.dev.json
+C:\Users\Samsung\source\repos\insysnw\NtpServer\NtpServer\bin\Debug\netcoreapp3.1\NtpServer.dll
+C:\Users\Samsung\source\repos\insysnw\NtpServer\NtpServer\bin\Debug\netcoreapp3.1\NtpServer.pdb
+C:\Users\Samsung\source\repos\insysnw\NtpServer\NtpServer\obj\Debug\netcoreapp3.1\NtpServer.csprojAssemblyReference.cache
+C:\Users\Samsung\source\repos\insysnw\NtpServer\NtpServer\obj\Debug\netcoreapp3.1\NtpServer.AssemblyInfoInputs.cache
+C:\Users\Samsung\source\repos\insysnw\NtpServer\NtpServer\obj\Debug\netcoreapp3.1\NtpServer.AssemblyInfo.cs
+C:\Users\Samsung\source\repos\insysnw\NtpServer\NtpServer\obj\Debug\netcoreapp3.1\NtpServer.csproj.CoreCompileInputs.cache
+C:\Users\Samsung\source\repos\insysnw\NtpServer\NtpServer\obj\Debug\netcoreapp3.1\NtpServer.dll
+C:\Users\Samsung\source\repos\insysnw\NtpServer\NtpServer\obj\Debug\netcoreapp3.1\NtpServer.pdb
+C:\Users\Samsung\source\repos\insysnw\NtpServer\NtpServer\obj\Debug\netcoreapp3.1\NtpServer.genruntimeconfig.cache
