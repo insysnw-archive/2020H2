@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30717.126
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TftpClient", "TftpClient\TftpClient.csproj", "{15B847E9-3A38-4E99-83F3-704B23856E91}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{15B847E9-3A38-4E99-83F3-704B23856E91}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15B847E9-3A38-4E99-83F3-704B23856E91}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15B847E9-3A38-4E99-83F3-704B23856E91}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15B847E9-3A38-4E99-83F3-704B23856E91}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {868665AE-3D74-478C-B9DE-20247D7ABE36}
+	EndGlobalSection
+EndGlobal
