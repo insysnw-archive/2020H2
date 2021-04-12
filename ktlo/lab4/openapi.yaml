@@ -1,0 +1,161 @@
+openapi: 3.0.3
+info:
+  title: Sevent HTTP Server
+  description: 'Система голосования/рейтингов'
+  contact:
+    name: Handtruth Support
+    email: support@handtruth.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.3.1
+servers:
+  - url: https://api.sevent.handtruth.com
+    description: Main Server
+components:
+  schemas:
+    category: &category
+      type: string
+      example: будильник
+      description: 'Имя категории события.'
+    event_id: &event_id
+      type: integer
+      format: int32
+      example: 23
+      readOnly: true
+      description: 'Идентификатор события.'
+    event: &event
+      type: object
+      required:
+        - description
+        - period
+      properties:
+        id: *event_id
+        categories:
+          type: array
+          items: *category
+          default: []
+        description:
+          type: string
+          example: 'Пора спать'
+        period:
+          type: string
+          format: duration
+          pattern: '^P(?!$)(\d+(?:\.\d+)?Y)?(\d+(?:\.\d+)?M)?(\d+(?:\.\d+)?W)?(\d+(?:\.\d+)?D)?(T(?=\d)(\d+(?:\.\d+)?H)?(\d+(?:\.\d+)?M)?(\d+(?:\.\d+)?S)?)?$'
+          example: 'T24H'
+        lastUpdate:
+          type: string
+          format: date-time
+          example: '2021-04-12T00:00:00Z'
+          readOnly: true
+        count:
+          default: 1
+          anyOf:
+            - type: integer
+              format: int32
+              minimum: 1
+            - type: string
+              enum:
+                - inf
+paths:
+  /events:
+    get:
+      description: 'Запрос всех ID событий и их категорий в системе.'
+      parameters:
+        - name: cat
+          in: query
+          description: >-
+            Имена типов событий, которые будут включены в ответ.
+            Этот параметр убирает из ответа события, которые не
+            пренадлежат указанным категориям.
+          required: false
+          explode: true
+          schema: *category
+      responses:
+        200:
+          description: >-
+            Список идентификаоров событий и соответствующих им категорий.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items: *event_id
+                  categories:
+                    type: array
+                    items: *category
+    put:
+      description: 'Создать новое событие'
+      parameters:
+        - name: cat
+          in: query
+          description: >-
+            Категории, к которым принадлежит данное событие. Могут быть указаны
+            в фильтре, чтобы отслеживать группы событий.
+          required: false
+          explode: true
+          schema: *category
+      requestBody:
+        description: 'Параметры добавляемого события.'
+        required: true
+        content:
+          application/json:
+            schema: *event
+      responses:
+        200:
+          description: 'Событие удачно добавлено.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: *event_id
+  /events/{id}:
+    parameters:
+      - name: id
+        in: path
+        description: 'Уникальный идентификатор события.'
+        required: true
+        schema: *event_id
+    get:
+      description: 'Получить полную информацию о конкретном событии'
+      responses:
+        200:
+          description: 'Полная информация о событии.'
+          content:
+            application/json:
+              schema: *event
+        404: &notFound
+          description: 'Событие с таким id не найдено.'
+    delete:
+      description: 'Удалить событие из системы.'
+      responses:
+        200:
+          description: 'Событие успешно удалено.'
+        404: *notFound
+  /listen:
+    get:
+      parameters:
+        - name: id
+          in: query
+          description: 'Иднетификаторы событий, которые следует слушать.'
+          required: false
+          explode: true
+          schema: *event_id
+        - name: cat
+          in: query
+          description: >-
+            Категории событий, которые следует слушать.
+          required: false
+          explode: true
+          schema: *category
+      responses:
+        200:
+          description: >-
+            Поток JSON объектов с полной информацией о произошедшем событии.
+          content:
+            application/json+stream:
+              schema: *event
+        404: *notFound
