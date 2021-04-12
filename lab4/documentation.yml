@@ -1,0 +1,192 @@
+openapi: 3.0.3
+info:
+  title: "Pays Server"
+  description: "Платежная система"
+  license:
+    name: MIT
+    url: https://mit-license.org/
+  version: 0.1.0
+servers:
+  - url: https://pays.example.com/api
+    description: Production Server
+paths:
+  /register:
+    get:
+      description: "Регистрация нового кошелька."
+      parameters:
+        - "$ref": "#/components/parameters/password"
+      responses:
+        200:
+          description: "Идентификатор кошелька."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  wallet:
+                    "$ref": "#/components/schemas/wallet"
+        400:
+          description: "Ошибка в параметрах запроса."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    enum:
+                      - "Предложенный пароль не надёжен"
+                      - "Параметр запроса password отсутствует"
+  /login:
+    get:
+      description: "Авторизация и получение идентификатора сессии."
+      parameters:
+        - "$ref": "#/components/parameters/wallet"
+        - "$ref": "#/components/parameters/password"
+      responses:
+        200:
+          description: "Ответ содержит идентификатор сессии, который следует использовать в других ручках."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionID:
+                    "$ref": "#/components/schemas/sessionID"
+                  money:
+                    "$ref": "#/components/schemas/money"
+        400:
+          description: "Ошибка в параметрах запроса."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    enum:
+                      - "Параметр password и(или) wallet отсутствует"
+                      - "Такого кошелька в системе нет"
+                      - "Неверный пароль"
+  /wallets:
+    get:
+      description: "Получить список всех кошельков."
+      responses:
+        200:
+          description: "Список идентификаторов кошельков."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/wallet"
+  /money:
+    get:
+      description: "Получить состояние кошелька текущей сессии."
+      parameters:
+        - "$ref": "#/components/parameters/session"
+      responses:
+        200:
+          description: "Количество доступных денег на кошельке."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  money:
+                    "$ref": "#/components/schemas/money"
+        401:
+          "$ref": "#/components/responses/401"
+  /transaction:
+    get:
+      description: "Перечислить деньги на другой кошелёк."
+      parameters:
+        - "$ref": "#/components/parameters/session"
+        - "$ref": "#/components/parameters/wallet"
+        - name: amount
+          description: "количество денег, которые будут перемещены на другой кошелёк"
+          in: query
+          required: true
+          schema:
+            "$ref": "#/components/schemas/money"
+      responses:
+        200:
+          description: "Деньги успешно перемещены на другой кошелёк."
+        400:
+          description: "Неверный параметр в запросе."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    enum:
+                      - "Не хватает денег на счёте."
+                      - "Нет параметра amount и(или) wallet."
+        401:
+          "$ref": "#/components/responses/401"
+        404:
+          description: "Кошелька, на который перемещаются деньги, не существует."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    enum:
+                      - "Кошелька, на который перемещаются деньги, не существует."
+
+components:
+  schemas:
+    password:
+      description: "пароль"
+      type: string
+      format: password
+    wallet:
+      description: "идентификатор кошелька"
+      type: string
+      format: uuid
+    sessionID:
+      description: "идентификатор сессии"
+      type: string
+      example: "AGKrrv6vfbn346DEs"
+    money:
+      description: "деньги"
+      type: string
+      format: big-uint
+      example: "5488916784"
+  parameters:
+    session:
+      name: "Session-ID"
+      in: header
+      required: true
+      schema:
+        "$ref": "#/components/schemas/sessionID"
+    password:
+      name: password
+      description: "пароль от кошелька"
+      in: query
+      required: true
+      schema:
+        "$ref": "#/components/schemas/password"
+    wallet:
+      name: wallet
+      description: "идентификатор кошелька"
+      in: query
+      required: true
+      schema:
+        "$ref": "#/components/schemas/wallet"
+  responses:
+    401:
+      description: "Нет заголовка Session-ID или время жизни сессии истекло."
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                enum:
+                  - "Нет заголовка Session-ID или время жизни сессии истекло."
