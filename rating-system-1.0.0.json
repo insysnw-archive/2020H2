@@ -1,0 +1,491 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Simple Rating System API",
+    "description": "Lab 4. Simple Rating System",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://virtserver.swaggerhub.com/romansv/rating-system/1.0.0",
+      "description": "SwaggerHub API Auto Mocking"
+    }
+  ],
+  "tags": [
+    {
+      "name": "moderators",
+      "description": "Operations available to moderators"
+    },
+    {
+      "name": "authorized",
+      "description": "Operations available to authorized users"
+    }
+  ],
+  "paths": {
+    "/topics": {
+      "get": {
+        "summary": "get all the topics",
+        "operationId": "getTopics",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "should server send status info for each topic or not",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "search results matching criteria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Topic"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "moderators"
+        ],
+        "summary": "add a topic",
+        "operationId": "addTopic",
+        "requestBody": {
+          "description": "Topic to add",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TopicRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "topic created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Topic"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid"
+          }
+        }
+      }
+    },
+    "/topics/{topicId}": {
+      "get": {
+        "summary": "get a topic",
+        "operationId": "getTopic",
+        "parameters": [
+          {
+            "name": "topicId",
+            "in": "path",
+            "description": "numeric id of the topic to get",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "search results matching criteria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Topic"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "moderators"
+        ],
+        "summary": "update a topic",
+        "description": "Use this to update topic name or to open/close voting\n",
+        "operationId": "updateTopic",
+        "parameters": [
+          {
+            "name": "topicId",
+            "in": "path",
+            "description": "numeric id of the topic to update",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Topic to update",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TopicUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "topic updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Topic"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "moderators"
+        ],
+        "summary": "delete a topic",
+        "operationId": "deleteTopic",
+        "parameters": [
+          {
+            "name": "topicId",
+            "in": "path",
+            "description": "numeric id of the topic to delete",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "topic deleted"
+          }
+        }
+      }
+    },
+    "/topics/{topicId}/options/{optionId}": {
+      "get": {
+        "summary": "get a topic option",
+        "operationId": "getOption",
+        "parameters": [
+          {
+            "name": "topicId",
+            "in": "path",
+            "description": "numeric id of the topic to get",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "optionId",
+            "in": "path",
+            "description": "numeric id of the option to get",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "a topic option",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RatingItem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "moderators"
+        ],
+        "summary": "delete an option",
+        "operationId": "deleteOption",
+        "parameters": [
+          {
+            "name": "topicId",
+            "in": "path",
+            "description": "numeric id of the topic to delete an option from",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "optionId",
+            "in": "path",
+            "description": "numeric id of the option to delete",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "topic deleted"
+          }
+        }
+      }
+    },
+    "/topics/{topicId}/options": {
+      "post": {
+        "tags": [
+          "moderators"
+        ],
+        "summary": "add topic options",
+        "operationId": "addOptions",
+        "parameters": [
+          {
+            "name": "topicId",
+            "in": "path",
+            "description": "numeric id of the topic to add options to",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Options to add",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RatingItemRequest"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "option created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RatingItem"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid"
+          }
+        }
+      }
+    },
+    "/topics/{topicId}/votes/{optionId}": {
+      "post": {
+        "tags": [
+          "authorized"
+        ],
+        "summary": "vote for an option",
+        "operationId": "addVote",
+        "parameters": [
+          {
+            "name": "topicId",
+            "in": "path",
+            "description": "numeric id of the topic",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "optionId",
+            "in": "path",
+            "description": "numeric id of the option to vote for",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "vote registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RatingItem"
+                  }
+                }
+              }
+            }
+          },
+          "442": {
+            "description": "vote is not started"
+          },
+          "443": {
+            "description": "vote is already closed"
+          },
+          "444": {
+            "description": "vote limit is reached"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Topic": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "example": "To be or not to be?"
+          },
+          "opened": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "closed": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "maxOptions": {
+            "type": "integer"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RatingItem"
+            }
+          }
+        }
+      },
+      "TopicRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "To be or not to be?"
+          },
+          "maxOptions": {
+            "type": "integer",
+            "example": 10
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RatingItemRequest"
+            }
+          }
+        }
+      },
+      "TopicUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "To be or not to be?"
+          },
+          "maxOptions": {
+            "type": "integer"
+          },
+          "open": {
+            "type": "boolean"
+          },
+          "close": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RatingItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "example": "That is the question"
+          },
+          "votes_abs": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "votes_rel": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "RatingItemRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "That is the question"
+          }
+        }
+      }
+    }
+  }
+}
