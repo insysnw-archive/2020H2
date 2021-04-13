@@ -1,0 +1,200 @@
+openapi: 3.0.1
+info:
+  title: Вариант 11 - Электронный магазин 
+  description: >-
+    Это протокол для лабораторной работы по Разработке сетевых приложений. Вариант 11 - Электронный магазин
+  license:
+    name: WTFPL 2.0
+    url: 'http://www.wtfpl.net/'
+  version: 1.0.0
+servers:
+  - url: 'http://mycoolstoreserver.swagger.io/v2'
+tags:
+  - name: Продукты
+    description: >-
+      Все, что связано с покупкой, продажей или получением информации о
+      продуктах
+paths:
+  /products:
+    get:
+      summary: Получить список всех товаров в магазине
+      operationId: getproducts
+      responses:
+        '200': 
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductsArray'
+      tags:
+        - Продукты
+    post:
+      summary: Добавление нового товара
+      description: >-
+        Создает новую позицию с amount = 0. Имена могут быть не
+        уникальными
+      operationId: productadd
+      requestBody:
+          description: ''
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductRequest'
+      responses:
+        '200': 
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+      tags:
+        - Продукты
+  /products/{id}:
+    get:
+      summary: Получение информации о товаре
+      description: ''
+      operationId: productidget
+      parameters:
+        - name: id
+          in: path
+          description: id товара
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200': 
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetails'
+        '404': 
+          description: "Товар не найден"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'    
+      tags:
+        - Продукты
+  /products/{id}/supply:
+    post:
+      summary: Поставка заданного количества товара
+      description: ''
+      operationId: productidsupply
+      parameters:
+        - name: id
+          in: path
+          description: id товара
+          required: true
+          schema:
+            type: integer
+        - name: amount
+          in: query
+          description: количество товара
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200': 
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '404': 
+          description: "Товар не найден"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+      tags:
+        - Продукты
+  /products/{id}/buy/:
+    post:
+      summary: Покупка заданного количества товара
+      description: ''
+      operationId: productidbuy
+      parameters:
+        - name: id
+          in: path
+          description: id товара
+          required: true
+          schema:
+            type: integer
+        - name: amount
+          in: query
+          description: количество товара
+          required: true
+          schema:
+            type: integer
+      responses:
+        200: 
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        404: 
+          description: "Товар не найден"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        400: 
+          description: "Нельзя купить такое количество этого товара"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+      tags:
+        - Продукты
+components:
+  schemas:
+    ProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        price:
+          type: integer
+          format: int32
+    ProductDetails:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        price:
+          type: integer
+          format: int32
+        amount:
+          type: integer
+          format: int32
+    ProductShortInfo:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        price:
+          type: integer
+          format: int32
+    ProductsArray:
+      properties:
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductShortInfo'
+    Response:
+      type: object
+      properties:
+        message: 
+          type: string
+        responseType:
+          type: string
+          enum: [ERROR, INFO]
