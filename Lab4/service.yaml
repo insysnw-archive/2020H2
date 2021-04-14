@@ -1,0 +1,141 @@
+openapi: 3.0.1
+info:
+  title: Student testing service
+  description: This is a sample student testing server.
+  contact:
+    email: kazandzhi.ma@edu.spbstu.ru
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+- url: https://test.localhsot.io
+- url: http://test.localhsot.io
+paths:
+  /login:
+    post:
+      summary: Auth for user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                login:
+                  type: string
+        required: true
+      responses:
+        200:
+          description: Success login
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: 
+                    type: number
+        405:
+          description: Error of auth
+      x-codegen-request-body-name: body
+  /list:
+    get:
+      summary: List of tests on server
+      responses:
+        200:
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: number
+                    name:
+                      type: string
+  /start:
+    post:
+      summary: Start new test
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: number
+                tid:
+                  type: number
+        required: true
+      responses:
+        200:
+          description: New test started
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sid: 
+                    type: number
+                  test:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        question:
+                          type: string
+                        answers:
+                          type: array
+                          items:
+                            type: string
+        405:
+          description: Error of starting new test
+      x-codegen-request-body-name: body
+  /end:
+    post:
+      summary: End test
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sid:
+                  type: number
+                answers:
+                  type: array
+                  items:
+                    type: number
+        required: true
+      responses:
+        200:
+          description: New test started
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties:
+                  res: 
+                    type: string
+        405:
+          description: Test not found
+      x-codegen-request-body-name: body
+  /logout:
+    post:
+      summary: Logout user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: number
+        required: true
+      responses:
+        200:
+          description: Success login
+        405:
+          description: Error of auth
+      x-codegen-request-body-name: body
