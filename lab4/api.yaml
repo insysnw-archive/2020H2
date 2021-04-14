@@ -1,0 +1,257 @@
+openapi: 3.0.0
+
+info:
+  description: This is a homework from SPBSTU
+  version: 1.0.0
+  title: Quotes
+  contact:
+    name: Denis
+    email: ssdenis99@gmail.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+tags:
+  - name: asset
+    description: API that allow to manage assets
+
+paths:
+  /api/assets:
+    get:
+      tags:
+        - asset
+      description: Return all assets with relative and absolute price increments
+      operationId: getAllAssets
+      responses:
+       200:
+          description: Successfull operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Asset'
+
+    post:
+      tags:
+        - asset
+      description: Add a new asset
+      operationId: addNewAsset
+      parameters:
+        - name: assetName
+          description: Name of new asset
+          required: true
+          in: header
+          schema:
+            type: string
+
+      responses:
+        201:
+          description: Asset added successfully
+        409:
+          description: Asset with the name already exist
+
+  /api/assets/{assetName}:
+    put:
+      tags:
+        - asset
+      description: Change the asset name
+      operationId: changeAssetName
+      parameters:
+        - $ref: '#/components/parameters/assetName'
+        - name: newAssetName
+          description: New asset name
+          required: true
+          in: header
+          schema:
+            type: string
+      responses:
+        200:
+          description: The asset renamed successfully
+        404:
+          description: The asset does not exist
+        409:
+          description: Asset with specified name is already presented
+
+
+    delete:
+      tags:
+        - asset
+      description: Delete an asset
+      operationId: deleteAsset
+      parameters:
+        - $ref: '#/components/parameters/assetName'
+
+      responses:
+        200:
+          description: The asset was deleted successfully
+        404:
+          description: The asset does not exist
+
+  /api/assets/{assetName}/history:
+    get:
+      tags:
+        - asset
+      description: Return history of the asset
+      operationId: getHistory
+      parameters:
+        - $ref: '#/components/parameters/assetName'
+        - name: from
+          in: query
+          description: Lower bound of the asset's time points
+          schema:
+            type: string
+            format: date-time
+
+        - name: to
+          in: query
+          description: Upper bound of the asset's time points
+          schema:
+            type: string
+            format: date-time
+
+        - name: size
+          in: query
+          description: Maximum number of returned history points counted from the end of the history
+          schema:
+            type: integer
+            format: int64
+
+      responses:
+        200:
+          description: Returns the asset history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        404:
+          description: Asset does not exist
+
+    post:
+      tags:
+        - asset
+      description: Add new history points to the asset
+      operationId: addPoint
+      parameters:
+        - $ref: '#/components/parameters/assetName'
+        - name: historyPoints
+          description: History points
+          required: true
+          in: header
+          schema:
+            type: object
+            items:
+              $ref: '#/components/schemas/History'
+
+      responses:
+        201:
+          description: Points are added successfully
+        404:
+          description: The asset does not exist
+        409:
+          description: Some points are already presented. No points were added.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/History'
+
+    delete:
+      tags:
+        - asset
+      description: Deletes history points by time
+      operationId: deletePoint
+      parameters:
+        - name: assetName
+          description: Asset name
+          required: true
+          in: path
+          schema:
+            type: string
+
+        - name: points
+          description: Time points without price
+          required: true
+          in: header
+          schema:
+            type: array
+            items:
+              type: string
+              format: date-time
+
+      responses:
+        200:
+          description: Points removed successfully
+        404:
+          description: Some points were not found. No points were deleted
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: date-time
+
+
+components:
+  parameters:
+    assetName:
+      name: assetName
+      description: Asset name
+      required: true
+      in: path
+      schema:
+        type: string
+
+
+  schemas:
+    HistoryPoint:
+      description: Single history point
+      type: object
+      required:
+        - price
+        - time
+      properties:
+        price:
+          type: number
+          format: double
+          description: An actual price
+
+        time:
+          type: string
+          format: date-time
+          description: A time point
+
+    History:
+      description: An array of history points
+      type: object
+      properties:
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoryPoint'
+
+    Asset:
+      description: Asset representation
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          description: A name of an asset
+          type: string
+
+        history:
+          description: History of an asset
+          type: object
+          items:
+            $ref: '#/components/schemas/History'
+
+        relative:
+          description: Relative price increment
+          type: number
+          format: double
+
+        absolute:
+          description: Absolute price increment
+          type: number
+          format: double
