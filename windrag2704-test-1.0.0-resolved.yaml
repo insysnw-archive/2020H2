@@ -1,0 +1,150 @@
+---
+openapi: 3.0.0
+info:
+  title: Email server api
+  description: Email server api
+  contact:
+    email: my_email@somemail.nya
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/windrag2704/test/1.0.0
+  description: SwaggerHub API Auto Mocking
+tags:
+- name: users
+  description: It's users -_-
+paths:
+  /authorize:
+    post:
+      tags:
+      - users
+      summary: authorize
+      description: |
+        OwO
+      operationId: authorize
+      parameters:
+      - name: email
+        in: query
+        description: enter your email
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Good authorize
+        "400":
+          description: bad input parameter
+  /status:
+    get:
+      tags:
+      - users
+      summary: get inbox messages
+      description: Return inbox messages
+      operationId: getMessages
+      responses:
+        "200":
+          description: Succesful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+        "400":
+          description: Can\'t get messages
+  /send:
+    post:
+      tags:
+      - users
+      summary: send message
+      description: Send message to user
+      operationId: sendMessage
+      parameters:
+      - name: email
+        in: query
+        description: enter destination email
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: message
+        in: query
+        description: enter your message
+        required: true
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/Message'
+      responses:
+        "200":
+          description: Succesful
+        "400":
+          description: Not succesful
+  /inbox:
+    get:
+      tags:
+      - users
+      summary: get message from inbox
+      description: get message
+      operationId: getMessage
+      parameters:
+      - name: id
+        in: query
+        description: message id
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: uuid
+          example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      responses:
+        "200":
+          description: Succesful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+    delete:
+      tags:
+      - users
+      summary: delete message from inbox
+      description: delete message
+      operationId: deleteMessage
+      parameters:
+      - name: id
+        in: query
+        description: message id
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: uuid
+          example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      responses:
+        "200":
+          description: Succesful
+        "400":
+          description: Not succesful
+components:
+  schemas:
+    Message:
+      required:
+      - body
+      - id
+      - theme
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: d290f1ee-6c54-4b01-90e6-d701748f0851
+        theme:
+          type: string
+          example: Hi asshole
+        body:
+          type: string
+          example: Hello
