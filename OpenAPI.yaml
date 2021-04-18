@@ -1,0 +1,162 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: LotSystem
+  description: Lot system's protocols API implementation
+
+servers: 
+  - url: https://server.example.com/v1
+
+paths: 
+  /connection:
+    post:
+      description: Connects clients with given username and role (buyer/seller)
+      operationId: connectionRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: eatler
+                buyer: 
+                  type: boolean
+                  description: if true then buyer, if false then seller
+      responses:
+        200:
+          description: Connection successful
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  accepted:
+                    type: boolean
+                  
+        400:
+          description: Connection error
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  accepted:
+                    type: boolean
+                    example: false
+  /lots:
+    get:
+      description: Get list of current lots
+      operationId: lotListRequest
+      responses:
+        200:
+          description: Successful pull of lot info
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    lotName:
+                      type: string
+                      
+                    seller:
+                      type: string
+                      description: Owner's username
+                      
+                    lotId: 
+                      type: string
+                      
+                    lotInitialPrice: 
+                      type: integer
+                      
+                    lotCurrentPrice:
+                      type: integer
+        400:
+          description: Can't get pull of lot info
+    
+    put:
+      description: Bid on some lot
+      operationId: raiseBidRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lotId:
+                  type: string
+                  
+                bid:
+                  type: integer
+                  description: How much do you want to bid
+      responses:
+        200:
+          description: Bid successful
+        400:
+          description: Bid unsuccessful
+          
+    post:
+      description: Put out a new lot
+      operationId: newLotRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lotName:
+                  type: string
+                
+                lotId:
+                  type: string
+                  
+                lotInitialPrice: 
+                  type: integer
+      responses:
+        200:
+          description: Lot placed
+        400:
+          description: Lot wasn't placed, something went wrong
+      
+ 
+  /endTrade:
+    put:
+      description: Sell some lot to the highest bidder
+      operationId: endTradeRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                
+                lotId:
+                  type: string
+               
+      responses:
+        200:
+          description: Operation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lotName:
+                    type: string
+                
+                  lotId:
+                    type: string
+                  
+                  lotOwner: 
+                    type: string
+                  
+                  highestBid:
+                    type: integer
+        400:
+          description: Something went wrong
