@@ -1,0 +1,220 @@
+openapi: 3.0.0
+info:
+  title: Bug Tracker
+  version: 1.0.0
+  description: "Realisation of bug tracking system server protocol"
+tags:
+  - name: Authentication
+  - name: Developers
+  - name: Testers
+
+paths:
+  /auth/register:
+    post:
+      summary: Register new user in the system
+      description: Choose nickname and role to use system.
+      tags:
+        - Authentication
+      parameters:
+        - in: query
+          name: user_id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: role
+          required: true
+          schema:
+            type: string
+            enum: [dev, test]
+      responses:
+        '200':
+          description: Successfull
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+  
+  /auth/login:
+    post:
+      summary: Log in with an existing account
+      tags:
+        - Authentication
+      description: Log in using your nickname.
+      parameters:
+        - in: query
+          name: nickaname
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfull
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+  
+  /dev/bugs:
+    get:
+      summary: Get list of bugs assigned to the developer
+      tags:
+      - Developers
+      responses:
+        '200':
+          description: Successfull
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bug'
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+  
+  /dev/fix:
+    post:
+      summary: Fix the bug
+      tags:
+      - Developers
+      parameters:
+        - in: query
+          name: bug_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfull
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+  
+  /test/add:
+    post:
+      summary: Add new bug
+      tags: 
+      - Testers
+      parameters:
+      - in: query
+        name: bug
+        schema:
+            $ref: '#/components/schemas/Bug'
+      responses:
+        '200':
+          description: Successfull
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+  
+  /test/bugs:
+    get:
+      summary: Get list of open bugs
+      tags:
+      - Testers
+      responses:
+        '200':
+          description: Successfull
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bug'  
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'  
+                
+  /test/verify:
+    post:
+      summary: Check the bug fix from developer
+      tags: 
+      - Testers
+      parameters:
+        - in: query
+          name: bug_id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: resolution
+          required: true
+          schema:
+            type: string
+            enum: [reopen, close]
+      responses:
+        '200':
+          description: Successfull
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+    
+components:
+  schemas:
+    Bug:
+      type: object
+      required:
+        - bug_id
+        - dev_id
+        - project_id
+        - text
+      properties:
+        bug_id:
+          type: integer
+          format: uuid
+        dev_id:
+          type: integer
+          format: uuid
+        project_id:
+          type: integer
+          format: uuid
+        text:
+          type: string
+    
+    Response:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
