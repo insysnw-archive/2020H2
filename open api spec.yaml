@@ -1,0 +1,415 @@
+swagger: "2.0"
+info:
+  description: "Eg-mail server allows user register, send, read eg-mails to other eg-users."
+  version: "1.0.0"
+  title: "Eg-mail"
+  contact:
+    email: "egorius.belov@yandex.ru"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "egmail.com"
+basePath: "/v1"
+
+# TAGS ZONE
+tags:
+- name: "user"
+  description: "Operations with Eg-user"
+- name: "mail"
+  description: "Operations with Eg-mails"
+schemes:
+- "https"
+- "http"
+
+# AUTH
+securityDefinitions:
+  ApiTokenAuth:
+    type: apiKey
+    in: header
+    name: eg-token 
+  
+# PATHS
+paths:
+  /user:
+    post:
+      tags:
+      - "user"
+      summary: "Sign up new eg-user"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Created user object"
+        required: true
+        schema:
+          $ref: "#/definitions/sign_up_request"
+      responses:
+        "200":
+          description: "Success Api Response"
+          schema:
+            $ref: "#/definitions/api_response"
+        "409":
+          description: "This eg-mail already exist"
+          schema:
+            $ref: "#/definitions/api_response"
+          
+  /user/login:
+    post:
+      tags:
+      - "user"
+      summary: "Login eg-user into the system"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Eg-user object"
+        required: true
+        schema:
+          $ref: "#/definitions/sign_in_request"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/sign_in_response"
+          headers:
+            X-Rate-Limit:
+              type: "integer"
+              format: "int32"
+              description: "Calls per hour allowed by the user"
+            X-Expires-After:
+              type: "string"
+              format: "date-time"
+              description: "Date in UTC when token expires"
+        "400":
+          description: "Invalid username/password supplied"
+        
+          
+  /user/logout:
+    post:
+      tags:
+      - "user"
+      summary: "Logs out eg-user in user session"
+      description: "Revoke token and close current session"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        "200":
+          description: "Success Api Response"
+          schema:
+            $ref: "#/definitions/api_response"
+        "401":
+          description: "Unauthorized"
+          schema:
+            $ref: "#/definitions/api_response"
+      security:
+        - ApiTokenAuth: []
+
+   
+# MAIL ZONE   
+  /mail:
+# POST MAIL
+    post:
+      tags:
+      - "mail"
+      summary: "Send eg-mail"
+      description: "Send eg-mail to the oher eg-user"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Eg-mail object"
+        required: true
+        schema:
+          $ref: "#/definitions/send-mail"
+      responses:
+        "200":
+          description: "Success sent"
+          schema:
+            $ref: "#/definitions/api_response"
+        "400":
+          description: "Invalid request"
+        "401":
+          description: "Unauthorized"
+          schema:
+            $ref: "#/definitions/api_response"
+      security:
+        - ApiTokenAuth: []
+      
+# GET  MAILS
+    get:
+      tags:
+      - "mail"
+      summary: "Get eg-mails"
+      description: "Get eg-mails with pagination"
+      produces:
+      - "application/json"
+      parameters: 
+        - name: "offset"
+          in: "query"
+          default: 0
+          type: "integer"
+        - name: "limit"
+          in: "query"
+          default: 50
+          type: "integer"
+      
+      responses:
+        "200":
+          description: "Array of eg-mails"  
+          schema: 
+            type: "array"
+            items:
+              $ref: "#/definitions/mail"
+        "401":
+          description: "Unauthorized"
+          schema:
+            $ref: "#/definitions/api_response"
+      security:
+        - ApiTokenAuth: []
+      
+# GET MAIL BY ID
+  /mail/{id}:
+    get:
+      tags:
+      - "mail"
+      summary: "Get eg-mail by id"
+      description: "Ger one eg-mail"
+      parameters:
+        - name: "id"
+          in: "path"
+          description: "Id of eg-mail"
+          required: true
+          type: "string"
+          format: "uuid"
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "Mail object"
+          schema:
+            $ref: "#/definitions/mail"
+        "404":
+          description: "Eg-mail not found"
+        "400":
+          description: "Invalid ID supplied"
+        "401":
+          description: "Unauthorized"
+          schema:
+            $ref: "#/definitions/api_response"
+        "403":
+          description: "Forbidden"
+          schema:
+            $ref: "#/definitions/api_response"
+      security:
+        - ApiTokenAuth: []
+
+# DELETE EG-MAIL BY ID     
+    delete:
+      tags:
+      - "mail"
+      summary: "Delete eg-mail by id"
+      description: "Delete eg-mail by id"
+      parameters:
+        - name: "id"
+          in: "path"
+          description: "Id of eg-mail"
+          required: true
+          type: "string"
+          format: "uuid"
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "Default Api Response"
+          schema:
+            $ref: "#/definitions/api_response"
+        "404":
+          description: "Eg-mail not found"
+        "400":
+          description: "Invalid ID supplied"
+        "401":
+          description: "Unauthorized"
+          schema:
+            $ref: "#/definitions/api_response"
+        "403":
+          description: "Forbidden"
+          schema:
+            $ref: "#/definitions/api_response"
+      security:
+        - ApiTokenAuth: []
+      
+# READ MAIL BY ID
+  /mail/read/{id}:
+    post:
+      tags:
+      - "mail"
+      summary: "Mark eg-mail as read"
+      description: "Mark eg-mail as read"
+      parameters:
+        - name: "id"
+          in: "path"
+          description: "Id of eg-mail"
+          required: true
+          type: "string"
+          format: "uuid"
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "Success Api response"
+          schema:
+            $ref: "#/definitions/api_response"
+        "404":
+           description: "Eg-mail not found"
+        "400":
+          description: "Invalid ID supplied"
+        "401":
+          description: "Unauthorized"
+          schema:
+            $ref: "#/definitions/api_response"
+        "403":
+          description: "Forbidden"
+          schema:
+            $ref: "#/definitions/api_response"
+      security:
+        - ApiTokenAuth: []
+      
+# READ MAILS 
+  /mail/read:
+    post:
+      tags:
+      - "mail"
+      summary: "Mark eg-mails as read"
+      description: "Mark eg-mails as read"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Array of ids"
+        required: true
+        schema:
+            type: "array"
+            items:
+              type: string
+              format: "uuid"
+      responses:
+        "200":
+          description: "Default Api response"
+          schema:
+            $ref: "#/definitions/api_response"
+        "401":
+          description: "Unauthorized"
+          schema:
+            $ref: "#/definitions/api_response"
+        "403":
+          description: "Forbidden"
+          schema:
+            $ref: "#/definitions/api_response"
+      security:
+        - ApiTokenAuth: []
+
+
+definitions:
+
+# EG-MAIL
+  mail:
+    type: "object"
+    properties: 
+      id:
+        type: "string"
+        format: "uuid"
+      from:
+        type: "string"
+        format: "email"
+        example: "eg@eg.ru"
+      to:
+        type: "string"
+        format: "email"
+        example: "eg@eg.ru"
+      header:
+        type: "string"
+        example: "Header"
+      content:
+        type: "string"
+        example: "Content"
+      isMark: 
+        type: "boolean"
+        example: "false"
+      createdAt: 
+        type: "string"
+        format: "date-time"
+      markAt: 
+        type: "string"
+        format: "date-time"
+        
+# SEND EG-MAIL
+  send-mail:
+    type: "object"
+    properties: 
+      to:
+        type: "string"
+        format: "email"
+        example: "eg@eg.ru"
+      header:
+        type: "string"
+        example: "Header"
+      content:
+        type: "string"
+        example: "Content"
+
+# SIGN IN RESPONSE
+  sign_in_response:
+    required:
+    - "token"
+    properties:
+      token:
+        type: "string"
+        format: "token"
+    
+# SIGN UP REQUEST 
+  sign_up_request:
+    required:
+    - "email"
+    - "password"
+    - "confirm_password"
+    type: "object"
+    properties:
+      email:
+        type: "string"
+        format: "email"
+      password:
+        type: "string"
+        format: "password"
+      confirm_password:
+        type: "string"
+        format: "password"
+
+# SIGN IN REQUEST 
+  sign_in_request:
+    required:
+    - "email"
+    - "password"
+    type: "object"
+    properties:
+      email:
+        type: "string"
+        format: "email"
+      password:
+        type: "string"
+        format: "password"
+  
+# STANDARD RESPONSE        
+  api_response:
+    type: "object"
+    properties:
+      message:
+        type: "string"
