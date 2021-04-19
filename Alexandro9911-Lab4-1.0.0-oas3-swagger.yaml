@@ -1,0 +1,188 @@
+openapi: 3.0.1
+info:
+  title: Rouletee API
+  description: This is an API for Roulette server.
+  contact:
+    email: alexandr.l1999@mail.ru
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+  version: 1.0.0-oas3
+servers:
+  - url: 'https://test.localhsot.io'
+  - url: 'http://test.localhsot.io'
+paths:
+  /reg:
+    post:
+      summary: add user to play
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role_id:
+                  type: number
+                nick_name:
+                  type: string
+        required: true
+      responses:
+        '200':
+          description: Success registration
+        '401':
+          description: Nick alredy used
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: number
+        '402':
+          description: Croupier already in game
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: number
+      x-codegen-request-body-name: body
+  /bet:
+    post:
+      summary: Make bet
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: number
+                value:
+                  type: number
+                bet_to:
+                  type: number
+        required: true
+      responses:
+        '200':
+          description: Bet added to play
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: number
+        '400':
+          description: Small Balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance:
+                    type: number
+        '401':
+          description: non valid bet
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  try_bet:
+                    type: number         
+      x-codegen-request-body-name: body
+  /balance:
+    get:
+      summary: Get Balance
+      parameters:
+        - in: query
+          name: user_id
+          schema:
+            type: number
+          required: true
+      responses:
+        '200':
+          description:  Balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance:
+                    type: number
+        '401':
+          description: Some error 
+          
+  /list_bets:
+    get:
+      summary: List of errors
+      responses:
+        '200':
+          description: List of bets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bets:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        from_user:
+                          type: number
+                        value_bet:
+                          type: number
+                        bet_to:
+                          type: number
+        '401':
+          description: No bets found
+  /start_play:
+    get:
+      summary: List of errors
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: number
+          required: true
+      responses:
+        '200':
+          description: bets_vin
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bets:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        from_user:
+                          type: number
+                        value_bet:
+                          type: number
+                        bet_to:
+                          type: number
+                        vin:
+                          type: number
+        '401':
+          description: No bets in play found
+  /quit:
+    post:
+      summary: Logout
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: number
+        required: true
+      responses:
+        '200':
+          description: Success logout
