@@ -1,0 +1,287 @@
+openapi: 3.0.0
+
+info:
+  title: Система голосования/рейтингов
+  description: Лабораторная работа по разработке сетевых приложений. Вариант 16
+  version: 1.0.0
+  contact:
+    name: Daria
+    email: nikitina.ds@edu.spbstu.ru
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+tags:
+  - name: Рейтинг
+
+paths:
+  /ratings:
+    get:
+      summary: Список имеющихся рейтингов
+      operationId: getratings
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RatingsArray'
+      tags: 
+        - Рейтинг
+    
+    post:
+      summary: Добавление рейтинга
+      operationId: addrating
+      requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/NewRating'
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/Response'
+        '404': 
+          description: "Не удалось создать рейтинг"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'    
+      tags:
+        - Рейтинг
+    
+  /ratings/{idrating}:
+    get: 
+      summary: Информация по конкретному рейтингу
+      operationId: getratingdetails
+      parameters:
+        - name: idrating
+          in: path
+          description: id темы
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/RatingDetails'
+        '404': 
+          description: "Рейтинг не найден"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'    
+      tags:
+        - Рейтинг
+    
+    delete:
+      summary: Удаление рейтинга
+      operationId: deleterating
+      parameters:
+        - name: idrating
+          in: path
+          description: id темы
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/Response'
+        '404': 
+          description: "Рейтинг не найден"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'    
+      tags:
+        - Рейтинг
+        
+    patch:
+      summary: Открытие/закрытие рейтинга
+      operationId: opencloserating
+      parameters:
+        - name: idrating
+          in: path
+          description: id темы
+          required: true
+          schema:
+            type: integer
+      requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                    openclose:
+                      type: boolean
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/Response'
+        '404': 
+          description: "Не удалось открыть/закрыть рейтинг"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'    
+      tags:
+        - Рейтинг
+        
+        
+    post:
+      summary: Добавление варианта в рейтинг
+      operationId: addvariant
+      parameters:
+        - name: idrating
+          in: path
+          description: id темы
+          required: true
+          schema:
+            type: integer
+      requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                    variant:
+                      type: string
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/Response'
+        '404': 
+          description: "Не удалось открыть/закрыть рейтинг"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'    
+      tags:
+        - Рейтинг
+  
+  /ratings/{idrating}/vote:
+    post:
+      summary: Голосование
+      operationId: vote
+      parameters:
+        - name: idrating
+          in: path
+          description: id темы
+          required: true
+          schema:
+            type: integer
+      requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vote'   
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/Response'
+        '404': 
+          description: "Не удалось открыть/закрыть рейтинг"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'    
+      tags:
+        - Рейтинг
+      
+
+components:
+  schemas:
+  
+    Vote:
+      type: object
+      properties:
+        idvariant:
+          type: integer
+          format: int32
+        votes: 
+          type: integer
+          format: int32
+    
+    Rating:
+      type: object
+      properties:
+        idrating:
+          type: integer
+          format: int32
+        name:
+          type: string
+    
+    RatingsArray:
+      properties:
+        ratings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rating'
+            
+    Variant:
+      type: object
+      properties:
+        idvariant: 
+          type: integer
+          format: int32
+        name: 
+          type: string
+        votes: 
+          type: integer
+          format: int32
+            
+    RatingDetails:
+      type: object
+      properties:
+        idrating: 
+          type: integer
+          format: int32
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variant'
+            
+    NewRating:
+      type: object
+      properties:
+        name:
+          type: string
+        maxvariants:
+          type: integer
+          format: int32
+        maxvotes: 
+          type: integer
+          format: int32
+        
+    
+    Response:
+      type: object
+      properties:
+        message: 
+          type: string
+        responseType:
+          type: string
+          enum: [ERROR, INFO] 
