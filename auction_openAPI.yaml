@@ -1,0 +1,190 @@
+openapi: 3.0.0
+info:
+  title: Auction
+  version: 1.0.0
+  description: "Realisation of auction system"
+tags:
+  - name: Authentication
+  - name: Steward
+  - name: Participant
+
+paths:
+  /auth/register:
+    post:
+      summary: Register new user in the system
+      description: Choose nickname and role to use system.
+      tags:
+        - Authentication
+      parameters:
+        - in: query
+          name: user_id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: role
+          required: true
+          schema:
+            type: string
+            enum: [steward, participant]
+      responses:
+        '200':
+          description: Successfull
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+  
+  /auth/login:
+    post:
+      summary: Log in with an existing account
+      tags:
+        - Authentication
+      description: Log in using your nickname.
+      parameters:
+        - in: query
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfull
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+  
+  /participant/items:
+    get:
+      summary: Get list of items
+      tags:
+      - Participant
+      responses:
+        '200':
+          description: Successfull
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bug'
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+  
+  /participant/price:
+    put:
+      summary: Make new bet
+      tags:
+      - Participant
+      parameters:
+        - in: query
+          name: item_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfull
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+  
+  /steward/add:
+    post:
+      summary: Add new item
+      tags: 
+      - Steward
+      parameters:
+      - in: query
+        name: item
+        schema:
+            $ref: '#/components/schemas/Item'
+      responses:
+        '200':
+          description: Successfull
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+  
+  /steward/stop:
+    put:
+      summary: Give lot to the last owner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Item'
+      responses:
+        '200':
+          description: Successfull
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'  
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'  
+    
+components:
+  schemas:
+    Item:
+      type: object
+      required:
+        -id
+        -name
+        -price
+      properties:
+        id:
+          type: integer
+          format: uuid
+        name:
+          type: string
+        price:
+          type: integer
+        owner: 
+          type: string
+
+    Response:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
