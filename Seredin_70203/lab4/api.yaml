@@ -1,0 +1,238 @@
+openapi: 3.0.0
+info:
+  version: '1.0.0'
+  title: 'Server API'
+  description: 'An API for forum application - lab_1'
+  contact:
+    name: Konsantin Seredin
+    email: anonymous@gmail.com
+servers:
+  - url: https://github.com/llday/forum
+    description: Forum server
+
+paths:
+  /topics:
+    description: Topics Resource
+    get:
+      description: Obtain information about topics
+      parameters:
+        - name: size
+          required: true
+          in: query
+          description: The amount of topics returned
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 2147483647
+            example: 30
+
+      responses:
+        200:
+          description: Successful pull of topics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topics'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Topics'
+
+    post:
+      description: Create a new topic
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Topic'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Topic'
+
+      responses:
+        200:
+          description: Successfully created a new topic
+        400:
+          description: A problem with the request
+
+    delete:
+      description: Delete a topic
+      parameters:
+        - name: tid
+          in: query
+          required: true
+          description: The ID of topic
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 2147483647
+            example: 30
+
+      responses:
+        200:
+          description: Successfully deleted topic
+        400:
+          description: A problem with the request
+
+  /messages:
+    description: Message Resource
+    get:
+      description: Obtain information about messages
+      parameters:
+        - name: size
+          in: query
+          description: The amount of messages returned
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 2147483647
+            example: 30
+
+      responses:
+        200:
+          description: Successful pull of topics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Messages'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Messages'
+
+    post:
+      description: Create a new message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Message'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Message'
+
+      responses:
+        200:
+          description: Successfully created a new message
+
+    delete:
+      description: Delete a message
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: The ID of message
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 2147483647
+            example: 30
+
+      responses:
+        200:
+          description: Successfully deleted message
+        400:
+          description: A problem with the request
+
+  /clients/{id}:
+    get:
+      description: Obtain information about specific client
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: The ID of the client
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 2147483647
+            example: 10
+responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Client'
+        400:
+          description: A problem with the request.
+
+components:
+  schemas:
+
+    Topics:
+      description: Array of topics
+      type: array
+      items:
+        $ref: '#/components/schemas/Topic'
+
+    Topic:
+      description: Model containting topic
+      properties:
+        tid:
+          type: integer
+          example: 1
+
+        time:
+          type: integer
+          description: from unix epoch
+          example: 0
+
+        topic title:
+          type: string
+          example: TBBT discussion
+
+        topic author:
+          type: string
+          example: The_Anonimous
+
+        cid:
+          type: integer
+          example: 11
+
+    Messages:
+      description: Array of messages
+      type: array
+      items:
+        $ref: '#/components/schemas/Message'
+
+    Message:
+      description: Model containting message
+      properties:
+        tid:
+          type: integer
+          example: 1
+
+        time:
+          type: integer
+          description: from unix epoch
+          example: 0
+
+        author:
+          type: string
+          example: Fun
+
+        message:
+          type: string
+          example: TBBT the funniest one
+
+        cid:
+          type: integer
+          example: 11
+
+    Client:
+      description: Model containting client
+      properties:
+        cid:
+          type: integer
+          example: 1
+
+        username:
+          type: string
+          example: The_anonymous
+        name:
+          type: string
+          example: Ivan Rubeshkov
