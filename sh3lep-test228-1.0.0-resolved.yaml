@@ -1,0 +1,114 @@
+---
+openapi: 3.0.0
+info:
+  title: Simple shop api
+  description: This is shop api
+  contact:
+    email: tuturu@ilovepoly.nya
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/sh3lep/test228/1.0.0
+  description: SwaggerHub API Auto Mocking
+tags:
+- name: customers
+  description: This is customers
+- name: workers
+  description: This is workers
+paths:
+  /store:
+    get:
+      tags:
+      - workers
+      - customers
+      summary: get items info
+      description: |
+        Get information about items in store
+      operationId: getItemsInfo
+      responses:
+        "200":
+          description: Items info
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+        "500":
+          description: can't get store info
+    post:
+      tags:
+      - workers
+      summary: adds an item
+      description: Add item to shop
+      operationId: addItem
+      requestBody:
+        description: Item to add
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Item'
+      responses:
+        "200":
+          description: Item added
+        "400":
+          description: Incorrect input
+  /order:
+    post:
+      tags:
+      - customers
+      - workers
+      summary: buy item
+      description: Buy item
+      operationId: buyItem
+      parameters:
+      - name: name
+        in: query
+        description: item name
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          example: Fork
+      - name: count
+        in: query
+        description: items count
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          example: 100
+      responses:
+        "200":
+          description: Succesful
+        "400":
+          description: Bad input
+components:
+  schemas:
+    Item:
+      required:
+      - count
+      - name
+      - price
+      type: object
+      properties:
+        id:
+          type: string
+          format: id
+          example: 1f34dbe25ef15acd378
+        name:
+          type: string
+          example: Stalin 3000
+        count:
+          minimum: 0
+          type: integer
+          example: 100
+        price:
+          minimum: 0
+          exclusiveMinimum: true
+          type: number
+          format: float
+          example: 9999.99
