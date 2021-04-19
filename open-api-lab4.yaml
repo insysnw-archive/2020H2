@@ -1,0 +1,165 @@
+swagger: "2.0"
+info:
+  description: "Сервер представляет из себя распределенную информационную систему. Система является иерархическим хранилищем статей, каждая из которых состоит из названия, автора и текста статьи. Система обеспечивает параллельный доступ к информации нескольким клиентам."
+  version: "1.0.0"
+  title: "Информационная система"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "lab3.ru"
+basePath: "/v1"
+tags:
+- name: "Навигация"
+  description: "Навигация по информационной системе"
+- name: "Управление статьями"
+  description: "Управление статьями в разделах системы"
+schemes:
+- "http"
+paths:
+  /current-section:
+    get:
+      tags:
+      - "Навигация"
+      summary: "Передача пользователю списка текущих разделов системы"
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "Список текущих разделов"
+          schema:
+            type: "array"
+            items:
+              type: string
+  /open-section:
+    post:
+      tags:
+      - "Навигация"
+      summary: "Переход в конкретный раздел системы по запросу клиента"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "В какой раздел следует перейти"
+        required: true
+        schema:
+          $ref: "#/definitions/Section"
+      responses:
+        "200":
+          description: "OK"
+        "404":
+          description: "Раздел не найден"
+  /previous-section:
+    get:
+      tags:
+      - "Навигация"
+      summary: "Возврат на предыдущий уровень по запросу клиента"
+      responses:
+        "200":
+          description: "OK"
+  /current-articles:
+    get:
+      tags:
+      - "Управление статьями"
+      summary: "Передача пользователю списка текущих статей раздела"
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ArticleShort"
+  /get-article-by-name/{title}:
+    get:
+      tags:
+       - "Управление статьями"
+      summary: "Передача пользователю конкретной статьи по названию"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "title"
+        in: "path"
+        description: "Название искомой статьи"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK. Если не найдено, вернет пустой список."
+          schema:
+            $ref: "#/definitions/Article"
+  /get-articles-by-author/{author}:
+    get:
+      tags:
+       - "Управление статьями"
+      summary: "Передача пользователю всех статей текущего раздела, принадлежащих определенному автору"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "author"
+        in: "path"
+        description: "Автор искомых статей"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK. Если не найдено, вернет пустой список."
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Article"
+  /add-article:
+    post:
+      tags:
+      - "Управление статьями"
+      summary: "Приём от клиента новой статьи и сохранение в информационной системе"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Статья которую нужно добавить"
+        required: true
+        schema:
+          $ref: "#/definitions/ArticleToAdd"
+      responses:
+        "200":
+          description: "OK"
+definitions:
+  Section:
+    type: "object"
+    properties:
+      section: 
+        type: string
+        example: "section name"
+      subsection: 
+        type: string
+        example: "subsection name"
+  ArticleShort:
+    type: "object"
+    properties:
+      author:
+        type: string
+        example: "Нгуен Нгок Ньян"
+      title:
+        type: string
+        example: "Название статьи"
+      description:
+        type: string
+        example: "Описание статьи"
+  Article:
+    type: "object"
+    properties:
+      author:
+        type: string
+        example: "Нгуен Нгок Ньян"
+      title:
+        type: string
+        example: "Название статьи"
+      body:
+        type: string
+        example: "Текст статьи"
+  ArticleToAdd:
+    type: "object"
+    properties:
+      section:
+        $ref: "#/definitions/Section"
+      article:
+        $ref: "#/definitions/Article"
