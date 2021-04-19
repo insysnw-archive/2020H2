@@ -1,0 +1,160 @@
+openapi: 3.0.0
+
+info:
+  title: Система публикации и поиска вакансий
+  description: Разработка сетевых приложений 
+  version: 1.0.0
+  contact:
+    name: Lisa
+    email: liniozaaa@gmail.com
+
+tags:
+  - name: Вакансии
+    description: База вакансий
+
+paths:
+  /getAllOffers:
+    get:
+      summary: Вывод вакансий
+      operationId: getAllOffers
+      tags: 
+        - all
+      responses:
+        '200': 
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items: 
+                  $ref: '#/components/schemas/Offer'
+        '400': 
+          description: "Список вакансий пуст"
+          
+  /getAllProffs:
+    get:
+      summary: Вывод специальностей
+      description: ''
+      operationId: getAllProffs
+      tags: 
+        - all
+      responses:
+        '200': 
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items: 
+                  type: string
+        '400':
+          description: "Список специальностей пуст"
+          
+  /delete:
+    post:
+      parameters:
+        - in: query
+          name: proff
+          description: proff
+          required: true
+          schema:
+            type: string
+      summary: Удаление специальности
+      description: ''
+      operationId: delete
+      tags: 
+        - all
+      responses:
+        '200': 
+          description: "OK"
+        '400':
+          description: "Проблема с удалением специальности"
+          
+  /findByProffs:
+    get:
+      summary: Поиск по параметрам
+      operationId: findByProffs
+      tags: 
+        - all
+      responses:
+        '200': 
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items: 
+                  $ref: '#/components/schemas/Offer'
+        '400': 
+          description: "Поиск не прошел"
+          
+  /saveOffer:
+    post:
+      parameters:
+        - in: query
+          name: offer
+          required: true
+          schema:
+            $ref: '#/components/schemas/Offer'
+      summary: Добавление вакансии
+      operationId: saveOffer
+      tags: 
+        - all
+      responses:
+        '200': 
+          description: "OK"
+        '400':
+          description: "Вакансия не добавлена"
+          
+  /saveProff:
+    post:
+      parameters:
+        - in: query
+          name: offer
+          required: true
+          schema:
+            type: string
+      summary: Добавление специальности
+      operationId: saveProff
+      tags: 
+        - all
+      responses:
+        '200': 
+          description: "OK"
+        '400':
+          description: "Специальность не добавлена"
+          
+components:
+  schemas:
+    Offer:
+      type: object
+      required: 
+        - id
+        - proff
+        - position
+        - sall
+        - age
+        - company
+      properties:
+        id:
+          type: integer
+          format: uuid
+        proff:
+          type: string
+          example: "Тестировщик"
+        position: 
+          type: string
+          example: "Инженер-тестировщик"
+        sall:
+          type: integer
+          example: "80000"
+        age:
+          type: integer
+          example: "30"
+        company:
+          type: string
+          example: "JetBrains"
+          
+externalDocs:
+  description: "README"
+  url: "https://github.com/insysnw/2020H2/pull/59"
