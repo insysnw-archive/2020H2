@@ -1,0 +1,112 @@
+---
+openapi: 3.0.0
+info:
+  title: Simple file access api
+  description: File access api
+  contact:
+    email: mur_mur_mur@ilovepoly.nya
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/MayneKeen/task2/1.0.0
+  description: SwaggerHub API Auto Mocking
+tags:
+- name: users
+  description: All users
+paths:
+  /file:
+    get:
+      tags:
+      - users
+      summary: get file from server
+      description: |
+        Download selected file
+      operationId: getFile
+      parameters:
+      - name: fileName
+        in: query
+        description: File name
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Succesful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/File'
+        "400":
+          description: File not exist
+    post:
+      tags:
+      - users
+      summary: upload file on server
+      description: Upload file
+      operationId: postFile
+      requestBody:
+        description: File
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/File'
+      responses:
+        "200":
+          description: File uploaded
+        "400":
+          description: Not succesful
+  /dir:
+    get:
+      tags:
+      - users
+      summary: get current directory
+      description: Get current directory files
+      operationId: getDir
+      responses:
+        "200":
+          description: Succesful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/File'
+    post:
+      tags:
+      - users
+      summary: set directory
+      description: Change current working directory
+      operationId: setDir
+      parameters:
+      - name: dirName
+        in: query
+        description: directory name
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Succesful
+        "400":
+          description: Not succesful
+components:
+  schemas:
+    File:
+      required:
+      - isDir
+      - name
+      type: object
+      properties:
+        data:
+          type: string
+          description: Base64 encoded file
+          example: SSBMT1ZFIFBPTFk=
+        name:
+          type: string
+          example: foo.txt
+        isDir:
+          type: boolean
+          example: true
