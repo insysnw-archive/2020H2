@@ -5,10 +5,10 @@ info:
     Это протокол для лабораторной работы по Разработке сетевых приложений. Вариант 11 - Электронный магазин
   license:
     name: WTFPL 2.0
-    url: 'http://www.wtfpl.net/'
+    url: 'https://www.wtfpl.net/'
   version: 1.0.0
 servers:
-  - url: 'http://mycoolstoreserver.swagger.io/v2'
+  - url: 'https://mycoolstoreserver.swagger.io/v2'
 tags:
   - name: Продукты
     description: >-
@@ -48,6 +48,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+              example:
+                message: "some info message"
+                responseType: INFO
       tags:
         - Продукты
   /products/{id}:
@@ -102,6 +105,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+              example:
+                message: "some info message"
+                responseType: INFO
         '404': 
           description: "Товар не найден"
           content:
@@ -135,6 +141,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+              example:
+                message: "some info message"
+                responseType: INFO
         404: 
           description: "Товар не найден"
           content:
@@ -156,34 +165,43 @@ components:
       properties:
         name:
           type: string
+          example: "hitchhiker's towel"
         price:
           type: integer
           format: int32
+          example: 100500
     ProductDetails:
       type: object
       properties:
         id:
           type: integer
           format: int32
+          example: 1
         name:
           type: string
+          example: "Hitchhiker's towel"
         price:
           type: integer
           format: int32
+          example: 100500
         amount:
           type: integer
           format: int32
+          example: 1
     ProductShortInfo:
       type: object
       properties:
         id:
           type: integer
           format: int32
+          example: 1
         name:
           type: string
+          example: "Hitchhiker's towel"
         price:
           type: integer
           format: int32
+          example: 100500
     ProductsArray:
       properties:
         products:
@@ -195,6 +213,7 @@ components:
       properties:
         message: 
           type: string
+          example: "some informative message"
         responseType:
           type: string
           enum: [ERROR, INFO]
