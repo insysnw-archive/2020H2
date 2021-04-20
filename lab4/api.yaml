@@ -59,6 +59,7 @@ paths:
                   properties:
                     codeOp:
                       type: integer
+                      description: Code of operation
                       
                     operation:
                       type: string
@@ -110,12 +111,13 @@ paths:
                   properties:
                     codeOp:
                       type: integer
+                      description: Code of operation
                       
                     operation:
                       type: string
                       description: Type of operation (sqrt,!)
         425:
-          description: The result is calculated 
+          description: The result is not ready 
         
         408:
           description: Timeout
