@@ -67,36 +67,6 @@ paths:
         402:
           description: Insufficient funds to bet
 
-   
-  /player/get_bets:
-    get:
-      description: Get current bets in this round
-      operationId: playerGetBetsRequest
-      
-      responses:
-        200:
-          description: List of bets received successfully
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  properties:
-                    name:
-                      type: string
-                      description: Name of player
-                      
-                    bet_amount:
-                      type: integer
-                      description: How many chips did player bet
-                      
-                    bet_choice: 
-                      type: integer
-                      description: Player-selected number
-                      
-        400:
-          description: Can't receive list of bets
-  
   /dealer/connect:
     post:
       description: Connect dealer with given encripted password
@@ -154,7 +124,35 @@ paths:
         409:
           description: Another dealer is already on server
  
-  
+  /get_bets:
+    get:
+      description: Get current bets in this round
+      operationId: getBetsRequest
+      
+      responses:
+        200:
+          description: List of bets received successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    name:
+                      type: string
+                      description: Name of player
+                      
+                    bet_amount:
+                      type: integer
+                      description: How many chips did player bet
+                      
+                    bet_choice: 
+                      type: integer
+                      description: Player-selected number
+                      
+        400:
+          description: Can't receive list of bets
+          
   /get_results:
     get:
       description: Get the results of the last round
