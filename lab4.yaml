@@ -1,0 +1,129 @@
+openapi: 3.0.0
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/Polytech7/lab4/1.0.0
+info:
+  description: Удаленный калькулятор, позволяющий дистанционно выполнять быстрые и медленные математические операции
+  version: "1.0.0"
+  title: API Удаленного кулькулятора
+  contact:
+    email: you@your-company.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+
+paths:
+  /short_operation:
+    post:
+      summary: отправить быструю операцию с аргументами на вычисление
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShortOperationRequest'
+        required: true
+      responses:
+        '200':
+          description: успешое выполнение операциии, получение результата
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShortOperationReply'
+        '401':
+          description: ошибка при выполнении операции
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShortOperationReply'
+                
+  /long_operation:
+    post:
+      summary: отправить долгую операцию с аргументом на вычисление
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LongOperationRequest'
+        required: true
+      responses:
+        '200':
+          description: успешое выполнение операциии, получение результата
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LongOperationReply'
+        '401':
+          description: ошибка при выполнении операции
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LongOperationReply'
+    
+components:
+  schemas:
+    ShortOperationRequest:
+      type: object
+      required: 
+        - op_code
+        - arg1
+        - arg2
+      properties:
+        op_code:
+          type: number
+          example: 0
+          description: 0 - сложение, 1 - вычитение, 2 - умножение, 3 - деление
+        arg1:
+          type: number
+          example: 5.5
+        arg2:
+          type: number
+          example: 19
+    ShortOperationReply:
+      type: object
+      required: 
+        - reply_code
+      properties:
+        reply_code:
+          type: number
+          example: 0
+          description: 0 - результат получен успешно, 1 - не удалось провести вычисления, неподходящие аргументы
+        result:
+          type: number
+          example: 222.4
+    LongOperationRequest:
+      type: object
+      required: 
+        - op_code
+        - arg1
+      properties:
+        op_code:
+          type: number
+          example: 0
+          description: 0 - взятие факториала, 1 - взятие квадратного корня
+        arg1:
+          type: number
+          example: 5
+    LongOperationReply:
+      type: object
+      required: 
+        - reply_code
+        - op_code
+        - supplied_arg
+      properties:
+        reply_code:
+          type: number
+          example: 0
+          description: 0 - результат получен успешно, 1 - не удалось провести вычисления, неподходящие аргументы, 2 - сервер слишком долго производил вычисления и сбросил задачу
+        op_code:
+          type: number
+          example: 0
+          description: код операции даёт понять, для какой долгой операции получен результат
+        supplied_arg:
+          type: number
+          example: 5
+          description: аргумент, полученный от пользователя при отправлении на вычисление даёт понять, для какого аргумента проводилась операция
+        result:
+          type: number
+          example: 99999
+          description: результат в случае успешного выполнения операции
