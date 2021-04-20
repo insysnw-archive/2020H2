@@ -29,18 +29,21 @@ paths:
             enum: [dev, test]
       responses:
         '200':
-          description: Successfull
+          description: Successfull registration
           content:
             application/json:
               schema:
                   $ref: '#/components/schemas/Response'
-        '400':
-          description: Error
+              example:
+                  message: "Registration is done"
+        '401':
+          description: Nickname is already in use
           content:
             application/json:
               schema:
                   $ref: '#/components/schemas/Response'
-  
+              example:
+                  message: "This user_id is already exist with this role"
   /auth/login:
     post:
       summary: Log in with an existing account
@@ -49,10 +52,10 @@ paths:
       description: Log in using your nickname.
       parameters:
         - in: query
-          name: nickaname
+          name: user_id
           required: true
           schema:
-            type: string
+            type: integer
       responses:
         '200':
           description: Successfull
@@ -60,13 +63,17 @@ paths:
             application/json:
               schema:
                   $ref: '#/components/schemas/Response'
-        '400':
-          description: Error
+              example:
+                  message: "Successfull log in"
+        '404':
+          description: User is not found
           content:
             application/json:
               schema:
                   $ref: '#/components/schemas/Response'
-  
+              example:
+                  message:
+                    "User is not found"
   /dev/bugs:
     get:
       summary: Get list of bugs assigned to the developer
@@ -81,12 +88,20 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Bug'
+              example:
+                bug_id: 1
+                dev_id: 2
+                project_id: 1
+                text: Button is not active
         '400':
           description: Error
           content:
             application/json:
               schema:
                   $ref: '#/components/schemas/Response'
+              example:
+                message:
+                  "Something went wrong"
   
   /dev/fix:
     post:
@@ -106,13 +121,28 @@ paths:
             application/json:
               schema:
                   $ref: '#/components/schemas/Response'
-        '400':
-          description: Error
+              example:
+                message:
+                  "Bug is fixed"
+        '404':
+          description: Bug is not found
           content:
             application/json:
               schema:
                   $ref: '#/components/schemas/Response'
-  
+              example:
+                message:
+                  "Bug with this id is not found"
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+              example:
+                message:
+                  "This bug has already been fixed"
+        
   /test/add:
     post:
       summary: Add new bug
@@ -130,12 +160,18 @@ paths:
             application/json:
               schema:
                   $ref: '#/components/schemas/Response'
-        '400':
-          description: Error
+              example:
+                message:
+                  "Bug was added to the system"
+        '404':
+          description: Project / developer is not found
           content:
             application/json:
               schema:
                   $ref: '#/components/schemas/Response'
+              example:
+                message:
+                  "This project doesn't exist"
   
   /test/bugs:
     get:
@@ -150,13 +186,21 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Bug'  
+                  $ref: '#/components/schemas/Bug'
+              example:
+                bug_id: 1
+                dev_id: 2
+                project_id: 1
+                text: Button is not active
         '400':
           description: Error
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/Response'  
+                  $ref: '#/components/schemas/Response'
+              example:
+                message:
+                  "Something went wrong"  
                 
   /test/verify:
     post:
@@ -182,12 +226,25 @@ paths:
             application/json:
               schema:
                   $ref: '#/components/schemas/Response'
-        '400':
-          description: Error
+              example:
+                message: Bug is confirmed
+        '404':
+          description: Bug is not found
           content:
             application/json:
               schema:
                   $ref: '#/components/schemas/Response'
+              example:
+                message: Bug is not found
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Response'
+              example:
+                message: Bug has already been confirmed
+              
     
 components:
   schemas:
