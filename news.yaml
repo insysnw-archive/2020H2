@@ -1,0 +1,139 @@
+openapi: 3.0.3
+info:
+  title: News Server
+  description: Система поиска/публикации новостей
+  version: '0.1'
+servers:
+  - url: https://news.com/api
+    description: Server
+paths:
+  /themes:
+    get:
+      description: Получение списка тем всех новостей на сервере
+      responses:
+        200:
+          description: &themesList Список тем новостей
+          content:
+            application/json:
+              schema:
+                description: *themesList
+                type: array
+                items:
+                  $ref: '#/components/schemas/theme'
+  /news:
+    get:
+      description: >-
+        Получения списка новостей по указанным темам. Если тема не указана, то
+        получение всех новостей.
+      parameters:
+        - $ref: '#/components/parameters/theme'
+      responses:
+        200:
+          description: &newsList Список идентификаторов новостей и их названий
+          content:
+            application/json:
+              schema:
+                description: *newsList
+                type: array
+                items:
+                  type: object
+                  required:
+                    - title
+                    - id
+                  properties:
+                    title:
+                      $ref: '#/components/schemas/title'
+                    id:
+                      $ref: '#/components/schemas/id'
+    put:
+      description: Создание новости по указанным темам и названию
+      requestBody:
+        description: текст новости
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/post'
+      responses:
+        200:
+          description: Идентификатор созданной новости
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    $ref: '#/components/schemas/id'
+  /news/{id}:
+    get:
+      description: Получение новости по идентификатору
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/id'
+      responses:
+        200:
+          description: 'Полное содержание новости: заголовок и текст'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/post'
+        404:
+          description: Новость с таким ID не найдена
+
+components:
+  schemas:
+    theme:
+      description: тема новости
+      type: string
+      example: животные
+    title:
+      description: название новости
+      type: string
+      example: Удивительные особенности казуальской вертихвостки
+    id:
+      description: идентификатор новости
+      type: integer
+      example: 42
+      minimum: 1
+    post:
+      description: новость
+      type: object
+      required:
+        - title
+        - body
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/id'
+            - readOnly: true
+        title:
+          $ref: '#/components/schemas/title'
+        themes:
+          description: темы к которым относится данная новость
+          type: array
+          items:
+            $ref: '#/components/schemas/theme'
+          default: []
+        created:
+          description: дата и время добавления новости
+          type: string
+          format: date-time
+          readOnly: true
+        body:
+          description: текст новости в формате Markdown
+          type: string
+          format: markdown
+          example: Lorem ipsum dolor sit amet, consectetur adipiscing elit...
+  parameters:
+    theme:
+      name: theme
+      description: тема новости
+      in: query
+      schema:
+        $ref: '#/components/schemas/theme'
+      required: false
+      explode: true
