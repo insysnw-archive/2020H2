@@ -11,7 +11,7 @@ servers:
     description: Production Server
 paths:
   /register:
-    get:
+    post:
       description: "Регистрация нового кошелька."
       parameters:
         - "$ref": "#/components/parameters/password"
@@ -38,7 +38,7 @@ paths:
                       - "Предложенный пароль не надёжен"
                       - "Параметр запроса password отсутствует"
   /login:
-    get:
+    post:
       description: "Авторизация и получение идентификатора сессии."
       parameters:
         - "$ref": "#/components/parameters/wallet"
@@ -98,7 +98,7 @@ paths:
         401:
           "$ref": "#/components/responses/401"
   /transaction:
-    get:
+    post:
       description: "Перечислить деньги на другой кошелёк."
       parameters:
         - "$ref": "#/components/parameters/session"
