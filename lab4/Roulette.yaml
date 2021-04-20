@@ -1,0 +1,182 @@
+openapi: 3.0.0
+info:
+  description: Simple Roulette API
+  version: "1.0.0"
+  title: Simple Roulette API
+  contact:
+    email: BigAwesomeTurtle@gmail.com
+
+servers:
+  - url: https://roulete_api.bigawesomesite.com
+
+paths: 
+  /player/connect:
+    post:
+      description: Connect player with given name
+      operationId: playerConnectionRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: BigAwesomeTurtle
+
+      responses:
+        200:
+          description: Connection successful
+                  
+        400:
+          description: Connection error
+        
+        409:
+          description: Username is already taken
+                    
+  /player/bet:
+    post:
+      description: Bet from player with given name
+      operationId: playerMakeBetRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: BigAwesomeTurtle
+                  description: Name of player
+                bet_amount:
+                  type: integer
+                  description: How many chips did player bet
+                bet_choice:
+                  type: integer
+                  description: Player-selected number
+
+      responses:
+        200:
+          description: Bet successful
+                  
+        400:
+          description: Bet error
+          
+        402:
+          description: Insufficient funds to bet
+
+   
+  /player/get_bets:
+    get:
+      description: Get current bets in this round
+      operationId: playerGetBetsRequest
+      
+      responses:
+        200:
+          description: List of bets received successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    name:
+                      type: string
+                      description: Name of player
+                      
+                    bet_amount:
+                      type: integer
+                      description: How many chips did player bet
+                      
+                    bet_choice: 
+                      type: integer
+                      description: Player-selected number
+                      
+        400:
+          description: Can't receive list of bets
+  
+  /dealer/connect:
+    post:
+      description: Connect dealer with given encripted password
+      operationId: dealerConnectionRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+                  description: Encripted dealer password
+
+      responses:
+        200:
+          description: Connection successful
+                  
+        400:
+          description: Connection error
+
+        401:
+          description: Wrong password
+
+        409:
+          description: Another dealer is already on server
+
+  
+  /dealer/start_game:
+    post:
+      description: Start game with dealer password
+      operationId: dealerStartRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+                  description: Encripted dealer password
+
+      responses:
+        200:
+          description: The game has been started successfully
+
+        400:
+          description: Error while starting the game
+        
+        401:
+          description: Wrong password
+                    
+        409:
+          description: Another dealer is already on server
+ 
+  
+  /get_results:
+    get:
+      description: Get the results of the last round
+      operationId: getResultsRequest
+      
+      responses:
+        200:
+          description: Results received successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    name:
+                      type: string
+                      description: Name of player
+                      
+                    result:
+                      type: integer
+                      description: A positive or negative number showing how much a particular player won or lost in a given round
+                      
+                      
+        400:
+          description: Can't receive list of results
