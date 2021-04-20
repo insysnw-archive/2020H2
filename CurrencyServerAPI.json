@@ -1,254 +1,243 @@
 ﻿{
 	"openapi": "3.0.1",
 	"info": {
-	  "title": "currency server",
-	  "description": "Система выставления курсов валют",
-	  "license": {
-		"name": "Apache 2.0",
-		"url": "https://www.apache.org/licenses/LICENSE-2.0.html"
-	  },
-	  "version": "1.0.0"
+		"title": "currency server",
+		"description": "Система выставления курсов валют",
+		"license": {
+			"name": "Apache 2.0",
+			"url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+		},
+		"version": "1.0.0"
 	},
 	"servers": [
-	  {
-		"url": "https://currency.example.com/api"
-	  }
+		{
+			"url": "https://currency.example.com/api"
+		}
 	],
 	"tags": [
-	  {
-		"name": "currencies",
-		"description": "система валют"
-	  }
+		{
+			"name": "currencies",
+			"description": "система валют"
+		}
 	],
 	"paths": {
-	  "/currency": {
-		"get": {
-		  "summary": "Получить список валют с котировками/изменениями",
-		  "operationId": "getCurrencies",
-		  "responses": {
-			"200": {
-			  "description": "OK",
-			  "content": {
-				"application/json": {
-				  "schema": {
-					"$ref": "#/components/schemas/CurrenciesList"
-				  }
-				}
-			  }
-			}
-		  },
-		  "tags": [
-			"currencies"
-		  ]
-		},
-		"post": {
-		  "summary": "Добавление нового курса валюты",
-		  "description": "Добавление нового курса валюты",
-		  "operationId": "addCurrency",
-		  "requestBody": {
-			"description": "ввести название валюты",
-			"required": true,
-			"content": {
-			  "text/plain": {
-				"schema": {
-				  "type": "string"
-				}
-			  }
-			}
-		  },
-		  "responses": {
-			"200": {
-			  "description": "OK",
-			  "content": {
-				"text/plain": {
-				  "schema": {
-					"type": "string"
-				  }
-				}
-			  }
+		"/currency": {
+			"get": {
+				"summary": "Получить список валют с котировками/изменениями",
+				"operationId": "getCurrencies",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CurrenciesList"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"currencies"
+				]
 			},
-			"409": {
-			  "description": "валюта уже существует",
-			  "content": {
-				"text/plain": {
-				  "schema": {
-					"type": "string"
-				  }
-				}
-			  }
-			}
-		  },
-		  "tags": [
-			"currencies"
-		  ]
-		},
-		"put": {
-		  "summary": "добавление курса валюты",
-		  "description": "добавление курса валюты",
-		  "operationId": "addRate",
-		  "requestBody": {
-			"description": "ввести название и курс валюты",
-			"required": true,
-			"content": {
-			  "application/json": {
-				"schema": {
-				  "$ref": "#/components/schemas/SubCurrency"
-				}
-			  }
-			}
-		  },
-		  "responses": {
-			"200": {
-			  "description": "OK",
-			  "content": {
-				"text/plain": {
-				  "schema": {
-					"type": "string"
-				  }
-				}
-			  }
+			"post": {
+				"summary": "Добавление нового курса валюты",
+				"description": "Добавление нового курса валюты",
+				"operationId": "addCurrency",
+				"requestBody": {
+					"description": "ввести название валюты",
+					"required": true,
+					"content": {
+						"text/plain" : {
+							"schema" : {
+								"type": "string"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK"
+						}
+					},
+					"409": {
+						"description": "валюта уже существует"
+					},
+					"405": {
+						"description": "Неправильное название"
+					}
+				},
+				"tags": [
+					"currencies"
+				]
 			},
-			"404": {
-			  "description": "валюта не найдена",
-			  "content": {
-				"text/plain": {
-				  "schema": {
-					"type": "string"
-				  }
-				}
-			  }
+			"put": {
+				"summary": "добавление курса валюты",
+				"description": "добавление курса валюты",
+				"operationId": "addRate",
+				"requestBody": {
+					"description": "ввести название и курс валюты",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SubCurrency"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK"
+					},
+					"404": {
+						"description": "валюта не найдена",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"message": {
+											"type": "string",
+											"enum": [
+												"валюта, курс которой перемещается, не существует."
+											]
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Неверный курс"
+					}
+				},
+			
+				"tags": [
+					"currencies"
+				]
+		},
+		"/currency/{code}": {
+			"get": {
+				"summary": "Получение истории курса валюты",
+				"description": "",
+				"operationId": "historyCurrency",
+				"parameters": [
+					{
+						"name": "code",
+						"in": "path",
+						"description": "название валюты",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"code": {
+											"type": "string"
+										},
+										"hostory": {
+											"type": "string"
+										}
+									}
+								}
+							}
+						}
+					  },
+					"400": {
+						"description": "Указано неверное название"
+					},
+					"404": {
+						"description": "валют не существует"
+					}
+				},
+				"tags": [
+					"currencies"
+				]
+			},
+			"delete" : {
+				"summary" : "удаление валюты",
+				"description": "удаление валюты",
+				"operationId": "deleteCurrency",
+				"parameters": [
+					{
+						"name": "code",
+						"in" : "path",
+						"description": "ввести название валюты",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK"
+					},
+					"404": {
+						"description": "валюта не найдена"
+					},
+					"400": {
+						"description": "Указано неверное название"
+					}
+				},
+				"tags": [
+					"currencies"
+				]
 			}
-		  },
-		  "tags": [
-			"currencies"
-		  ]
 		}
-	  },
-	  "/currency/{code}": {
-		"get": {
-		  "summary": "Получение истории курса валюты",
-		  "description": "",
-		  "operationId": "historyCurrency",
-		  "parameters": [
-			{
-			  "name": "code",
-			  "in": "path",
-			  "description": "название валюты",
-			  "required": true,
-			  "schema": {
-				"type": "string"
-			  }
-			}
-		  ],
-		  "responses": {
-			"200": {
-			  "description": "OK",
-			  "content": {
-				"text/plain": {
-				  "schema": {
-					"type": "string"
-				  }
-				}
-			  }
-			},
-			"404": {
-			  "description": "валют не существует",
-			  "content": {
-				"text/plain": {
-				  "schema": {
-					"type": "string"
-				  }
-				}
-			  }
-			}
-		  },
-		  "tags": [
-			"currencies"
-		  ]
-		},
-		"delete": {
-		  "summary": "удаление валюты",
-		  "description": "удаление валюты",
-		  "operationId": "deleteCurrency",
-		  "parameters": [
-			{
-			  "name": "code",
-			  "in": "path",
-			  "description": "ввести название валюты",
-			  "required": true,
-			  "schema": {
-				"type": "string"
-			  }
-			}
-		  ],
-		  "responses": {
-			"200": {
-			  "description": "OK",
-			  "content": {
-				"text/plain": {
-				  "schema": {
-					"type": "string"
-				  }
-				}
-			  }
-			},
-			"404": {
-			  "description": "валют не найден",
-			  "content": {
-				"text/plain": {
-				  "schema": {
-					"type": "string"
-				  }
-				}
-			  }
-			}
-		  },
-		  "tags": [
-			"currencies"
-		  ]
-		}
-	  }
 	},
 	"components": {
-	  "schemas": {
-		"Currency": {
-		  "type": "object",
-		  "properties": {
-			"code": {
-			  "type": "string"
+		"schemas": {
+			"Currency": {
+				"type": "object",
+				"properties": {
+					"code": {
+						"type": "string"
+					},
+					"rate": {
+						"type": "mumber",
+						"format": "double"
+					},
+					"increment": {
+						"type": "string"
+					},
+					"history": {
+						"type": "string"
+					}
+				}
 			},
-			"rate": {
-			  "type": "string"
+			"CurrenciesList": {
+				"properties": {
+					"currencies": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Currency"
+						}
+					}
+				}
 			},
-			"increment": {
-			  "type": "string"
-			},
-			"history": {
-			  "type": "string"
+			"SubCurrency": {
+				"type": "object",
+				"properties": {
+					"code": {
+						"type": "string"
+					},
+					"rate": {
+						"type": "number",
+						"format": "double"
+					}
+				}
 			}
-		  }
-		},
-		"CurrenciesList": {
-		  "properties": {
-			"currencies": {
-			  "type": "array",
-			  "items": {
-				"$ref": "#/components/schemas/Currency"
-			  }
-			}
-		  }
-		},
-		"SubCurrency": {
-		  "type": "object",
-		  "properties": {
-			"code": {
-			  "type": "string"
-			},
-			"rate": {
-			  "type": "string"
-			}
-		  }
 		}
-	  }
 	}
-  }
+}
