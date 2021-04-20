@@ -48,11 +48,11 @@ paths:
         "200":
           description: "Success Api Response"
           schema:
-            $ref: "#/definitions/api_response"
+            $ref: "#/definitions/api_success_response"
         "409":
           description: "This eg-mail already exist"
           schema:
-            $ref: "#/definitions/api_response"
+            $ref: "#/definitions/api_exist_response"
           
   /user/login:
     post:
@@ -84,8 +84,14 @@ paths:
               description: "Date in UTC when token expires"
         "400":
           description: "Invalid username/password supplied"
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "Invalid username or password"
         
-          
+  
   /user/logout:
     post:
       tags:
@@ -99,11 +105,11 @@ paths:
         "200":
           description: "Success Api Response"
           schema:
-            $ref: "#/definitions/api_response"
+            $ref: "#/definitions/api_success_response"
         "401":
           description: "Unauthorized"
           schema:
-            $ref: "#/definitions/api_response"
+            $ref: "#/definitions/api_unauth_response"
       security:
         - ApiTokenAuth: []
 
@@ -131,13 +137,19 @@ paths:
         "200":
           description: "Success sent"
           schema:
-            $ref: "#/definitions/api_response"
+            $ref: "#/definitions/api_success_response"
         "400":
           description: "Invalid request"
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "Invalid field: header"
         "401":
           description: "Unauthorized"
           schema:
-            $ref: "#/definitions/api_response"
+            $ref: "#/definitions/api_unauth_response"
       security:
         - ApiTokenAuth: []
       
@@ -169,7 +181,7 @@ paths:
         "401":
           description: "Unauthorized"
           schema:
-            $ref: "#/definitions/api_response"
+            $ref: "#/definitions/api_unauth_response"
       security:
         - ApiTokenAuth: []
       
@@ -196,16 +208,22 @@ paths:
             $ref: "#/definitions/mail"
         "404":
           description: "Eg-mail not found"
+          schema:
+            $ref: "#/definitions/api_notfound_response"
         "400":
           description: "Invalid ID supplied"
         "401":
           description: "Unauthorized"
           schema:
-            $ref: "#/definitions/api_response"
+            $ref: "#/definitions/api_unauth_response"
         "403":
           description: "Forbidden"
           schema:
-            $ref: "#/definitions/api_response"
+            type: "object"
+            properties:
+                message:
+                 type: "string"
+                 example: "Forbidden"
       security:
         - ApiTokenAuth: []
 
@@ -228,19 +246,31 @@ paths:
         "200":
           description: "Default Api Response"
           schema:
-            $ref: "#/definitions/api_response"
+            $ref: "#/definitions/api_success_response"
         "404":
           description: "Eg-mail not found"
+          schema:
+            $ref: "#/definitions/api_notfound_response"
         "400":
           description: "Invalid ID supplied"
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "Invalid id"
         "401":
           description: "Unauthorized"
           schema:
-            $ref: "#/definitions/api_response"
+            $ref: "#/definitions/api_unauth_response"
         "403":
           description: "Forbidden"
           schema:
-            $ref: "#/definitions/api_response"
+            type: "object"
+            properties:
+                message:
+                 type: "string"
+                 example: "Forbidden"
       security:
         - ApiTokenAuth: []
       
@@ -264,19 +294,31 @@ paths:
         "200":
           description: "Success Api response"
           schema:
-            $ref: "#/definitions/api_response"
+            $ref: "#/definitions/api_success_response"
         "404":
-           description: "Eg-mail not found"
+          description: "Eg-mail not found"
+          schema:
+            $ref: "#/definitions/api_notfound_response"
         "400":
           description: "Invalid ID supplied"
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "Invalid id"
         "401":
           description: "Unauthorized"
           schema:
-            $ref: "#/definitions/api_response"
+            $ref: "#/definitions/api_unauth_response"
         "403":
           description: "Forbidden"
           schema:
-            $ref: "#/definitions/api_response"
+            type: "object"
+            properties:
+                message:
+                 type: "string"
+                 example: "Forbidden"
       security:
         - ApiTokenAuth: []
       
@@ -305,15 +347,19 @@ paths:
         "200":
           description: "Default Api response"
           schema:
-            $ref: "#/definitions/api_response"
+            $ref: "#/definitions/api_success_response"
         "401":
           description: "Unauthorized"
           schema:
-            $ref: "#/definitions/api_response"
+            $ref: "#/definitions/api_unauth_response"
         "403":
           description: "Forbidden"
           schema:
-            $ref: "#/definitions/api_response"
+            type: "object"
+            properties:
+                message:
+                 type: "string"
+                 example: "Forbidden"
       security:
         - ApiTokenAuth: []
 
@@ -407,9 +453,36 @@ definitions:
         type: "string"
         format: "password"
   
-# STANDARD RESPONSE        
-  api_response:
+# SUCCESS RESPONSE        
+  api_success_response:
     type: "object"
     properties:
       message:
         type: "string"
+        example: "Success operation"
+        
+# EXIST RESPONSE        
+  api_exist_response:
+    type: "object"
+    properties:
+      message:
+        type: "string"
+        example: "This eg-mail already exist"
+        
+# unauth RESPONSE        
+  api_unauth_response:
+    type: "object"
+    properties:
+      message:
+        type: "string"
+        example: "Unauthorized"
+        
+
+# notfound RESPONSE        
+  api_notfound_response:
+    type: "object"
+    properties:
+      message:
+        type: "string"
+        example: "Mail not found"
+        
