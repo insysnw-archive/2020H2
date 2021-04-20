@@ -22,7 +22,8 @@ paths:
               type: object
               properties:
                 role_id:
-                  type: number
+                  type: "integer"
+                  format: "int32"
                 nick_name:
                   type: string
         required: true
@@ -30,24 +31,9 @@ paths:
         '200':
           description: Success registration
         '401':
-          description: Nick alredy used
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: number
+          description: nick already exists
         '402':
-          description: Croupier already in game
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: number
-      x-codegen-request-body-name: body
+          description: croupier already in game
   /bet:
     post:
       summary: Make bet
@@ -58,22 +44,19 @@ paths:
               type: object
               properties:
                 user_id:
-                  type: number
+                  type: "integer"
+                  format: "int32"
                 value:
-                  type: number
+                  type: "integer"
+                  format: "int32"
                 bet_to:
-                  type: number
+                  type: "integer"
+                  format: "int32"
         required: true
       responses:
         '200':
           description: Bet added to play
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code:
-                    type: number
+    
         '400':
           description: Small Balance
           content:
@@ -81,8 +64,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  balance:
-                    type: number
+                  your_balance:
+                    type: "integer"
+                    format: "int32"
         '401':
           description: non valid bet
           content:
@@ -90,8 +74,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  try_bet:
-                    type: number         
+                  your_try_bet:
+                    type: "integer"
+                    format: "int32"
       x-codegen-request-body-name: body
   /balance:
     get:
@@ -100,8 +85,8 @@ paths:
         - in: query
           name: user_id
           schema:
-            type: number
-          required: true
+            type: "integer"
+            format: "int32"
       responses:
         '200':
           description:  Balance
@@ -110,8 +95,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  balance:
-                    type: number
+                  balance: 
+                    type: "integer"
+                    format: "int32"
         '401':
           description: Some error 
           
@@ -132,11 +118,14 @@ paths:
                       type: object
                       properties:
                         from_user:
-                          type: number
+                          type: "integer"
+                          format: "int32"
                         value_bet:
-                          type: number
+                          type: "integer"
+                          format: "int32"
                         bet_to:
-                          type: number
+                          type: "integer"
+                          format: "int32"
         '401':
           description: No bets found
   /start_play:
@@ -162,13 +151,17 @@ paths:
                       type: object
                       properties:
                         from_user:
-                          type: number
+                          type: "integer"
+                          format: "int32"
                         value_bet:
-                          type: number
+                          type: "integer"
+                          format: "int32"
                         bet_to:
-                          type: number
-                        vin:
-                          type: number
+                          type: "integer"
+                          format: "int32"
+                        win:
+                          type: "integer"
+                          format: "int32"
         '401':
           description: No bets in play found
   /quit:
@@ -181,7 +174,8 @@ paths:
               type: object
               properties:
                 user_id:
-                  type: number
+                  type: "integer"
+                  format: "int32"
         required: true
       responses:
         '200':
