@@ -1,0 +1,7 @@
+apispec
+apispec_webframeworks
+flask
+flask_swagger_ui
+Flask-WTF
+marshmallow
+WTForms
