@@ -1,0 +1,222 @@
+openapi: 3.0.0
+info:
+  title: Вариант 3 - Электронная почта 
+  description: >-
+    OpenApi спецификация для моей реализации сервера (вар. 3)
+  license:
+    name: "THE SUSHI-WARE LICENSE"
+    url: 'https://github.com/MakeNowJust/sushi-ware'
+  version: 1.0.0
+servers:
+  - url: 'https://myemailserver.swagger.io/v2'
+paths:
+  /user/login:
+    post:
+      summary: Подключение пользователя
+      description: ''
+      operationId: userLoginId
+      requestBody:
+          description: ''
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryRequest'
+      responses:
+        '200': 
+          description: "User successfully login"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                message: "some info message"
+                responseType: INFO
+        '400': 
+          description: "Invalid mail address fromat"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryRequest'  
+      tags:
+        - Вход/Выход
+  /user/logout:
+    post:
+      summary: Отключение пользователя
+      description: ''
+      operationId: userLogoutId
+      responses:
+        "200":
+          description: "User successfully logout"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                message: "some info message"
+                responseType: INFO
+        "401":
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+      tags:
+        - Вход/Выход
+  /send:
+    post:
+      summary: Получение информации о товаре
+      description: ''
+      operationId: sendId
+      requestBody:
+          description: ''
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendMailRequest'
+      responses:
+        '200': 
+          description: "Mail sent successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                message: "some info message"
+                responseType: INFO
+        '400': 
+          description: "Invalid mail JSON format"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendMailRequest'    
+      tags:
+        - Отправка письма
+  /mailbox:
+    get:
+      summary: Список всех писем
+      description: ''
+      operationId: mailboxId
+      responses:
+        '200': 
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailboxResponse'
+        '404': 
+          description: "Mailbox is empty"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+      tags:
+        - Почтовый ящик
+  /mailbox/{id}:
+    get:
+      summary: Отыкрите письма
+      description: ''
+      operationId: getMailId
+      parameters:
+        - name: id
+          in: path
+          description: id письма
+          required: true
+          schema:
+            type: integer
+      responses:
+        200: 
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMailResponse'
+        404: 
+          description: "Mail not found"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+      tags:
+        - Почтовый ящик
+    delete:
+      summary: Удаление письма
+      description: ''
+      operationId: deleteMailId
+      parameters:
+        - name: id
+          in: path
+          description: id товара
+          required: true
+          schema:
+            type: integer
+      responses:
+        200: 
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                message: "some info message"
+                responseType: INFO
+        404: 
+          description: "Mail not found"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+      tags:
+        - Почтовый ящик  
+components:
+  schemas:
+    EntryRequest:
+      type: object
+      properties:
+        mail:
+          type: string
+          example: "something@somthing.something"
+    SendMailRequest:
+      type: object
+      properties:
+        to: 
+          type: string
+          example: "something@somthing.something"
+        subject:
+          type: string
+          example: "some subject"
+        text:
+          type: string
+          example: "Some TEXT BLAH BLAH BLAH"
+    GetMailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+        from: 
+          type: string
+          example: "something@somthing.something"
+        subject:
+          type: string
+          example: "some subject"
+        text:
+          type: string
+          example: "Some TEXT BLAH BLAH BLAH"
+    MailboxResponse:
+      properties:
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetMailResponse'
+    Response:
+      type: object
+      properties:
+        message: 
+          type: string
+          example: "some informative message"
+        responseType:
+          type: string
+          enum: [ERROR, INFO]
