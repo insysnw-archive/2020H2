@@ -1,0 +1,132 @@
+openapi: 3.0.0
+
+info:
+  title: Quiz
+  description: Система тестирования
+  version: 1.0.0
+
+paths:
+  /auth:
+    post:
+      parameters:
+        - in: query
+          name: username
+          description: "имя пользователя"
+          required: true
+          schema:
+            type: string
+      summary: Подключение к серверу
+      responses:
+        '200':
+          description: Подключение выполнено успешно
+        '400':
+          description: Некорректный формат запроса
+        '401':
+          description: Имя уже занято
+
+  /quiz/lastResults:
+    get:
+      summary: Запрос результатов последнего теста
+      responses:
+        '200':
+          description: Результаты последнего теста
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answersCount:
+                    type: integer
+                  correctAnswersCount:
+                    type: integer
+                  questions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        question:
+                          type: string
+                        answer:
+                          type: string
+        '404':
+          description: Результаты не найдены
+
+  /quiz/testsList:
+    get:
+      summary: Запрос списка тестов
+      responses:
+        '200':
+          description: Список тестов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    testNumber:
+                      type: integer
+                      description: "номер теста"
+                    testName:
+                      type: string
+                      description: "название теста"
+
+  /quiz/chooseTest:
+    post:
+      parameters:
+        - in: query
+          name: testNumber
+          description: "номер теста"
+          required: true
+          schema:
+            type: integer
+      summary: Выбор номера теста
+      responses:
+        '200':
+          description: Номер выбран
+        '400':
+          description: Некорректный формат запроса
+        '404':
+          description: Несуществующий номер теста
+
+  /quiz/requestQuestion:
+    get:
+      summary: Cледующий вопрос
+      responses:
+        '200':
+          description: Вопрос
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  question:
+                    type: string
+                    description: "вопрос"
+
+        '404':
+          description: Следующий вопрос не найден
+
+  /quiz/answer:
+    post:
+      summary: Ответ на вопрос
+      parameters:
+        - in: query
+          name: answer
+          description: "ответ"
+          required: true
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: Ответ принят
+        '400':
+          description: Некорректный формат запроса
+
+  /quit:
+    post:
+      summary: Отключение
+      responses:
+        '200':
+          description: Клиент отключен
