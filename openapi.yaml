@@ -32,7 +32,7 @@ paths:
               example:
                 message: "some info message"
                 responseType: INFO
-        '400': 
+        '401': 
           description: "Invalid mail address fromat"
           content:
             application/json:
