@@ -1,0 +1,129 @@
+openapi: 3.0.1
+info:
+  title: Calculator API
+  description: This is an API for Roulette server.
+  contact:
+    email: ilya_dolgushev@mail.ru
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+  version: 1.0.0-oas3
+servers:
+  - url: 'https://test.localhost.io'
+  - url: 'http://test.localhost.io'
+paths:
+  /short_operation:
+    get:
+      summary: Get result of n  [+ | - | * | / ] m 
+      parameters:
+        - $ref : '#/components/schemas/short_input'
+        
+      responses:
+        '200':
+          description:  result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/short_output'
+        '400':
+          description: Bad format of request 
+        '403':
+          description: Div by zero
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/short_output'
+          
+  /long_operation:
+    get:
+      summary: Get result of long operation
+      parameters:
+        - $ref : '#/components/schemas/long_input'
+      responses:
+        '200':
+          description:  result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/long_output'
+        '400':
+          description: Bad format of request 
+        '408':
+          description: Error timeout
+        '401':
+          description: Bad argument 
+  /quit:
+    post:
+      summary: Logout
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: "integer"
+                  format: "int32"
+        required: true
+      responses:
+        '200':
+          description: Success logout
+          
+components:
+  schemas:
+    id_operation_short:
+      description: идентификатор короткой операции
+      type: integer
+      example: 1
+      minimum: 1
+      maximum: 4
+      
+    id_operation_long:
+      description: идентификатор длинной операции
+      type: integer
+      example: 1
+      minimum: 1
+      maximum: 2
+      
+    short_input:
+      description: all for short operation
+      type: object
+      properties:
+        first_operand:
+          type: "integer"
+          format: "int32"
+        second_operand:
+          type: "integer"
+          format: "int32"
+        action:
+          $ref: '#/components/schemas/id_operation_short'
+          
+    long_input:
+      description: all for long operation
+      type: object
+      properties:
+        first_operand:
+          type: "integer"
+          format: "int32"
+        action:
+          $ref: '#/components/schemas/id_operation_long'
+    
+    short_output:
+      description: all about result of short operation
+      type: object
+      properties:
+        result:
+          type: "integer"
+          format: "int32"
+        info:
+          $ref: '#/components/schemas/short_input'
+          
+    long_output:
+      description: all about result of short operation
+      type: object
+      properties:
+        result:
+          type: "integer"
+          format: "int32"
+        info:
+          $ref: '#/components/schemas/long_input'
