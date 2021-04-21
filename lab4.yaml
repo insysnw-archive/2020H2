@@ -29,13 +29,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ShortOperationReply'
+                $ref: '#/components/schemas/ShortOperationResult'
         '401':
-          description: ошибка при выполнении операции
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ShortOperationReply'
+          description: ошибка при выполнении операции, неподходящие аргументы
                 
   /long_operation:
     post:
@@ -52,14 +48,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LongOperationReply'
+                $ref: '#/components/schemas/LongOperationResult'
         '401':
           description: ошибка при выполнении операции
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LongOperationReply'
-    
+                $ref: '#/components/schemas/LongOperationError'
+                
 components:
   schemas:
     ShortOperationRequest:
@@ -79,18 +75,16 @@ components:
         arg2:
           type: number
           example: 19
-    ShortOperationReply:
+          
+    ShortOperationResult:
       type: object
       required: 
-        - reply_code
+        - result
       properties:
-        reply_code:
-          type: number
-          example: 0
-          description: 0 - результат получен успешно, 1 - не удалось провести вычисления, неподходящие аргументы
         result:
           type: number
           example: 222.4
+          
     LongOperationRequest:
       type: object
       required: 
@@ -104,17 +98,14 @@ components:
         arg1:
           type: number
           example: 5
-    LongOperationReply:
+          
+    LongOperationResult:
       type: object
       required: 
-        - reply_code
         - op_code
         - supplied_arg
+        - result
       properties:
-        reply_code:
-          type: number
-          example: 0
-          description: 0 - результат получен успешно, 1 - не удалось провести вычисления, неподходящие аргументы, 2 - сервер слишком долго производил вычисления и сбросил задачу
         op_code:
           type: number
           example: 0
@@ -127,3 +118,23 @@ components:
           type: number
           example: 99999
           description: результат в случае успешного выполнения операции
+          
+    LongOperationError:
+      type: object
+      required: 
+        - error_code
+        - op_code
+        - supplied_arg
+      properties:
+        error_code:
+          type: number
+          example: 1
+          description: 1 - не удалось провести вычисления, неподходящие аргументы, 2 - сервер слишком долго производил вычисления и сбросил задачу
+        op_code:
+          type: number
+          example: 0
+          description: код операции даёт понять, для какой долгой операции получен результат
+        supplied_arg:
+          type: number
+          example: 5
+          description: аргумент, полученный от пользователя при отправлении на вычисление даёт понять, для какого аргумента проводилась операция
