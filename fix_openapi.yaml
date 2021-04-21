@@ -1,0 +1,199 @@
+openapi: 3.0.0
+
+info:
+  title: Система поиска/публикации новостей
+  description: Лабораторная работа по разработке сетевых приложений. Вариант 13
+  version: 1.0.0
+  contact:
+    name: Anna
+    email: Anuta-lyubchenkova@yandex.ru
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+tags:
+  - name: Новости
+    description: Все, что связано с публикацей и поиском новостей по теме
+
+paths:
+  /news/themes:
+    get:
+      summary: Получить список всех тем
+      operationId: getthemes
+      responses:
+        '200': 
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThemesArray'
+      tags:
+        - Новости
+    post:
+      summary: Добавление новой темы
+      description: >-
+        Создает новую тему
+      operationId: themesadd
+      requestBody:
+          description: ''
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThemesRequest'
+      responses:
+        '200': 
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOK'
+      tags:
+        - Новости
+  /news/{idtheme}:
+    get:
+      summary: Получение новости по теме
+      description: ''
+      operationId: newsgetbytheme
+      parameters:
+        - name: idtheme
+          in: path
+          description: id темы
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200': 
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewsArray'
+        '404': 
+          description: "Тема не найдена"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'    
+      tags:
+        - Новости
+  /news:
+    post:
+      summary: Добавление новой новости
+      description: >-
+        Создает новую новость
+      operationId: newsadd
+      requestBody:
+          description: ''
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewsRequest'
+      responses:
+        '200': 
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOK'
+      tags:
+        - Новости
+    
+  /news/{idnews}:
+    get:
+      summary: Получение новости по id
+      description: ''
+      operationId: newsgetbyid
+      parameters:
+        - name: idnews
+          in: path
+          description: id новости
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200': 
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewsDetails'
+        '404': 
+          description: "Новость не найдена"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+      tags:
+        - Новости
+components:
+  schemas:
+    NewsRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        text:
+          type: string
+    ThemesRequest:
+      type: object
+      properties:
+        name:
+          type: string
+    NewsDetails:
+      type: object
+      properties:
+        idnews:
+          type: integer
+          format: int32
+        name:
+          type: string
+        text:
+          type: string
+        theme:
+          type: string
+    ThemesDetails:
+      type: object
+      properties:
+        idtheme:
+          type: integer
+          format: int32
+        name:
+          type: string
+    NewsShortInfo:
+      type: object
+      properties:
+        idnews:
+          type: integer
+          format: int32
+        name:
+          type: string
+    NewsArray:
+      properties:
+        news:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewsShortInfo'
+    ThemesArray:
+      properties:
+        themes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ThemesDetails'
+    ResponseOK:
+      type: object
+      properties:
+        message: 
+          type: string
+        responseType:
+          type: string
+          enum: [INFO] 
+    Response:
+      type: object
+      properties:
+        message: 
+          type: string
+        responseType:
+          type: string
+          enum: [ERROR] 
