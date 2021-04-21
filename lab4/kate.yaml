@@ -29,7 +29,7 @@ paths:
       responses:
         200:
           description: Success registration
-        405:
+        400:
           description: Error of registration
           content: 
             application/json:
@@ -61,7 +61,7 @@ paths:
                 properties:
                   role_id: 
                     type: number
-        405:
+        401:
           description: User not found
           content: 
             application/json:
@@ -102,7 +102,7 @@ paths:
                           type: number
                         text:
                           type: string
-        401:
+        404:
           description: "No bugs found"
   /bug:
     put:
@@ -125,7 +125,7 @@ paths:
       responses:
         200:
           description: "Succesed added bug"
-        405:
+        409:
           description: "Bug id already existed"
     patch:
       summary: Change type of bug
@@ -141,9 +141,9 @@ paths:
       responses:
         200:
           description: "Succesed type of bug changed"
-        405:
+        410:
           description: "Bug id already fixed or solved"
-        401:
+        404:
           description: "Bug not found"
     get:
       summary: Verify bug
