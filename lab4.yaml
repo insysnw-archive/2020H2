@@ -56,6 +56,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/LongOperationError'
                 
+  /operations:
+    get:
+      description: получение списка доступных операций
+      responses:
+        200:
+          description: список операций
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Operation'
+                
 components:
   schemas:
     ShortOperationRequest:
@@ -138,3 +151,21 @@ components:
           type: number
           example: 5
           description: аргумент, полученный от пользователя при отправлении на вычисление даёт понять, для какого аргумента проводилась операция
+          
+    Operation:
+      type: object
+      required: 
+      - op_type
+      - op_code
+      - op_name
+      properties:
+        op_type:
+          type: number
+          description: тип операции, 0 - быстрые операции, 1 - долгие
+        op_code:
+          type: number
+          description: код операции, совместно с типом определяющий конкретную операцию
+        op_name:
+          type: string
+          description: название операции
+          
