@@ -1,0 +1,198 @@
+openapi: 3.0.0
+info:
+  license:
+    name: 'gpl-3.0'
+    url: 'https://raw.githubusercontent.com/Illumina/licenses/master/gpl-3.0.txt'
+
+  title: Messaging System
+  description: >-
+    OpenApi specification for a HTTP messenger (v1.2.1)
+  version: 0.1.0
+
+servers:
+  - url: 'http://messenger.example.com/api/v1'
+
+paths:
+
+  /user:
+    post:
+      description: User connects providing username and gets bearer token
+      operationId: userCreateOperationId
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateDto'
+      responses:
+        '200':
+          description: User provided name and got bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserTokenDto'
+        '409':
+          description: Same username is already present on the server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDto'
+      tags:
+        - User
+
+    delete:
+      description: User invalidates his token manually
+      operationId: userDeleteOperationId
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: User signed out
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      tags:
+        - User
+
+  /message:
+    get:
+      description: List existing messages or wait if none (long polling)
+      operationId: messageListOperationId
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: query
+          name: unread
+          schema:
+            type: boolean
+            default: false
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReceivedMessageDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      tags:
+        - Message
+
+    post:
+      description: Send message to username or * for all
+      operationId: messageCreateOperationId
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageDto'
+      responses:
+        '200':
+          description: Message sent
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      tags:
+        - Message
+
+  /message/{id}:
+    post:
+      description: Mark message and all previous as read
+      operationId: messageReadOperationId
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Message read
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+      tags:
+        - Message
+
+
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+
+  responses:
+
+    UnauthorizedError:
+      description: Access token is missing or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorDto'
+
+
+  schemas:
+
+    UserCreateDto:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Jim Ben
+
+    UserTokenDto:
+      type: object
+      properties:
+        token:
+          type: string
+
+    ErrorDto:
+      type: object
+      properties:
+        message:
+          type: string
+          example: error
+
+    ReceivedMessageDto:
+      type: object
+      properties:
+        id:
+          type: string
+        payload:
+          type: string
+        read:
+          type: boolean
+        sender:
+          type: object
+          properties:
+            name:
+              type: string
+
+    SendMessageDto:
+      type: object
+      properties:
+        payload:
+          type: string
+        receiver:
+          type: object
+          properties:
+            name:
+              type: string
+
