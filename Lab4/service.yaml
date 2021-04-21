@@ -34,7 +34,7 @@ paths:
                 properties:
                   id: 
                     type: number
-        405:
+        401:
           description: Error of auth
       x-codegen-request-body-name: body
   /list:
@@ -89,7 +89,7 @@ paths:
                           type: array
                           items:
                             type: string
-        405:
+        401:
           description: Error of starting new test
       x-codegen-request-body-name: body
   /end:
@@ -118,7 +118,7 @@ paths:
                 properties:
                   res: 
                     type: string
-        405:
+        409:
           description: Test not found
       x-codegen-request-body-name: body
   /logout:
@@ -136,6 +136,6 @@ paths:
       responses:
         200:
           description: Success login
-        405:
+        401:
           description: Error of auth
       x-codegen-request-body-name: body
