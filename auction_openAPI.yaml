@@ -33,14 +33,18 @@ paths:
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/Response'
-        '400':
-          description: Error
+                $ref: '#/components/schemas/Response'
+              example:
+                message: "Successfully registered"
+        '401':
+          description: This nickname is already taken
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/Response'
-  
+                $ref: '#/components/schemas/Response'
+              example:
+                message: "user_id is already exist"
+
   /auth/login:
     post:
       summary: Log in with an existing account
@@ -59,19 +63,22 @@ paths:
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/Response'
-        '400':
-          description: Error
+                $ref: '#/components/schemas/Response'
+        '404':
+          description: User is not found
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/Response'
-  
+                $ref: '#/components/schemas/Response'
+              example:
+                message:
+                  "No such user"
+
   /participant/items:
     get:
       summary: Get list of items
       tags:
-      - Participant
+        - Participant
       responses:
         '200':
           description: Successfull
@@ -80,19 +87,27 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Bug'
+                  $ref: '#/components/schemas/Item'
+                example:
+                  id: 5
+                  name: picture
+                  price: 1220
+                  owner: John
         '400':
           description: Error
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/Response'
-  
+                $ref: '#/components/schemas/Response'
+              example:
+                message:
+                  "Error during getting list of items"
+
   /participant/price:
     put:
       summary: Make new bet
       tags:
-      - Participant
+        - Participant
       parameters:
         - in: query
           name: item_id
@@ -105,23 +120,30 @@ paths:
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/Response'
-        '400':
-          description: Error
+                $ref: '#/components/schemas/Response'
+              example:
+                message:
+                  "Price is higher now"
+        '404':
+          description: Item not found
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/Response'
-  
+                $ref: '#/components/schemas/Response'
+              example:
+                message:
+                  "There is no such item"
+
+
   /steward/add:
     post:
       summary: Add new item
-      tags: 
-      - Steward
+      tags:
+        - Steward
       parameters:
-      - in: query
-        name: item
-        schema:
+        - in: query
+          name: item
+          schema:
             $ref: '#/components/schemas/Item'
       responses:
         '200':
@@ -129,14 +151,21 @@ paths:
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/Response'
-        '400':
-          description: Error
+                $ref: '#/components/schemas/Response'
+              example:
+                message:
+                  "Item added to the auction"
+        '409':
+          description: Conflict
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/Response'
-  
+                $ref: '#/components/schemas/Response'
+              example:
+                message:
+                  "This item already exist"
+
+
   /steward/stop:
     put:
       summary: Give lot to the last owner
@@ -154,31 +183,38 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Item'  
-        '400':
-          description: Error
+                  $ref: '#/components/schemas/Item'
+                example:
+                  message:
+                    "Steward end auction"
+        '408':
+          description: Request timeout
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/Response'  
-    
+                $ref: '#/components/schemas/Response'
+              example:
+                message:
+                  "Steward lost connection"
+
 components:
   schemas:
     Item:
       type: object
       required:
-        -id
+        -item_id
         -name
         -price
+        -owner
       properties:
-        id:
+        item_id:
           type: integer
           format: uuid
         name:
           type: string
         price:
           type: integer
-        owner: 
+        owner:
           type: string
 
     Response:
