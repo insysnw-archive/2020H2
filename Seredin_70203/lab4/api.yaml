@@ -36,6 +36,8 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/Topics'
+        404:
+          description: Topic does not exist
 
     post:
       description: Create a new topic
@@ -52,8 +54,8 @@ paths:
       responses:
         200:
           description: Successfully created a new topic
-        400:
-          description: A problem with the request
+        409:
+          description: Some topic is already presented. No were added
 
     delete:
       description: Delete a topic
@@ -71,8 +73,8 @@ paths:
       responses:
         200:
           description: Successfully deleted topic
-        400:
-          description: A problem with the request
+        404:
+          description: Topic does not exist
 
   /messages:
     description: Message Resource
@@ -98,6 +100,8 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/Messages'
+        404:
+          description: Message does not exist
 
     post:
       description: Create a new message
@@ -114,6 +118,8 @@ paths:
       responses:
         200:
           description: Successfully created a new message
+        409:
+          description: Some message is already presented. No were added
 
     delete:
       description: Delete a message
@@ -131,8 +137,8 @@ paths:
       responses:
         200:
           description: Successfully deleted message
-        400:
-          description: A problem with the request
+        404:
+          description: The message does not exist
 
   /clients/{id}:
     get:
@@ -147,18 +153,18 @@ paths:
             minimum: 0
             maximum: 2147483647
             example: 10
-responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Client'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Client'
-        400:
-          description: A problem with the request.
+      responses:
+              200:
+                description: Success
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/Client'
+                  application/xml:
+                    schema:
+                      $ref: '#/components/schemas/Client'
+              404:
+                description: The client does not exist
 
 components:
   schemas:
