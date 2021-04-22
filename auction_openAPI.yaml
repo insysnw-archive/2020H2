@@ -202,10 +202,10 @@ components:
     Item:
       type: object
       required:
-        -item_id
-        -name
-        -price
-        -owner
+        - item_id
+        - name
+        - price
+        - owner
       properties:
         item_id:
           type: integer
