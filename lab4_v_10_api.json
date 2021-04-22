@@ -1,0 +1,278 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Simple remote control",
+    "description": "This is a simple API for remote control server",
+    "contact": {
+      "email": "you@your-company.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://virtserver.swaggerhub.com/org9866/lab_4/1.0.0",
+      "description": "SwaggerHub API Auto Mocking"
+    }
+  ],
+  "tags": [
+    {
+      "name": "admins",
+      "description": "Secured Admin-only calls"
+    },
+    {
+      "name": "users",
+      "description": "Operations available to regular users"
+    }
+  ],
+  "paths": {
+    "/users": {
+      "get": {
+        "tags": [
+          "admins"
+        ],
+        "summary": "get all users on server",
+        "description": "By accesssing as admin you can get information on all users on server\n",
+        "operationId": "getUsers",
+        "responses": {
+          "200": {
+            "description": "succesfully got all users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserInfo"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "users",
+          "admins"
+        ],
+        "summary": "logs in",
+        "description": "By passing login and password you can login into server\n",
+        "operationId": "login",
+        "parameters": [
+          {
+            "name": "login",
+            "in": "query",
+            "description": "pass login",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "password",
+            "in": "query",
+            "description": "pass password",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "logged in succesfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "some_token"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "provided information is missing or invalid"
+          }
+        }
+      }
+    },
+    "/users/{name}": {
+      "get": {
+        "tags": [
+          "admins"
+        ],
+        "summary": "get one user",
+        "description": "By accesssing as admin you can get information on user on server\n",
+        "operationId": "getUser",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "users name",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "string",
+              "example": "user123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "succesfully got user info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized"
+          },
+          "404": {
+            "description": "user with such name is not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "admins"
+        ],
+        "summary": "remove user from server",
+        "description": "By accesssing as admin you can get remove user from server\n",
+        "operationId": "rmUser",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "users name",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "string",
+              "example": "user123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "succesfully got user info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized"
+          },
+          "404": {
+            "description": "user with such name is not found"
+          }
+        }
+      }
+    },
+    "/command": {
+      "post": {
+        "tags": [
+          "users",
+          "admins"
+        ],
+        "summary": "execute command",
+        "description": "execute command by passing it\n",
+        "operationId": "executeCommand",
+        "parameters": [
+          {
+            "name": "consoleCommand",
+            "in": "query",
+            "description": "pass command",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "$ref": "#/components/schemas/ConsoleCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "command was succesfully executed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "currentFolder"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "provided command does not exist"
+          },
+          "401": {
+            "description": "unauthorized"
+          },
+          "403": {
+            "description": "user doesn't have rights to execute command"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ConsoleCommand": {
+        "required": [
+          "command"
+        ],
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "example": "ls"
+          },
+          "arguments": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "../"
+            }
+          }
+        }
+      },
+      "UserInfo": {
+        "required": [
+          "currentFolder",
+          "userLogin"
+        ],
+        "type": "object",
+        "properties": {
+          "userLogin": {
+            "type": "string",
+            "example": "login"
+          },
+          "currentFold": {
+            "type": "string",
+            "example": "/folder"
+          }
+        }
+      }
+    }
+  }
+}
