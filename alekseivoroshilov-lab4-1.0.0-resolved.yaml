@@ -1,0 +1,198 @@
+---
+openapi: 3.0.0
+info:
+  title: Pay server
+  description: Pay server
+  contact:
+    email: nyan_nyan@cuttie.nya
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/alekseivoroshilov/lab4/1.0.0
+  description: SwaggerHub API Auto Mocking
+tags:
+- name: users
+  description: users
+paths:
+  /signin:
+    post:
+      tags:
+      - users
+      summary: authorize
+      description: |
+        Send username and password
+      operationId: signIn
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthInfo'
+      responses:
+        "200":
+          description: Succesful
+        "400":
+          description: Incorrect input data
+  /signup:
+    post:
+      tags:
+      - users
+      summary: register
+      description: Register user
+      operationId: signUp
+      requestBody:
+        description: Authentification info
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthInfo'
+      responses:
+        "200":
+          description: Succesful
+        "400":
+          description: Incorrect input data
+        "409":
+          description: User already exist
+  /wallets:
+    get:
+      tags:
+      - users
+      summary: get wallet list
+      description: Get Wallets
+      operationId: getWallets
+      responses:
+        "200":
+          description: Succesful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Wallet'
+  /transactions:
+    get:
+      tags:
+      - users
+      summary: get transactions
+      description: Get all user transactions
+      operationId: getTransactions
+      parameters:
+      - name: wId
+        in: query
+        description: wallet id
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 0
+          type: integer
+      responses:
+        "200":
+          description: Succesful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+        "400":
+          description: Invalid input data
+    post:
+      tags:
+      - users
+      summary: send money
+      description: Send money
+      operationId: send
+      parameters:
+      - name: wid
+        in: query
+        description: wallet id
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 0
+          type: integer
+      - name: balance
+        in: query
+        description: money amount
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 0
+          exclusiveMinimum: true
+          type: number
+          format: float
+      responses:
+        "200":
+          description: Succesful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        "400":
+          description: Invalid input data
+components:
+  schemas:
+    Transaction:
+      required:
+      - money
+      - succesful
+      - tId
+      - uId
+      - wId
+      type: object
+      properties:
+        money:
+          minimum: 0
+          exclusiveMinimum: true
+          type: number
+          format: float
+          example: 123.44
+        tId:
+          minimum: 0
+          type: integer
+          example: 5
+        uId:
+          minimum: 0
+          type: integer
+          example: 34
+        wId:
+          minimum: 0
+          type: integer
+          example: 23
+        succesful:
+          type: boolean
+          example: true
+    AuthInfo:
+      required:
+      - name
+      - password
+      type: object
+      properties:
+        name:
+          type: string
+          example: PutinVV
+        password:
+          type: string
+          example: widewalker1337
+    Wallet:
+      required:
+      - balance
+      - id
+      - userid
+      type: object
+      properties:
+        id:
+          minimum: 0
+          type: integer
+          example: 5
+        userid:
+          minimum: 0
+          type: integer
+          example: 10
+        balance:
+          minimum: 0
+          exclusiveMinimum: true
+          type: number
+          format: float
+          example: 100.34
