@@ -1,0 +1,145 @@
+openapi: 3.0.1
+info:
+  title: Система оповещения о событиях и подписки на них
+  description: ''
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+  version: 1.0.0
+servers:
+  - url: 'http://lab3.ru/v1'
+tags:
+  - name: События
+    description: ''
+paths:
+  /events:
+    get:
+      tags:
+        - События
+      summary: Передача пользователю списка текущих событий
+      responses:
+        '200':
+          description: Список текущих событий
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+        '400':
+          description: Error
+  /addEvent:
+    post:
+      tags:
+        - События
+      summary: Добавление события
+      requestBody:
+        description: Добавить событие
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/Event'
+        required: true
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: ERROR
+          
+  /deleteEvent:
+    post:
+      tags:
+        - События
+      summary: Удаление события
+      parameters:
+        - name: id
+          in: header
+          description: Удалить событие по id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content: {}
+        '400':
+          description: ERROR
+          content: {}
+  /subscribe:
+    post:
+      tags:
+        - События
+      summary: Подписка на событие
+      parameters:
+        - name: id
+          in: header
+          description: Подписка на событие по id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content: {}
+        '400':
+          description: ERROR
+          content: {}
+  /unsubscribe:
+    post:
+      tags:
+        - События
+      summary: Отписка от события
+      parameters:
+        - name: id
+          in: header
+          description: Отписка от события по id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content: {}
+        '400':
+          description: ERROR
+          content: {}
+  /notification:
+    get:
+      tags:
+        - События
+      summary: Получение уведомлений
+      responses:
+        '200':
+          description: Список уведомлений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+        '400':
+          description: ERROR
+          content: {}
+components:
+  schemas:
+    Event:
+      type: object
+      properties:
+        name:
+          type: string
+          example: fname lname
+        time:
+          type: integer
+          example: 13453
+        period:
+          type: integer
+          example: 1243
+        place:
+          type: string
+          example: road
+        description:
+          type: string
+          example: car race
+        organizer:
+          type: string
+          example: who
