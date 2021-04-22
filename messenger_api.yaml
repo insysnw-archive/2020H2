@@ -155,44 +155,51 @@ components:
       properties:
         name:
           type: string
-          example: Jim Ben
+          example: Bertram Gilfoyle
 
     UserTokenDto:
       type: object
       properties:
         token:
           type: string
+          example: rIzmAnasNruGroF03G8q
 
     ErrorDto:
       type: object
       properties:
         message:
           type: string
-          example: error
+          example: Error occured
 
     ReceivedMessageDto:
       type: object
       properties:
         id:
           type: string
+          example: C1Et4PZ1y
         payload:
           type: string
+          example: Octopus. It's a water animal
         read:
           type: boolean
+          example: false
         sender:
           type: object
           properties:
             name:
               type: string
+              example: Jian Yang
 
     SendMessageDto:
       type: object
       properties:
         payload:
           type: string
+          example: Go away Jian Yang
         receiver:
           type: object
           properties:
             name:
               type: string
+              example: Jian Yang
 
