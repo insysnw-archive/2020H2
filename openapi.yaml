@@ -44,13 +44,13 @@ paths:
           content:
             application/json:
               schema: 
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/ResponseOK'
         '404': 
           description: "Не удалось создать рейтинг"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'    
+                $ref: '#/components/schemas/ResponseERR'    
       tags:
         - Рейтинг
     
@@ -77,7 +77,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'    
+                $ref: '#/components/schemas/ResponseERR'    
       tags:
         - Рейтинг
     
@@ -97,13 +97,13 @@ paths:
           content:
             application/json:
               schema: 
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/ResponseOK'
         '404': 
           description: "Рейтинг не найден"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'    
+                $ref: '#/components/schemas/ResponseERR'    
       tags:
         - Рейтинг
         
@@ -132,13 +132,13 @@ paths:
           content:
             application/json:
               schema: 
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/ResponseOK'
         '404': 
           description: "Не удалось открыть/закрыть рейтинг"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'    
+                $ref: '#/components/schemas/ResponseERR'    
       tags:
         - Рейтинг
         
@@ -168,13 +168,13 @@ paths:
           content:
             application/json:
               schema: 
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/ResponseOK'
         '404': 
           description: "Не удалось открыть/закрыть рейтинг"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'    
+                $ref: '#/components/schemas/ResponseERR'    
       tags:
         - Рейтинг
   
@@ -201,13 +201,13 @@ paths:
           content:
             application/json:
               schema: 
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/ResponseOK'
         '404': 
           description: "Не удалось открыть/закрыть рейтинг"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'    
+                $ref: '#/components/schemas/ResponseERR'
       tags:
         - Рейтинг
       
@@ -277,11 +277,20 @@ components:
           format: int32
         
     
-    Response:
+    ResponseOK:
       type: object
       properties:
         message: 
           type: string
         responseType:
           type: string
-          enum: [ERROR, INFO] 
+          enum: [OK] 
+          
+    ResponseERR:
+      type: object
+      properties:
+        message: 
+          type: string
+        responseType:
+          type: string
+          enum: [ERROR] 
