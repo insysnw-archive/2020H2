@@ -1,0 +1,285 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Online Testing Api",
+    "description": "This is a simple API for Online Testing",
+    "contact": {
+      "email": "me@gmail.com"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://virtserver.swaggerhub.com/KostarevVI/Testing_system/1.0.0",
+      "description": "SwaggerHub API Auto Mocking"
+    }
+  ],
+  "tags": [
+    {
+      "name": "user",
+      "description": "What user can do"
+    }
+  ],
+  "paths": {
+    "/test": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Return all tests available",
+        "description": "Return all tests available\n",
+        "operationId": "getTest",
+        "responses": {
+          "200": {
+            "description": "Returning array of test names",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Test"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Can't get tests"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "pick a test",
+        "description": "Chose the test",
+        "operationId": "pickTest",
+        "parameters": [
+          {
+            "name": "testNumber",
+            "in": "query",
+            "description": "Picked number of test",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "minimum": 0,
+              "exclusiveMinimum": true,
+              "type": "integer",
+              "example": 5
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test picked"
+          },
+          "400": {
+            "description": "invalid input, object invalid"
+          }
+        }
+      }
+    },
+    "/questions": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Return all questions available",
+        "description": "Return all questions available\n",
+        "operationId": "getQuestions",
+        "responses": {
+          "200": {
+            "description": "Returning array of questions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Question"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Can't get tests"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "submit answer on question",
+        "description": "Submit answer on question",
+        "operationId": "submitQuestion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Id of question",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "format": "id",
+              "example": "w290f1ee6d701748f0853"
+            }
+          },
+          {
+            "name": "answer",
+            "in": "query",
+            "description": "Users answer on question",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "minimum": 0,
+              "exclusiveMinimum": true,
+              "type": "integer",
+              "format": "id",
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Answer accepted"
+          },
+          "400": {
+            "description": "invalid input"
+          }
+        }
+      }
+    },
+    "/result": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Return result for user",
+        "description": "Return currend summary of the test\n",
+        "operationId": "getResult",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "description": "User id. Use user1 for testing.",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "format": "id",
+              "example": "user1"
+            }
+          },
+          {
+            "name": "test",
+            "in": "query",
+            "description": "Completed test",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "integer",
+              "format": "id",
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Result"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Can't get tests"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Test": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "id",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "Test1"
+          }
+        }
+      },
+      "Question": {
+        "required": [
+          "answer",
+          "id",
+          "questionText",
+          "test"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "id",
+            "example": "e290f1ee6d701748f0855"
+          },
+          "test": {
+            "$ref": "#/components/schemas/Test"
+          },
+          "questionText": {
+            "type": "string",
+            "example": "Where is my sausage? 1.Here 2.There"
+          },
+          "answer": {
+            "minimum": 1,
+            "type": "integer",
+            "example": 1
+          }
+        }
+      },
+      "Result": {
+        "required": [
+          "summary",
+          "test",
+          "user"
+        ],
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "id",
+            "example": "user1"
+          },
+          "test": {
+            "$ref": "#/components/schemas/Test"
+          },
+          "summary": {
+            "minimum": 0,
+            "type": "integer",
+            "example": 19
+          }
+        }
+      }
+    }
+  }
+}
